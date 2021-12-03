@@ -8,7 +8,7 @@
 # This module contains a class to handle the GWENS catalogue
 ####
 
-
+import nibabel
 import pandas as pd
 import healpy as hp
 import numpy as np
@@ -35,9 +35,11 @@ class GWENS(GalCat):
             filenames = [os.path.join(self._path, 'ra_{:03d}_{:03d}.csv.gz'.format(i*15, (i+1)*15)) for i in self._patches]
 
         for i, filename in enumerate(filenames):
-        
+            #print(filename)#per cercare i file corrotti
+            #nibabel.load(filename).get_data()#così ho il nome del file che non apre e posso eliminarlo, almeno per ora
             print('Loading patch ' + str(i) + ' of ' + str(len(filenames)) + ' patches of GWENS...')
-            
+            print(filename)
+
             dg = pd.read_csv(filename, compression='gzip', error_bad_lines=False)
             #dg = pd.read_csv(filename, error_bad_lines=False)
            

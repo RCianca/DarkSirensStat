@@ -80,7 +80,7 @@ class GLADE(GalCat):
         if not loaded:
         
             
-            gname='GLADE_2.4.txt'
+            gname='GLADE_nonull.txt'
             groupname='Galaxy_Group_Catalogue.csv'
             filepath_GLADE = os.path.join(self._path, gname)
             filepath_groups = os.path.join(miscPath, groupname)
@@ -199,7 +199,7 @@ class GLADE(GalCat):
                     zvals = df[df.dL.isna()]['z']
                     if self.verbose:
                         print('%s points have null entry for dist, correcting original redshift' %zvals.shape[0])
-                    z_cosmo_vals = np.where(df.dL.notna(), np.interp( df.dL , dL_grid, z_grid), df.z)
+                    z_cosmo_vals = np.where(df.dL.isna(), np.interp( df.dL , dL_grid, z_grid), df.z)
                 else:
                     z_cosmo_vals = np.interp( df.dL , dL_grid, z_grid)
                 
@@ -265,8 +265,8 @@ class GLADE(GalCat):
                     raise ValueError('Enter valid choice for err_vals. Valid options are: GLADE, const, const_perc . Got %s' %err_vals)
                 
                 # restrict error to <=z itself. otherwise for z very close to 0 input is infeasible for keelin distributions, which would break things silently
-                #df.loc[:, 'z_err'] = np.minimum(scales, df.z.to_numpy())
-                df.loc[:, 'z_err'] = 0.00005
+                df.loc[:, 'z_err'] = np.minimum(scales, df.z.to_numpy())
+                #df.loc[:, 'z_err'] = 0.00005
                 df.loc[:, 'z_lowerbound'] = df.z - 3*df.z_err
                 df.loc[df.z_lowerbound < 0, 'z_lowerbound'] = 0
                 df.loc[:, 'z_lower'] = df.z - df.z_err

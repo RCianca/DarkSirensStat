@@ -178,6 +178,10 @@ def plot_post(base_path, grid, post, post_cat, post_compl, event_list,
     plt.savefig(os.path.join(base_path, 'posterior.pdf'))
     plt.close()
     
+    #added by Raul: save the . txt of the total posterior
+    #with open(os.path.join(base_path, 'posteriortot.txt'),'w+') as k:
+        #k.write(post['total'])
+        #k.close()
     #plt.show()
 
 

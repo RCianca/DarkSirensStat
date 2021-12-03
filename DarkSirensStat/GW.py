@@ -9,7 +9,7 @@
 # This module contains everything related to handling GW skymaps
 ####
 
-
+from config import delta
 import healpy as hp
 import pandas as pd
 import scipy.stats
@@ -88,6 +88,8 @@ class Skymap3D(object):
         self.event_name = get_ename(fname, verbose=self.verbose)
         if self.verbose:
                 print('\nEvent: %s' %self.event_name)
+                #aggiunto da Raul
+                print('Delta=%s. Se 1 run normale '%delta)
         if (convert_nested) & (metadata['nest']): #If one wants RING ordering (the one of O2 data afaik) just has to set "convert_nested" to True
             self.p_posterior = hp.reorder(skymap[0],n2r=True)
             self.mu = hp.reorder(skymap[1],n2r=True)
@@ -275,8 +277,8 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        
-        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )
+        #Raul: Modificato sigma a mano CAMBIALO
+        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])
     
     
@@ -286,6 +288,7 @@ class Skymap3D(object):
         def discretesample(nSamples, pdf):
             cdf = np.cumsum(pdf)
             cdf = cdf / cdf[-1]
+            #Aggiunto da Raul: in questo modo vado a pescare la cumulativa quando si alza, non spreco estrazioni
             return np.searchsorted(cdf, np.random.uniform(size=nSamples))
             
         # norm goes away sampling r^2 as well below, only prob remains to give pixel probability
@@ -295,7 +298,8 @@ class Skymap3D(object):
 
         mu = self.mu[pixSampled]
         sig = self.sigma[pixSampled]
-
+        sig=sig*delta
+       
         # sample distances. note mu is not the peak location of the *posterior* with r^2. be generous with sigma...
         res = 1000
         lower = mu - 3.5*sig
@@ -303,6 +307,7 @@ class Skymap3D(object):
         upper = mu + 3.5*sig
         grids = np.linspace(lower, upper, res).T
         mu = mu[:, np.newaxis]
+        #aggiunto da Raul
         sig = sig[:, np.newaxis]
 
         pdfs = mu**2*np.exp(-(mu - grids)**2/(2*sig**2))
@@ -449,7 +454,7 @@ class Skymap3D(object):
             return self._metadata_r_lims(std_number=std_number, verbose=verbose)
         
     
-    def _find_r_loc(self, std_number=None, verbose=None):
+    def _find_r_loc(self, std_number=None, verbose=False):
         '''
         Returns mean GW lum. distance, lower and upper limits of distance, and the mean sigma.
         Based on actual skymap shape in the selected credible region, not metadata.
@@ -467,7 +472,8 @@ class Skymap3D(object):
         lower = max(np.average(mu-std_number*sigma, weights = p), 0)
         upper = np.average(mu+std_number*sigma, weights = p)
         if verbose:
-            print('Position: %s +%s %s'%(meanmu, upper, lower))
+        
+            print('Position: %s, %s, %s, meansig=%s'%(meanmu, upper, lower,meansig))
         
         return meanmu, lower, upper, meansig
         

@@ -193,10 +193,12 @@ class GWgal(object):
         return LL
     
     def _hom_lik(self, eventName, H0, Xi0, n):
-        
-        if self.MC: 
+        #modificato da Raul
+        #print('sono in GWgal.py:_hom_lik. self.MC={}'.format(self.MC))
+        if self.MC:
+            #print('Eseguo likelihood MC')
             return self._hom_lik_MC(eventName, H0, Xi0, n)
-        else: 
+        else:
             return self._hom_lik_trapz(eventName, H0, Xi0, n)
         
         

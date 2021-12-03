@@ -418,14 +418,19 @@ def main():
                                               band,Lcut,zR,
                                               myMin=myMin, myMax=myMax, 
                                               varname=goalParam,)
-    
+        #Nevents=0
         for event in myGWgal.selectedGWevents:
+            #Nevents=Nevents+1
             postPathhom =os.path.join(out_path, event+'_post_compl'+goalParam+'.txt')
             postPathinhom =os.path.join(out_path, event+'_post_cat'+goalParam+'.txt')
             postPathtot=os.path.join(out_path, event+'_post'+goalParam+'.txt')
             np.savetxt(postPathhom, post_compl[event])
             np.savetxt(postPathinhom, post_cat[event])
             np.savetxt(postPathtot, post[event])
+	#Added by Raul: obtain a txt of the total posterior
+        if len(myGWgal.selectedGWevents)>1:
+            postPath=os.path.join(out_path,'posterior_total.txt')
+            np.savetxt(postPath,post['total'])
     #else:
     #    myGWgal.select_gals()
         

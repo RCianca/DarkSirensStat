@@ -28,7 +28,8 @@ class DES(GalCat):
     def load(self, remove_unreliable=True, add_distrib_redshifts=True, galPosterior = True):
         from astropy.io import fits
         filepath = os.path.join(self._path, 'y1a1.fits')
-        f = fits.open(filepath)
+        f = fits.open(filepath,ignore_missing_end=True) 
+	#per tornare a prima, togliere ignore..
         
         #dg = pd.DataFrame(data=hp.read_map(filepath,field=[1],verbose=self.verbose), columns=['ra','dec'])
         RA = f[1].data['RA'] 

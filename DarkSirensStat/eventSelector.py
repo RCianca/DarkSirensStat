@@ -84,7 +84,7 @@ class EventSelector(Selector):
     
     def is_good_event(self, GWevent):
         
-        dL, _, _, _ = GWevent.find_r_loc(verbose=False)
+        dL, _, _, _ = GWevent.find_r_loc(verbose=True)
         
         return self.is_good(*GWevent.find_event_coords(polarCoords=True), dL)
         

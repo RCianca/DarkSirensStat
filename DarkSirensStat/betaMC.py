@@ -57,12 +57,12 @@ class BetaMC:#(Beta):
         
         self.selector = selector
         
-        self.verbose = verbose
+        self.verbose = True
         self.freq = None
         self.integr = None
         self.nSamples = nSamples
         self.SNRthresh = SNRthresh
-        
+        print('Eseguo betaMC')
         # for setting the scale - if this is chosen around the effective detector horizon comoving volume in Mpc^3, beta is around one
         self.VcomPivot = 4/3*np.pi*(2000)**3
         
