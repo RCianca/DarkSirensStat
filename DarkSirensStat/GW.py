@@ -26,6 +26,7 @@ from os.path import isfile, join
 
 
 
+
 class Skymap3D(object):
     
 
@@ -70,7 +71,8 @@ class Skymap3D(object):
         # for each pixel it drops after doing the ddLGW integral.
         # The angular integral gives sum pixarea * p_posterior_i which needs to be 1.
         self.p_likelihood /= (np.sum(self.p_posterior)*self.pixarea)
-        
+        #Raul:to seve 'pix' from inhom like
+        self.raulpix=np.zeros(len(self.p_posterior))
         self.set_credible_region(level)
         
         
@@ -279,10 +281,17 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        #Raul: put a delta factor here
+        #Raul: put a delta factor here; save p_likelihood_selected[pix]
+        if saveplike==1:
+            print('Saving p_likelihood_selected[pix] in a txt file')
+            path='~/DarkSirensStat/results/'
+            temp=os.path.join(path,fout)
+            dirout=os.path.join(temp,'p_likelihood.txt')
+            outfile=self.p_likelihood_selected[pix]
+            np.savetxt(dirout,outfile)
+            print('Done')
         return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])
-
     
     
     def sample_posterior(self, nSamples):
@@ -291,7 +300,6 @@ class Skymap3D(object):
         def discretesample(nSamples, pdf):
             cdf = np.cumsum(pdf)
             cdf = cdf / cdf[-1]
-            #Aggiunto da Raul: in questo modo vado a pescare la cumulativa quando si alza, non spreco estrazioni
             return np.searchsorted(cdf, np.random.uniform(size=nSamples))
             
         # norm goes away sampling r^2 as well below, only prob remains to give pixel probability
