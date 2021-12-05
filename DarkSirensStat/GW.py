@@ -10,6 +10,8 @@
 ####
 
 from config import delta
+from config import saveplike
+from config import fout
 import healpy as hp
 import pandas as pd
 import scipy.stats
@@ -277,9 +279,10 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        #Raul: Modificato sigma a mano CAMBIALO
+        #Raul: put a delta factor here
         return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])
+
     
     
     def sample_posterior(self, nSamples):
