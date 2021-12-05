@@ -92,8 +92,10 @@ class Skymap3D(object):
         self.event_name = get_ename(fname, verbose=self.verbose)
         if self.verbose:
                 print('\nEvent: %s' %self.event_name)
-                #aggiunto da Raul
+                #Raul: prints for control
                 print('Delta=%s. Se 1 run normale '%delta)
+                if saveplike==1:
+                    print('like_cat ora è self.p_likelihood_selected[pix]')
         if (convert_nested) & (metadata['nest']): #If one wants RING ordering (the one of O2 data afaik) just has to set "convert_nested" to True
             self.p_posterior = hp.reorder(skymap[0],n2r=True)
             self.mu = hp.reorder(skymap[1],n2r=True)
@@ -281,16 +283,11 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        #Raul: put a delta factor here; save p_likelihood_selected[pix]
+        #Raul:delta factor here. p-likelihood[pix]; remove after tests
         if saveplike==1:
-            print('Saving p_likelihood_selected[pix] in a txt file')
-            path='~/DarkSirensStat/results/'
-            temp=os.path.join(path,fout)
-            dirout=os.path.join(temp,'p_likelihood.txt')
-            outfile=self.p_likelihood_selected[pix]
-            np.savetxt(dirout,outfile)
-            print('Done')
-        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
+            return self.p_likelihood_selected[pix]
+        else:
+            return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])
     
     

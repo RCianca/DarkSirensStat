@@ -389,9 +389,14 @@ def main():
         if not folderCheck:
             print('\n-----  COMPUTING LIKELIHOOD ....')
             liks = myGWgal.get_lik(H0s=H0grid, Xi0s=Xi0grid, n=nGlob)
+            #Raul: changed the name to avoid mistake
+            if saveplike==1:
+                name='_plike_'
+            else:
+                name='_lik_cat'
             for event in myGWgal.selectedGWevents:
                 liksPathhom =os.path.join(out_path, event+'_lik_compl'+goalParam+'.txt')
-                liksPathinhom =os.path.join(out_path, event+'_lik_cat'+goalParam+'.txt')
+                liksPathinhom =os.path.join(out_path, event+name+goalParam+'.txt')
                 np.savetxt(liksPathhom, liks[event][1])
                 np.savetxt(liksPathinhom, liks[event][0])
             print('Done.')
