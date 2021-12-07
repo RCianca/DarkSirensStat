@@ -14,10 +14,10 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'stdnum5GW190814_printplike'
+fout = 'stdnum1GW190814_printplike_new'
 #only to some  test, then remove 
-delta=5#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
-saveplike=0#to save p_likelihood_selected 
+delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
+saveplike=1#to save p_likelihood_selected 
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10
@@ -77,7 +77,7 @@ completnessThreshCentral=0.7
 
 ## Confidence region for GW skymaps
 level = 0.99
-std_number=5 #if none, it is computed from level
+std_number=1#if none, it is computed from level
 
 
 # --------------------------------------------------------------

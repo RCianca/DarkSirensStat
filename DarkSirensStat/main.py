@@ -392,6 +392,8 @@ def main():
             #Raul: changed the name to avoid mistake
             if saveplike==1:
                 name='_plike_'
+            elif saveplike==2:
+                name='sigmaovermu'
             else:
                 name='_lik_cat'
             for event in myGWgal.selectedGWevents:

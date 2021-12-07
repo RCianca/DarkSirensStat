@@ -96,6 +96,8 @@ class Skymap3D(object):
                 print('Delta=%s. Se 1 run normale '%delta)
                 if saveplike==1:
                     print('like_cat ora è self.p_likelihood_selected[pix]')
+                if saveplike==2:
+                    print('Saving sigma/mu of the smearing')
         if (convert_nested) & (metadata['nest']): #If one wants RING ordering (the one of O2 data afaik) just has to set "convert_nested" to True
             self.p_posterior = hp.reorder(skymap[0],n2r=True)
             self.mu = hp.reorder(skymap[1],n2r=True)
@@ -286,6 +288,10 @@ class Skymap3D(object):
         #Raul:delta factor here. p-likelihood[pix]; remove after tests
         if saveplike==1:
             return self.p_likelihood_selected[pix]
+        elif saveplike==2:
+            mu=self.mu[pix]
+            sigma=self.sigma[pix]*delta
+            return sigma/mu
         else:
             return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])
@@ -306,6 +312,7 @@ class Skymap3D(object):
 
         mu = self.mu[pixSampled]
         sig = self.sigma[pixSampled]
+        #Raul:delta factor here
         sig=sig*delta
        
         # sample distances. note mu is not the peak location of the *posterior* with r^2. be generous with sigma...
@@ -315,7 +322,6 @@ class Skymap3D(object):
         upper = mu + 3.5*sig
         grids = np.linspace(lower, upper, res).T
         mu = mu[:, np.newaxis]
-        #aggiunto da Raul
         sig = sig[:, np.newaxis]
 
         pdfs = mu**2*np.exp(-(mu - grids)**2/(2*sig**2))
