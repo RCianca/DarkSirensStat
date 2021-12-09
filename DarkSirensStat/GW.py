@@ -101,12 +101,12 @@ class Skymap3D(object):
         if (convert_nested) & (metadata['nest']): #If one wants RING ordering (the one of O2 data afaik) just has to set "convert_nested" to True
             self.p_posterior = hp.reorder(skymap[0],n2r=True)
             self.mu = hp.reorder(skymap[1],n2r=True)
-            self.sigma = hp.reorder(skymap[2],n2r=True)
+            self.sigma = hp.reorder(skymap[2],n2r=True)*delta
             self.posteriorNorm = hp.reorder(skymap[3],n2r=True)
         else:
             self.p_posterior= skymap[0]
             self.mu= skymap[1]
-            self.sigma = skymap[2]
+            self.sigma = skymap[2]*delta
             self.posteriorNorm= skymap[3]        
         
         self.head = None
@@ -136,7 +136,7 @@ class Skymap3D(object):
         
         self.p_posterior=smap[0]
         self.mu=smap[1]
-        self.sigma=smap[2]
+        self.sigma=smap[2]*delta
         self.posteriorNorm=smap[3]
         self.head = header
         
@@ -285,15 +285,14 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        #Raul:delta factor here. p-likelihood[pix]; remove after tests
+        #Raul:p-likelihood[pix]; remove after tests
         if saveplike==1:
             return self.p_likelihood_selected[pix]
-        elif saveplike==2:
-            mu=self.mu[pix]
-            sigma=self.sigma[pix]*delta
             return sigma/mu
+        elif saveplike==3:
+            return 1
         else:
-            return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix]*delta, lower=0 )
+            return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])
     
     
@@ -312,8 +311,6 @@ class Skymap3D(object):
 
         mu = self.mu[pixSampled]
         sig = self.sigma[pixSampled]
-        #Raul:delta factor here
-        sig=sig*delta
        
         # sample distances. note mu is not the peak location of the *posterior* with r^2. be generous with sigma...
         res = 1000

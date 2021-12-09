@@ -394,6 +394,8 @@ def main():
                 name='_plike_'
             elif saveplike==2:
                 name='sigmaovermu'
+            elif saveplike==3:
+                name='weights'
             else:
                 name='_lik_cat'
             for event in myGWgal.selectedGWevents:

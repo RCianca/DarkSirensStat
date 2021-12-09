@@ -187,8 +187,9 @@ class GWgal(object):
             weights *= (1+zs)**(self.lamb-1)
             
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rs, pixels)
-            
-        LL = np.sum(my_skymap*weights)
+            #replaced weights with 1
+        LL = np.sum(my_skymap)
+        #LL = np.sum(my_skymap*weights)
         
         return LL
     
