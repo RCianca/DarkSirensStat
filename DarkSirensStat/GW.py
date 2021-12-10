@@ -288,9 +288,9 @@ class Skymap3D(object):
         #Raul:p-likelihood[pix]; remove after tests
         if saveplike==1:
             return self.p_likelihood_selected[pix]
-            return sigma/mu
-        elif saveplike==3:
-            return 1
+        #elif saveplike==3:
+            #temp=np.ones(len(self.p_likelihood_selected[pix]))
+            #return temp
         else:
             return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )
         #scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])

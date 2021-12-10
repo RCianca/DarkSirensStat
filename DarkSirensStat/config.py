@@ -14,10 +14,10 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'stdnum1GW190814_pesi'
+fout = 'std1-new-plike'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
-saveplike=3#to save p_likelihood_selected 
+saveplike=1#to save inhom stuff
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10

@@ -9,6 +9,7 @@
 ####
 # This module contains a class to handle GW-galaxy correlation and compute the likelihood
 ####
+from config import saveplike
 from globals import *
 import pandas as pd
 from copy import deepcopy
@@ -16,7 +17,7 @@ from copy import deepcopy
 
 
 class GWgal(object):
-    
+    print('GWgals.py-saveplike={}'.format(saveplike))
     def __init__(self, GalCompleted, GWevents,
                  eventSelector, lamb = 1,
                  MC = True, nHomSamples=1000, 
@@ -187,8 +188,15 @@ class GWgal(object):
             weights *= (1+zs)**(self.lamb-1)
             
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rs, pixels)
-            #replaced weights with 1
-        LL = np.sum(my_skymap)
+        #replaced weights with 1
+        if saveplike==1:
+            LL = np.sum(my_skymap)
+        elif saveplike==3:
+            LL = np.sum(weights)
+        else:
+            LL = np.sum(my_skymap*weights)
+                
+                
         #LL = np.sum(my_skymap*weights)
         
         return LL
