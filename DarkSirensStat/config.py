@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'testrun'
+fout = 'testrun00'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 ## Prior limits
@@ -70,7 +70,7 @@ subset_names =['GW190814'] #['GW190924_021846'] #['GW190425',]
 select_events=True
 
 ## Threshold in probability at position of the event, for event selection
-completnessThreshCentral=0.7
+completnessThreshCentral=0.0
 
 
 

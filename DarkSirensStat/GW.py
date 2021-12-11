@@ -10,7 +10,6 @@
 ####
 
 from config import delta
-from config import saveplike
 from config import fout
 import healpy as hp
 import pandas as pd

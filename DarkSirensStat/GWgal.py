@@ -9,7 +9,6 @@
 ####
 # This module contains a class to handle GW-galaxy correlation and compute the likelihood
 ####
-from config import saveplike
 from globals import *
 import pandas as pd
 from copy import deepcopy
