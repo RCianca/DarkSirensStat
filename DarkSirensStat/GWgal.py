@@ -141,18 +141,21 @@ class GWgal(object):
             
             Linhom = np.ones((H0s.size, Xi0s.size))
             Lhom   = np.ones((H0s.size, Xi0s.size))
-        
+            Linhomnude = np.ones((H0s.size, Xi0s.size))
+            weigts = np.ones((H0s.size, Xi0s.size))
             for i in np.arange(H0s.size):
             
                 for j in np.arange(Xi0s.size):
+                    temp=self._inhom_lik(eventName=eventName, H0=H0s[i], Xi0=Xi0s[j], n=n)
                     
            
-                    Linhom[i,j] = self._inhom_lik(eventName=eventName, H0=H0s[i], Xi0=Xi0s[j], n=n)
-                    
+                    #Linhom[i,j] = self._inhom_lik(eventName=eventName, H0=H0s[i], Xi0=Xi0s[j], n=n)
+                    Linhom[i,j]=temp[0]
                     Lhom[i,j] = self._hom_lik(eventName=eventName, H0=H0s[i], Xi0=Xi0s[j], n=n)
-                    
+                    Linhomnude[i,j]=temp[1]
+                    weigts[i,j]=temp[2]
 
-            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom))
+            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts))
             
         return ret
      
@@ -188,18 +191,13 @@ class GWgal(object):
             weights *= (1+zs)**(self.lamb-1)
             
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rs, pixels)
-        #replaced weights with 1
-        if saveplike==1:
-            LL = np.sum(my_skymap)
-        elif saveplike==3:
-            LL = np.sum(weights)
-        else:
-            LL = np.sum(my_skymap*weights)
-                
-                
-        #LL = np.sum(my_skymap*weights)
-        
-        return LL
+  
+
+
+        LL = np.sum(my_skymap*weights)
+        sky_to_return=np.sum(my_skymap)
+        weights_to_return=np.sum(weights)
+        return LL, sky_to_return, weights_to_return
     
     def _hom_lik(self, eventName, H0, Xi0, n):
         #modificato da Raul
