@@ -16,7 +16,6 @@ from copy import deepcopy
 
 
 class GWgal(object):
-    print('GWgals.py-saveplike={}'.format(saveplike))
     def __init__(self, GalCompleted, GWevents,
                  eventSelector, lamb = 1,
                  MC = True, nHomSamples=1000, 
