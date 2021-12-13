@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'testrun-zplusserr-hom-weights'
+fout = 'testrun-zplusserr-weights-1-add-hom'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 ## Prior limits
@@ -96,7 +96,7 @@ Lcut=0.6
 # Band for lum cut
 band= None # B, K, or None . 
 # Average galaxy density in comoving volume, used if band='None'. A number, or 'auto' (only for mask completeness) 
-Nbar = 'auto'
+Nbar = 0.2
 # Band for lum weights
 band_weight = None  # B, K, or None . 
 
