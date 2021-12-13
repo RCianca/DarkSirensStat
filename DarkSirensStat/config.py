@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'testrun-zplusserr'
+fout = 'testrun-zplusserr-hom-weights'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 ## Prior limits
@@ -94,11 +94,11 @@ do_check_footprint=False
 # Band should be None if we use number counts
 Lcut=0.6
 # Band for lum cut
-band='K' # B, K, or None . 
+band= None # B, K, or None . 
 # Average galaxy density in comoving volume, used if band='None'. A number, or 'auto' (only for mask completeness) 
 Nbar = 'auto'
 # Band for lum weights
-band_weight = 'K'  # B, K, or None . 
+band_weight = None  # B, K, or None . 
 
 
 
@@ -127,7 +127,7 @@ plot_comp=False
 
 
 ## Type of completion: 'mult' , 'add' or 'mix' 
-completionType = 'mix'
+completionType = 'add'
 # Use MC integration or not in the computation of additive completion
 MChom=True
 # N. of homogeneous MC samples
@@ -140,7 +140,7 @@ nHomSamples=15000
 # --------------------------------------------------------------
 
 ## Which beta to use. 'fit', 'MC', 'hom', 'cat'
-which_beta = 'MC'
+which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
 betaHomdMax = 600 #roughly O3 
