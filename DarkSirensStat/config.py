@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'testrun00'
+fout = 'testrun-zplusserr'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 ## Prior limits
@@ -76,7 +76,7 @@ completnessThreshCentral=0.0
 
 ## Confidence region for GW skymaps
 level = 0.99
-std_number=1#if none, it is computed from level
+std_number=1 #if none, it is computed from level
 
 
 # --------------------------------------------------------------

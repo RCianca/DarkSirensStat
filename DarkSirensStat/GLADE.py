@@ -82,7 +82,9 @@ class GLADE(GalCat):
             
             #gname='GLADE_2.4.txt'
             #gname='GLADE_randomhost.txt'
-            gname='GLADE_nhost.txt'
+            #gname='GLADE_nhost.txt'
+            #gname='GLADE_nhost-one.txt'
+            gname='GLADE_zpluserr.txt'
             groupname='Galaxy_Group_Catalogue.csv'
             filepath_GLADE = os.path.join(self._path, gname)
             filepath_groups = os.path.join(miscPath, groupname)
