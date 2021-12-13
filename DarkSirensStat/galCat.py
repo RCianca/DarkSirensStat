@@ -42,10 +42,21 @@ class GalCat(ABC):
         
     def get_data(self):
         return self.selectedData
+
+    def skyloc_to_humans(self, pixels, nside):
+        #Raul: this function gives back the 2D-sky location in angles. Use this to locate the hosts
+        #This will be the 2D-sky location area for a single GW  
+        theta, phi = hp.pixelfunc.pix2angle(nside,pixels)
+        ret= theta, phi
+        return ret
         
     def select_area(self, pixels, nside):
         if self.verbose:
             print("Restricting area of the catalogue to %s pixels with nside=%s" %(pixels.shape[0], nside))
+            2dsky= skyloc_to_humans(pixels,nside)
+            theta=2dsky[0]
+            phi=2dsky[1]
+            print('Sky locations: theta={}, phi={}'.format(theta,phi))
         pixname = "pix" + str(nside)
         
         if not pixname in self.data:
