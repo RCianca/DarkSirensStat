@@ -155,7 +155,7 @@ class GWgal(object):
                     weigts[i,j]=temp[2]
                     weights_norm=temp[3]
 
-            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weigts_norm))
+            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weights_norm))
             
         return ret
      
