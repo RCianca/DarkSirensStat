@@ -141,6 +141,7 @@ class GWgal(object):
             Lhom   = np.ones((H0s.size, Xi0s.size))
             Linhomnude = np.ones((H0s.size, Xi0s.size))
             weigts = np.ones((H0s.size, Xi0s.size))
+            weights_norm = np.ones((H0s.size, Xi0s.size))
             for i in np.arange(H0s.size):
             
                 for j in np.arange(Xi0s.size):
