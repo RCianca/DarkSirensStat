@@ -352,7 +352,6 @@ class GalCompleted(object):
         allweights = np.vstack(allweights)
         allweights /= catweightTotal
         #Raul:Printing the norm for weights
-        print('weights normalization={}'.format(catweightTotal))
         #return np.squeeze(np.vstack(allpixels)), np.vstack(allweights)
         return np.hstack(allpixels), allweights, catweightTotal
     
