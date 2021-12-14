@@ -152,8 +152,9 @@ class GWgal(object):
                     Lhom[i,j] = self._hom_lik(eventName=eventName, H0=H0s[i], Xi0=Xi0s[j], n=n)
                     Linhomnude[i,j]=temp[1]
                     weigts[i,j]=temp[2]
+                    weights_norm=temp[3]
 
-            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts))
+            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weigts_norm))
             
         return ret
      
@@ -172,7 +173,7 @@ class GWgal(object):
 
             zGrid = z_from_dLGW_fast(rGrid, H0=H0, Xi0=Xi0, n=n)
             
-            pixels, weights = self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
+            pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
             
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             
@@ -195,7 +196,8 @@ class GWgal(object):
         LL = np.sum(my_skymap*weights)
         sky_to_return=np.sum(my_skymap)
         weights_to_return=np.sum(weights)
-        return LL, sky_to_return, weights_to_return
+        norm_to_return=np.sum(norm)
+        return LL, sky_to_return, weights_to_return, norm_to_return
     
     def _hom_lik(self, eventName, H0, Xi0, n):
         #modificato da Raul

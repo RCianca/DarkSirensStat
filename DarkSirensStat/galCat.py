@@ -354,7 +354,7 @@ class GalCompleted(object):
         #Raul:Printing the norm for weights
         print('weights normalization={}'.format(catweightTotal))
         #return np.squeeze(np.vstack(allpixels)), np.vstack(allweights)
-        return np.hstack(allpixels), allweights
+        return np.hstack(allpixels), allweights, catweightTotal
     
 
     def get_inhom(self, nside):

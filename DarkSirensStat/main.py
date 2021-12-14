@@ -395,10 +395,12 @@ def main():
                 liksPathinhom =os.path.join(out_path, event+'_lik_cat'+goalParam+'.txt')
                 liksPathinhomnude =os.path.join(out_path, event+'_plike'+goalParam+'.txt')
                 weightsPath =os.path.join(out_path, event+'_weights'+goalParam+'.txt')
+                weightsNormPath =os.path.join(out_path, event+'_norm_weights'+goalParam+'.txt')
                 np.savetxt(liksPathhom, liks[event][1])
                 np.savetxt(liksPathinhom, liks[event][0])
                 np.savetxt(liksPathinhomnude, liks[event][2])
                 np.savetxt(weightsPath, liks[event][3])
+                np.savetxt(weightsNormPath, liks[event][4])
             print('Done.')
         else:
             print('\n-----  LOADING LIKELIHOOD ....')
