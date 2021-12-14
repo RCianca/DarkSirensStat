@@ -46,10 +46,6 @@ class GalCat(ABC):
     def select_area(self, pixels, nside):
         if self.verbose:
             print("Restricting area of the catalogue to %s pixels with nside=%s" %(pixels.shape[0], nside))
-            
-            theta, phi = hp.pix2ang(nside,pixels)
-            print('Sky locations: theta_in={}, phi_in={}'.format(theta[0],phi[0]))
-            print('Sky locations: theta_fin={}, phi_fin={}'.format(theta[-1],phi[-1]))
         pixname = "pix" + str(nside)
         
         if not pixname in self.data:
@@ -67,6 +63,7 @@ class GalCat(ABC):
         self.selectedData = self.selectedData[(self.selectedData.z >= zMin) & (self.selectedData.z < zMax)]
         if self.verbose:
             print('%s galaxies kept' %self.selectedData.shape[0])
+            #Raul:selected data must have 2D-sky coordinate. Work with it
             
     def count_selection(self):
         return self.selectedData.shape[0]
@@ -354,7 +351,8 @@ class GalCompleted(object):
             
         allweights = np.vstack(allweights)
         allweights /= catweightTotal
-            
+        #Raul:Printing the norm for weights
+        print('weights normalization={}'.format(catweightTotal))
         #return np.squeeze(np.vstack(allpixels)), np.vstack(allweights)
         return np.hstack(allpixels), allweights
     

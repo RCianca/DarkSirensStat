@@ -92,7 +92,7 @@ class Skymap3D(object):
         if self.verbose:
                 print('\nEvent: %s' %self.event_name)
                 #Raul: prints for control
-                print('Delta=%s. Se 1 run normale '%delta)
+                print('Delta=%s. If delta=1, normal run '%delta)
         if (convert_nested) & (metadata['nest']): #If one wants RING ordering (the one of O2 data afaik) just has to set "convert_nested" to True
             self.p_posterior = hp.reorder(skymap[0],n2r=True)
             self.mu = hp.reorder(skymap[1],n2r=True)
