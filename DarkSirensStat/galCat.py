@@ -415,9 +415,10 @@ class GalCompleted(object):
             allweights.append(weights)
            
         allweights = np.hstack(allweights)
+        #nudeweights=allweights
         allweights /= catweightTotal
                    
-        return np.hstack(allpixels), np.hstack(allredshifts), allweights
+        return np.hstack(allpixels), np.hstack(allredshifts), allweights, catweightTotal
     
     def eval_inhom(self, Omega, z):
         '''

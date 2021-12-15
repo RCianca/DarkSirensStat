@@ -175,7 +175,6 @@ class GWgal(object):
             zGrid = z_from_dLGW_fast(rGrid, H0=H0, Xi0=Xi0, n=n)
             
             pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
-            
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
@@ -184,7 +183,7 @@ class GWgal(object):
              
         else: # use Diracs
             
-            pixels, zs, weights =  self.gals.get_inhom(self.selectedGWevents[eventName].nside)
+            pixels, zs, weights, norm =  self.gals.get_inhom(self.selectedGWevents[eventName].nside)
             
             rs = dLGW(zs, H0=H0, Xi0=Xi0, n=n)
             
@@ -198,6 +197,7 @@ class GWgal(object):
         sky_to_return=np.sum(my_skymap)
         weights_to_return=np.sum(weights)
         norm_to_return=np.sum(norm)
+        #print('GWgal--norm_to_return={}'.format(norm_to_return))
         return LL, sky_to_return, weights_to_return, norm_to_return
     
     def _hom_lik(self, eventName, H0, Xi0, n):

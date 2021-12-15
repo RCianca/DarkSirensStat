@@ -389,7 +389,6 @@ def main():
         if not folderCheck:
             print('\n-----  COMPUTING LIKELIHOOD ....')
             liks = myGWgal.get_lik(H0s=H0grid, Xi0s=Xi0grid, n=nGlob)
-            
             for event in myGWgal.selectedGWevents:
                 liksPathhom =os.path.join(out_path, event+'_lik_compl'+goalParam+'.txt')
                 liksPathinhom =os.path.join(out_path, event+'_lik_cat'+goalParam+'.txt')
@@ -400,7 +399,7 @@ def main():
                 np.savetxt(liksPathinhom, liks[event][0])
                 np.savetxt(liksPathinhomnude, liks[event][2])
                 np.savetxt(weightsPath, liks[event][3])
-                np.savetxt(weightsNormPath, liks[event][4])
+                print('weights normalization={}'.format(liks[event][4]))
             print('Done.')
         else:
             print('\n-----  LOADING LIKELIHOOD ....')
