@@ -325,9 +325,9 @@ class GalCompleted(object):
                 weights = weights[np.newaxis, :]
             
             weights *= d.w[:, np.newaxis]
-            #temp=d.w[:, np.newaxis]
-            #temp=weights/temp
-            #nudeweights.append(temp)
+            temp=d.w[:, np.newaxis]
+            temp=weights/temp
+            nudeweights.append(temp)
             if self._additive and (len(self._galcats) == 1): # no need to evaluate completeness...
                 catweightTotal = w
                 
@@ -352,10 +352,11 @@ class GalCompleted(object):
             allweights.append(weights)
             
         allweights = np.vstack(allweights)
+        nudeweights=np.vstack(temp)
         allweights /= catweightTotal
         #Raul:Printing the norm for weights
         #return np.squeeze(np.vstack(allpixels)), np.vstack(allweights)
-        return np.hstack(allpixels), allweights, catweightTotal#, nudeweights
+        return np.hstack(allpixels), allweights, catweightTotal, nudeweights
     
 
     def get_inhom(self, nside):
