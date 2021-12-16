@@ -39,7 +39,7 @@ class GalCat(ABC):
         self._completeness = deepcopy(completeness)
         self._completeness.verbose = verbose
         self._completeness.compute(self.data, useDirac)
-        
+        self.nonorm=0
     def get_data(self):
         return self.selectedData
         
@@ -298,12 +298,11 @@ class GalCompleted(object):
         
         allpixels = []
         allweights = []
-        nudeweights=[]
+        #nudeweights=[]
         
         # iterate through catalogs and add results to lists
         
         catweightTotal = 0
-        
         for c, w in zip(self._galcats, self._catweights):
         
             # shorthand
@@ -323,11 +322,15 @@ class GalCompleted(object):
             weights = bounded_keelin_3_discrete_probabilities(zGrid, 0.16, d.z_lower, d.z, d.z_upper, d.z_lowerbound, d.z_upperbound, N=40, P=0.99999)
             if weights.ndim == 1:
                 weights = weights[np.newaxis, :]
-            
+            trigger=np.all((weights==0))
+            #if self.nonorm==1:
+                #temp=weights.flatten()
+                #s=np.sum(temp)
+                #print(s)
+                #print('\n')
             weights *= d.w[:, np.newaxis]
-            temp=d.w[:, np.newaxis]
-            temp=weights/temp
-            nudeweights.append(temp)
+            
+            #temp=weights/temp
             if self._additive and (len(self._galcats) == 1): # no need to evaluate completeness...
                 catweightTotal = w
                 
@@ -352,11 +355,11 @@ class GalCompleted(object):
             allweights.append(weights)
             
         allweights = np.vstack(allweights)
-        nudeweights=np.vstack(temp)
+        #nudeweights=np.vstack(nudeweights)
         allweights /= catweightTotal
         #Raul:Printing the norm for weights
         #return np.squeeze(np.vstack(allpixels)), np.vstack(allweights)
-        return np.hstack(allpixels), allweights, catweightTotal, nudeweights
+        return np.hstack(allpixels), allweights, catweightTotal
     
 
     def get_inhom(self, nside):

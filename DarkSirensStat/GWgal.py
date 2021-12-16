@@ -142,7 +142,7 @@ class GWgal(object):
             Linhomnude = np.ones((H0s.size, Xi0s.size))
             weigts = np.ones((H0s.size, Xi0s.size))
             weights_norm = np.ones((H0s.size, Xi0s.size))
-            no_norm=np.ones((H0s.size, Xi0s.size))
+            #no_norm=np.ones((H0s.size, Xi0s.size))
             for i in np.arange(H0s.size):
             
                 for j in np.arange(Xi0s.size):
@@ -155,9 +155,9 @@ class GWgal(object):
                     Linhomnude[i,j]=temp[1]
                     weigts[i,j]=temp[2]
                     weights_norm=temp[3]
-                    no_norm=temp[4]
+                    #no_norm=temp[4]
 
-            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weights_norm),np.squeeze(no_norm))
+            ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weights_norm))
             
         return ret
      
@@ -176,7 +176,7 @@ class GWgal(object):
 
             zGrid = z_from_dLGW_fast(rGrid, H0=H0, Xi0=Xi0, n=n)
             
-            pixels, weights, norm, no_norm_weights = self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
+            pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
@@ -199,9 +199,9 @@ class GWgal(object):
         sky_to_return=np.sum(my_skymap)
         weights_to_return=np.sum(weights)
         norm_to_return=np.sum(norm)
-        pure_to_return=np.sum(no_norm_weights)
+        #pure_to_return=np.sum(no_norm_weights)
         
-        return LL, sky_to_return, weights_to_return, norm_to_return, pure_to_return
+        return LL, sky_to_return, weights_to_return, norm_to_return
     
     def _hom_lik(self, eventName, H0, Xi0, n):
         #modificato da Raul
