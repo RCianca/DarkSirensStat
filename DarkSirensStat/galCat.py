@@ -298,6 +298,7 @@ class GalCompleted(object):
         
         allpixels = []
         allweights = []
+        nudeweights=[]
         
         # iterate through catalogs and add results to lists
         
@@ -320,12 +321,13 @@ class GalCompleted(object):
             # keelin weights. N has to be tuned for speed vs quality
             # for each gal, on zGrid
             weights = bounded_keelin_3_discrete_probabilities(zGrid, 0.16, d.z_lower, d.z, d.z_upper, d.z_lowerbound, d.z_upperbound, N=40, P=0.99999)
-            
             if weights.ndim == 1:
                 weights = weights[np.newaxis, :]
             
             weights *= d.w[:, np.newaxis]
-            
+            #temp=d.w[:, np.newaxis]
+            #temp=weights/temp
+            #nudeweights.append(temp)
             if self._additive and (len(self._galcats) == 1): # no need to evaluate completeness...
                 catweightTotal = w
                 
@@ -353,7 +355,7 @@ class GalCompleted(object):
         allweights /= catweightTotal
         #Raul:Printing the norm for weights
         #return np.squeeze(np.vstack(allpixels)), np.vstack(allweights)
-        return np.hstack(allpixels), allweights, catweightTotal
+        return np.hstack(allpixels), allweights, catweightTotal#, nudeweights
     
 
     def get_inhom(self, nside):

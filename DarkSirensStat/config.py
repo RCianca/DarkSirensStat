@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'testrun-pesinorm-mix-MC'
+fout = 'testrun-pesinorm-add-hom-pure'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 ## Prior limits
@@ -140,7 +140,7 @@ nHomSamples=15000
 # --------------------------------------------------------------
 
 ## Which beta to use. 'fit', 'MC', 'hom', 'cat'
-which_beta = 'MC'
+which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
 betaHomdMax = 600 #roughly O3 
