@@ -17,6 +17,7 @@ goalParam = 'H0'
 fout = 'photo_GW190814_trim1'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
+forcePcopl=0
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10

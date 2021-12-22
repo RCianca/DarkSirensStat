@@ -9,6 +9,7 @@
 ####
 # This module contains a class to handle GW-galaxy correlation and compute the likelihood
 ####
+from config import forcePcopl
 from globals import *
 import pandas as pd
 from copy import deepcopy
@@ -95,6 +96,10 @@ class GWgal(object):
     def _get_avgPcompl(self):
         if self.verbose:
             print('Computing <P_compl>...')
+            #Raul: forced pcompl
+            if forcePcopl==1:
+                print('<P_compl> forced to 1')
+
         PcAv={}
         PEv = {}
         #from scipy.integrate import quad
@@ -109,6 +114,8 @@ class GWgal(object):
                 Pcomp = np.array([self.gals.total_completeness( *self.GWevents[eventName].find_theta_phi(self.GWevents[eventName].selected_pixels), z).sum() for z in zGrid])
                 vol = self.GWevents[eventName].areaRad*np.trapz(cosmoglob.differential_comoving_volume(zGrid).value, zGrid) #quad(lambda x: cosmoglob.differential_comoving_volume(x).value, self.GWevents[eventName].zmin,  self.GWevents[eventName].zmax)
                 _PcAv = np.trapz(Pcomp*cosmoglob.differential_comoving_volume(zGrid).value, zGrid)*self.GWevents[eventName].pixarea/vol
+                if forcePcopl==1:
+                    _PcAv=1
                 PcAv[eventName] = _PcAv
             
             
