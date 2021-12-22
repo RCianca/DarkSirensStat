@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'testrun-pesinorm-mix-hom-pure'
+fout = 'flagged_GW190924_trim1'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 ## Prior limits
@@ -63,20 +63,20 @@ mBreak=36.7
 zLimSelection='skymap'
 
 ## Names of events to analyse. If None, all events in the folder will be used
-subset_names =['GW190814'] #['GW190924_021846'] #['GW190425',]
+subset_names = ['GW190924_021846'] #['GW190425',] #['GW190814']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
 select_events=True
 
 ## Threshold in probability at position of the event, for event selection
-completnessThreshCentral=0.0
+completnessThreshCentral=0.7
 
 
 
 ## Confidence region for GW skymaps
 level = 0.99
-std_number=1 #if none, it is computed from level
+std_number=5 #if none, it is computed from level
 
 
 # --------------------------------------------------------------
@@ -94,11 +94,11 @@ do_check_footprint=False
 # Band should be None if we use number counts
 Lcut=0.6
 # Band for lum cut
-band= None # B, K, or None . 
+band= 'K' # B, K, or None . 
 # Average galaxy density in comoving volume, used if band='None'. A number, or 'auto' (only for mask completeness) 
-Nbar = 0.2
+Nbar = 'auto'
 # Band for lum weights
-band_weight = None  # B, K, or None . 
+band_weight = 'K'  # B, K, or None . 
 
 
 
@@ -140,7 +140,7 @@ nHomSamples=15000
 # --------------------------------------------------------------
 
 ## Which beta to use. 'fit', 'MC', 'hom', 'cat'
-which_beta = 'hom'
+which_beta = 'MC'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
 betaHomdMax = 600 #roughly O3 
