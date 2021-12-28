@@ -271,7 +271,8 @@ class GLADE(GalCat):
                 if err_vals=='GLADE':
                     scales = np.where(df['flag2'].values==3, 1.5*1e-04, 1.5*1e-02)
                     #Raul: different errors
-                    scales = np.where(df['flag2'].values==4, 1.5*1e-05, 1.5*1e-02)
+                    scales = np.where(df['flag2'].values==4, 1.5*1e-08, 1.5*1e-08)
+                    print('Scales is {}'.format(scales))
                 elif err_vals=='const_perc':
                     scales=np.where(df['flag2'].values==3, df.z/100, df.z/10)
                 elif err_vals=='const':

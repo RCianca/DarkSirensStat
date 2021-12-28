@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'flag4_GW190814_trim1'
+fout = 'flag4_GW190924_08'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -64,7 +64,7 @@ mBreak=36.7
 zLimSelection='skymap'
 
 ## Names of events to analyse. If None, all events in the folder will be used
-subset_names = ['GW190814'] #['GW190924_021846'] #['GW190425',] #['GW190814']
+subset_names = ['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
