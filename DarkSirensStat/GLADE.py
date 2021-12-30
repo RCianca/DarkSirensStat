@@ -91,8 +91,8 @@ class GLADE(GalCat):
             #gname='GLADE_spectro_30.txt'
             #gname='GLADE_spectro_10.txt'
             #gname='GLADE_spectro_1.txt'
-            #gname='GLADE_photo_1.txt' 
-            gname='GLADE_spectro_flag4_1.txt'
+            gname='GLADE_photo_1.txt' 
+            #gname='GLADE_spectro_flag4_1.txt'
             print('\nGatalogue loaded\n')
             groupname='Galaxy_Group_Catalogue.csv'
             filepath_GLADE = os.path.join(self._path, gname)
@@ -113,7 +113,7 @@ class GLADE(GalCat):
                        ]
             
             df.columns=colnames
-            
+            print('Catalogue loaded')
              
             # ------  SELECT SUBSURVEYS
             
