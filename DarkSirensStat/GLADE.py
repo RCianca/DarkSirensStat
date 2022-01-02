@@ -81,19 +81,14 @@ class GLADE(GalCat):
         
             
             #gname='GLADE_2.4.txt'
-            #gname='GLADE_randomhost.txt'
-            #gname='GLADE_nhost.txt'
-            #gname='GLADE_nhost-one.txt'
-            #gname='GLADE_zpluserr.txt'
-            #gname='GLADE_spectro_100.txt'
-            #gname='GLADE_spectro_80.txt'
-            #gname='GLADE_spectro_50.txt'
-            #gname='GLADE_spectro_30.txt'
-            #gname='GLADE_spectro_10.txt'
             #gname='GLADE_spectro_1.txt'
-            gname='GLADE_photo_1.txt' 
-            #gname='GLADE_spectro_flag4_1.txt'
-            print('\nGatalogue loaded\n')
+            #gname='GLADE_photo_1.txt'
+            #gname='GLADE_trimmed_1.txt'
+            #gname='GLADE_trimmed_5.txt'
+            #gname='GLADE_trimmed_10.txt'
+            #gname='GLADE_trimmed_15.txt'
+            #gname='GLADE_trimmed_20.txt'
+            gname='GLADE_trimmed_50.txt'
             groupname='Galaxy_Group_Catalogue.csv'
             filepath_GLADE = os.path.join(self._path, gname)
             filepath_groups = os.path.join(miscPath, groupname)
@@ -270,8 +265,6 @@ class GLADE(GalCat):
                     print('Adding errors on z with %s values' %err_vals)
                 if err_vals=='GLADE':
                     scales = np.where(df['flag2'].values==3, 1.5*1e-04, 1.5*1e-02)
-                    #Raul: different errors
-                    scales = np.where(df['flag2'].values==4, 1.5*1e-08, 1.5*1e-08)
                     print('Scales is {}'.format(scales))
                 elif err_vals=='const_perc':
                     scales=np.where(df['flag2'].values==3, df.z/100, df.z/10)
