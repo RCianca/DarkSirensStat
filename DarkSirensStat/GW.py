@@ -70,7 +70,7 @@ class Skymap3D(object):
         # for each pixel it drops after doing the ddLGW integral.
         # The angular integral gives sum pixarea * p_posterior_i which needs to be 1.
         self.p_likelihood /= (np.sum(self.p_posterior)*self.pixarea)
-        #Raul:to seve 'pix' from inhom like
+        #Raul:to save 'pix' from inhom like
         self.raulpix=np.zeros(len(self.p_posterior))
         self.set_credible_region(level)
         
@@ -93,8 +93,6 @@ class Skymap3D(object):
                 print('\nEvent: %s' %self.event_name)
                 #Raul: prints for control
                 print('Delta=%s. If delta=1, normal run '%delta)
-                theta, phi = self.find_theta_phi(np.argmax(self.p_posterior))
-                print('theta=%, phi=%',theta,phi)
         if (convert_nested) & (metadata['nest']): #If one wants RING ordering (the one of O2 data afaik) just has to set "convert_nested" to True
             self.p_posterior = hp.reorder(skymap[0],n2r=True)
             self.mu = hp.reorder(skymap[1],n2r=True)
