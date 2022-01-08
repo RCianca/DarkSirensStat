@@ -14,11 +14,11 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'FakeHost-1'
+fout = 'testem'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
-EM==0
+EM=0
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10
@@ -37,13 +37,13 @@ verbose=True
 
 
 ## Select dataset : O2, O3
-observingRun = 'O3'
+observingRun = 'O2'
 
 ## Select BBH or BNS
-eventType='BBH'
+eventType='BNS'
 
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss
-massDist='O3'
+massDist='NS-flat'
 
 ## Specify the exponent of the redshift distribution , p(z) = dV/dz* (1+z)^(lamb-1)
 lamb=1
@@ -66,8 +66,8 @@ zLimSelection='skymap'
 
 ## Names of events to analyse. If None, all events in the folder will be used
 #subset_names = ['GW190412'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
-subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
-#subset_names = ['GW190814','GW190412']
+#subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
+subset_names = ['GW170817']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
@@ -147,8 +147,8 @@ nHomSamples=15000
 which_beta = 'MC'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
-betaHomdMax = 600 #roughly O3 
-#betaHomMax = 425.7 # O2 
+#betaHomdMax = 600 #roughly O3 
+betaHomMax = 425.7 # O2 
 
 
 # Max redshift  of the region R,  if beta is 'fit'

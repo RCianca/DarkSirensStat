@@ -245,7 +245,7 @@ class GWgal(object):
     def gaus(x,x0,sigma):
         a=1/(sigma*np.sqrt(2*np.pi))
 
-    return a*exp(-(x-x0)**2/(2*sigma**2))
+        return a*exp(-(x-x0)**2/(2*sigma**2))
     
     def _hom_lik_MC(self, eventName, H0, Xi0, n):
         '''
