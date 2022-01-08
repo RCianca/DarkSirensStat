@@ -10,6 +10,7 @@
 # This module contains a class to handle GW-galaxy correlation and compute the likelihood
 ####
 from config import forcePcopl
+from config import EM
 from globals import *
 import pandas as pd
 from copy import deepcopy
@@ -201,8 +202,11 @@ class GWgal(object):
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rs, pixels)
   
 
-
-        LL = np.sum(my_skymap*weights)
+        #Raul: Try to add EM info
+        if (EM==1):
+            LL = np.sum(my_skymap*weights*gauss(z,0.0098,0.0004))
+        else:
+            LL = np.sum(my_skymap*weights)
         sky_to_return=np.sum(my_skymap)
         weights_to_return=np.sum(weights)
         norm_to_return=np.sum(norm)
@@ -238,6 +242,10 @@ class GWgal(object):
         
         return LL
     
+    def gaus(x,x0,sigma):
+        a=1/(sigma*np.sqrt(2*np.pi))
+
+    return a*exp(-(x-x0)**2/(2*sigma**2))
     
     def _hom_lik_MC(self, eventName, H0, Xi0, n):
         '''
@@ -256,8 +264,14 @@ class GWgal(object):
         jac = dVdcom_dVdLGW(z, H0=H0, Xi0=Xi0, n=n)
          
         # MC integration
-        
-        LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
+
+        #Raul:Here add the EM-mock
+
+        if (EM==1):
+            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*gauss(z,0.0098,0.0004))
+
+        else:
+            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
         
         return LL
     
