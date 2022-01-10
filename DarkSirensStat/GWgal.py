@@ -14,10 +14,13 @@ from config import EM
 from globals import *
 import pandas as pd
 from copy import deepcopy
+from scipy.special import erf
 
 
 
 class GWgal(object):
+
+    
     def __init__(self, GalCompleted, GWevents,
                  eventSelector, lamb = 1,
                  MC = True, nHomSamples=1000, 
@@ -168,7 +171,10 @@ class GWgal(object):
             ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weights_norm))
             
         return ret
-     
+     #Raul: Gaussian func
+    def gauss(self,x,x0,sigma):
+        a=1/(sigma*np.sqrt(2*np.pi))
+        return a*np.exp(-(x-x0)**2/(2*sigma**2))    
     
     def _inhom_lik(self, eventName, H0, Xi0, n):
         '''
@@ -183,7 +189,10 @@ class GWgal(object):
             rGrid = self._get_rGrid(eventName, minPoints=20)
 
             zGrid = z_from_dLGW_fast(rGrid, H0=H0, Xi0=Xi0, n=n)
-            
+            #pos=int(len(zGrid)/2)
+            #zz=zGrid[pos]
+            zz=np.mean(zGrid)
+            #print(zz)
             pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             
@@ -204,9 +213,11 @@ class GWgal(object):
 
         #Raul: Try to add EM info
         if (EM==1):
-            LL = np.sum(my_skymap*weights*gauss(z,0.0098,0.0004))
+            LL = np.sum(my_skymap*weights*self.gauss(zGrid,0.0098,0.0004))
+            #LL = np.sum(my_skymap*weights)*erf(zz)
         else:
             LL = np.sum(my_skymap*weights)
+        #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
         sky_to_return=np.sum(my_skymap)
         weights_to_return=np.sum(weights)
         norm_to_return=np.sum(norm)
@@ -242,10 +253,6 @@ class GWgal(object):
         
         return LL
     
-    def gaus(x,x0,sigma):
-        a=1/(sigma*np.sqrt(2*np.pi))
-
-        return a*exp(-(x-x0)**2/(2*sigma**2))
     
     def _hom_lik_MC(self, eventName, H0, Xi0, n):
         '''
@@ -255,6 +262,8 @@ class GWgal(object):
         theta, phi, r = self.selectedGWevents[eventName].sample_posterior(nSamples=self.nHomSamples)
         
         z = z_from_dLGW_fast(r, H0=H0, Xi0=Xi0, n=n)
+        zz=np.mean(z)
+        #print(zz)
         
         # the prior is nbar in comoving volume, so it transforms if we integrate over D_L^{gw}
         # nbar D_com^2 d D_com = nbar D_com^2 (d D_com/d D_L^{gw}) d D_L^{gw}
@@ -268,11 +277,11 @@ class GWgal(object):
         #Raul:Here add the EM-mock
 
         if (EM==1):
-            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*gauss(z,0.0098,0.0004))
+            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*self.gauss(z,0.0098, 0.0004))
 
         else:
             LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
-        
+        #LL=(H0/70)**3*np.mean(self.gauss(z,0.0098, 0.0004))
         return LL
     
     
