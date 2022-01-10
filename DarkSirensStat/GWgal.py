@@ -15,7 +15,7 @@ from globals import *
 import pandas as pd
 from copy import deepcopy
 from scipy.special import erf
-
+from scipy import stats
 
 
 class GWgal(object):
@@ -171,7 +171,7 @@ class GWgal(object):
             ret[eventName] = (np.squeeze(Linhom), np.squeeze(Lhom),np.squeeze(Linhomnude),np.squeeze(weigts),np.squeeze(weights_norm))
             
         return ret
-     #Raul: Gaussian func
+     #Raul: Gaussian func use scipy.stats.norm
     def gauss(self,x,x0,sigma):
         a=1/(sigma*np.sqrt(2*np.pi))
         return a*np.exp(-(x-x0)**2/(2*sigma**2))    
@@ -213,8 +213,9 @@ class GWgal(object):
 
         #Raul: Try to add EM info
         if (EM==1):
-            LL = np.sum(my_skymap*weights*self.gauss(zGrid,0.0098,0.0004))
-            #LL = np.sum(my_skymap*weights)*erf(zz)
+            #LL=np.sum(stats.norm.expect(my_skymap*weights,zz,loc=0.0098,scale=0.0004))
+            LL = np.sum(my_skymap*weights*stats.norm.cdf(zz,loc=0.0098,scale=0.0004))
+            #LL = np.sum(my_skymap*weights)
         else:
             LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
@@ -274,10 +275,15 @@ class GWgal(object):
          
         # MC integration
 
-        #Raul:Here add the EM-mock
+        #Raul:Here add the EM-mock, maybe try expect?
 
         if (EM==1):
-            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*self.gauss(z,0.0098, 0.0004))
+            #def temp(x):
+            #    toreturn=(H0/70)**3*jac*(1+x)**(self.lamb-1)*self.gals.eval_hom(theta, phi, x)
+            #    return toreturn
+            
+            #LL= np.mean(stats.norm.expect(toreturn,loc=0.0098,scale=0.0004))
+            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.cdf(zz,loc=0.0098,scale=0.0004))
 
         else:
             LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
