@@ -197,16 +197,14 @@ class GWgal(object):
             #np.savetxt('pixels.txt',pixels)
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             if EM==1:
-                print(pixels.shape)
-                temp=np.array([6376622, 6380717, 6376621, 6372525, 6368430, 6372526, 6376623, 6380718, 6384814])
-                for i in range(len(temp)):
-                    pixels[i]=temp[i]
-                pixels=pixels[0:len(temp)]
-                print(pixels.shape)
-                #print(type(pixels[0]))
+                #print(pixels.shape)
+                #pix_EM=np.array([6376622, 6380717, 6376621, 6372525, 6368430, 6372526, 6376623, 6380718, 6384814])
+                #for i in range(len(pix_EM)):
+                #    pixels[i]=pix_EM[i]
+                #pixels=pixels[0:len(pix_EM)]
                 my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
-                print(my_skymap.shape)
-                print(weights.shape)
+                #print(my_skymap.shape)
+                #print(weights.shape)
          
             #LL = np.sum(skymap*weights)
              

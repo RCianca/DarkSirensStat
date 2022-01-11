@@ -287,6 +287,11 @@ class GalCompleted(object):
         for c in self._galcats:
             c.set_z_range_for_selection(zMin, zMax)
             
+    def distance(self,theta,phi,z):
+        #Raul:function to compute distance in the selected volume. NB only for small z-z0
+        dist=np.sqrt(z**2+theta**2+phi**2)
+        return dist
+    
     def count_selection(self):
         return [c.count_selection() for c in self._galcats]
 
@@ -307,17 +312,36 @@ class GalCompleted(object):
         
             # shorthand
             d = c.get_data()
-            
+            if EM==1:
+                #Raul: given a point in space, find nearest N host
+                #print('d={}'.format(d))
+                distances=np.zeros(d.shape[0])
+                theta_ref=1.5844686277555844
+                phi_ref=1.8377089838869982
+                z_ref=0.008594041188054874
+                #dist_ref=self.distance(theta_ref,phi_ref,z_ref)
+                #for i in range(d.shape[0]):
+                #    distances[i]=np.sqrt((d.iloc[i,1]-theta_ref)**2+(d.iloc[i,2]-phi_ref)**2+(d.iloc[i,3]-z_ref)**2)
+                #d['distances']=distances
+                #d=d.sort_values(["distances"], ascending=True)            
+                #d=d.head(9)
+                #print('d={}'.format(d))
+                for index, row in d.iterrows():
+                    distances[index]=np.sqrt((row['theta']-theta_ref)**2+(row['phi']-phi_ref)**2+(row['z']-z_ref)**2)
+                d['distances']=distances
+                d=d.sort_values(["distances"], ascending=True)            
+                d=d.head(9)
+                #print('d={}'.format(d))
+                
             pixname = "pix" + str(nside)
-            print('d={}'.format(d))
             # compute this only once
             if not pixname in c.get_data():
                 d.loc[:, pixname] = hp.ang2pix(nside, d.theta.to_numpy(), d.phi.to_numpy())
 
             # pixels are already known
             allpixels.append(d[pixname].to_numpy())
-            print('allpixels={}'.format(allpixels))
-            print('d[pixname]={}'.format(d[pixname]))
+            #print('allpixels={}'.format(allpixels))
+            #print('d[pixname]={}'.format(d[pixname]))
             # keelin weights. N has to be tuned for speed vs quality
             # for each gal, on zGrid
             weights = bounded_keelin_3_discrete_probabilities(zGrid, 0.16, d.z_lower, d.z, d.z_upper, d.z_lowerbound, d.z_upperbound, N=40, P=0.99999)
