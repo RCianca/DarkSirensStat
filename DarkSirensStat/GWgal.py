@@ -194,11 +194,19 @@ class GWgal(object):
             zz=np.mean(zGrid)
             #print(zz)
             pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
+            #np.savetxt('pixels.txt',pixels)
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             if EM==1:
-                pixels=[6376622, 6380717, 6376621, 6372525, 6368430, 6372526, 6376623, 6380718, 6384814]
-                #print(pixels)
-            my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
+                print(pixels.shape)
+                temp=np.array([6376622, 6380717, 6376621, 6372525, 6368430, 6372526, 6376623, 6380718, 6384814])
+                for i in range(len(temp)):
+                    pixels[i]=temp[i]
+                pixels=pixels[0:len(temp)]
+                print(pixels.shape)
+                #print(type(pixels[0]))
+                my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
+                print(my_skymap.shape)
+                print(weights.shape)
          
             #LL = np.sum(skymap*weights)
              
@@ -285,8 +293,14 @@ class GWgal(object):
             #    return toreturn
             
             #LL= np.mean(stats.norm.expect(toreturn,loc=0.0098,scale=0.0004))
-            theta=1.5844686277555844
-            phi=1.8377089838869982
+            thetatoput=1.5844686277555844
+            phitoput=1.8377089838869982
+            #Raul:not elegant but it will works
+            theta=np.where(theta!=0,thetatoput,theta)
+            theta=np.where(theta==0,thetatoput,theta)
+            phi=np.where(phi!=0,phitoput,phi)
+            phi=np.where(phi==0,phitoput,phi)
+            
             LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.pdf(z,loc=0.0098,scale=0.0004))
 
         else:

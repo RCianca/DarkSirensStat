@@ -8,7 +8,7 @@
 ####
 # This module contains a abstract classes to handle a galaxy catalogue
 ####
-
+from config import EM
 import pandas as pd
 import healpy as hp
 import numpy as np
@@ -309,14 +309,15 @@ class GalCompleted(object):
             d = c.get_data()
             
             pixname = "pix" + str(nside)
-            
+            print('d={}'.format(d))
             # compute this only once
             if not pixname in c.get_data():
                 d.loc[:, pixname] = hp.ang2pix(nside, d.theta.to_numpy(), d.phi.to_numpy())
 
             # pixels are already known
             allpixels.append(d[pixname].to_numpy())
-            
+            print('allpixels={}'.format(allpixels))
+            print('d[pixname]={}'.format(d[pixname]))
             # keelin weights. N has to be tuned for speed vs quality
             # for each gal, on zGrid
             weights = bounded_keelin_3_discrete_probabilities(zGrid, 0.16, d.z_lower, d.z, d.z_upper, d.z_lowerbound, d.z_upperbound, N=40, P=0.99999)
