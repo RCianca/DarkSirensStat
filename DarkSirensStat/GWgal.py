@@ -186,7 +186,7 @@ class GWgal(object):
         
             # Convolution with z errors
             
-            rGrid = self._get_rGrid(eventName, minPoints=100)
+            rGrid = self._get_rGrid(eventName, minPoints=20)
 
             zGrid = z_from_dLGW_fast(rGrid, H0=H0, Xi0=Xi0, n=n)
             #pos=int(len(zGrid)/2)

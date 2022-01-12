@@ -27,7 +27,7 @@ H0max =    140
 
 
 ## Number of points for posterior grid
-nPointsPosterior = 10000
+nPointsPosterior = 1000
 
 verbose=True
 
@@ -154,7 +154,7 @@ betaHomMax = 425.7 # O2
 # Max redshift  of the region R,  if beta is 'fit'
 zR = 10
 # n of MC samples for beta MC
-nSamplesBetaMC= 550000
+nSamplesBetaMC= 250000
 nUseCatalogBetaMC = True
 SNRthresh=8
 
