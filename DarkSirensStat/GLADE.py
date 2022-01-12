@@ -80,9 +80,10 @@ class GLADE(GalCat):
         if not loaded:
         
             
-            #gname='GLADE_2.4.txt'
+            gname='GLADE_2.4.txt'
             #gname='GLADE_fakehost.txt'
-            gname='GLADE_fakehost_single.txt'
+            #gname='GLADE_fakehost_single.txt'
+            #gname='GLADE_fakehost_single_170817.txt'
             #gname='GLADE_spectro_1.txt'
             #gname='GLADE_photo_1.txt'
             #gname='GLADE_trimmed_1.txt'

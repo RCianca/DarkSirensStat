@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'BS170817-pix-04'
+fout = 'BS170817-pix-coordfromscript-bignum'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -27,7 +27,7 @@ H0max =    140
 
 
 ## Number of points for posterior grid
-nPointsPosterior = 1000
+nPointsPosterior = 10000
 
 verbose=True
 
@@ -154,7 +154,7 @@ betaHomMax = 425.7 # O2
 # Max redshift  of the region R,  if beta is 'fit'
 zR = 10
 # n of MC samples for beta MC
-nSamplesBetaMC= 250000
+nSamplesBetaMC= 550000
 nUseCatalogBetaMC = True
 SNRthresh=8
 
