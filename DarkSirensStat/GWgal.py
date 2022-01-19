@@ -221,9 +221,9 @@ class GWgal(object):
 
         #Raul: Try to add EM info
         if (EM==1):
-            #LL=np.sum(stats.norm.expect(my_skymap*weights,zz,loc=0.0098,scale=0.0004))
             LL = np.sum(my_skymap*weights*stats.norm.pdf(zGrid,loc=0.0098,scale=0.0004))
-            #LL = np.sum(my_skymap*weights)
+            #Raul:Only for one test
+            #LL = np.sum(my_skymap*stats.norm.pdf(zGrid,loc=0.0098,scale=0.0004))
         else:
             LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
