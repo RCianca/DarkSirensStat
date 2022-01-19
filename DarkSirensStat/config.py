@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'BS170817-pix-coordfromscript-bignum'
+fout = 'BS170817-PiToOne'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -160,4 +160,4 @@ SNRthresh=8
 
 # Use SNR at all orders or 1st order approximation.
 # SNR at all orders is computed from a pre-computed grid
-fullSNR=True
+fullSNR=False
