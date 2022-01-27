@@ -318,7 +318,7 @@ class GalCompleted(object):
                 distances=np.zeros(d.shape[0])
                 theta_ref=1.5844686277555844
                 phi_ref=1.8377089838869982 
-                z_ref=0.008594041188054874
+                z_ref=0.00875389492140222 #0.0098#0.008594041188054874
                 #dist_ref=self.distance(theta_ref,phi_ref,z_ref)
                 #for i in range(d.shape[0]):
                 #    distances[i]=np.sqrt((d.iloc[i,1]-theta_ref)**2+(d.iloc[i,2]-phi_ref)**2+(d.iloc[i,3]-z_ref)**2)

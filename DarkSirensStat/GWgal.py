@@ -217,13 +217,15 @@ class GWgal(object):
             weights *= (1+zs)**(self.lamb-1)
             
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rs, pixels)
-  
 
         #Raul: Try to add EM info
         if (EM==1):
+            redshift=0.0098 #0.008594041188054874 #0.00875389492140222
+            sigz=0.0004 #0.0016946015804142258 #0.0017261220703953587
+            
             LL = np.sum(my_skymap*weights*stats.norm.pdf(zGrid,loc=0.0098,scale=0.0004))
             #Raul:Only for one test
-            #LL = np.sum(my_skymap*stats.norm.pdf(zGrid,loc=0.0098,scale=0.0004))
+            #LL = np.sum(my_skymap*stats.norm.pdf(zGrid,loc=redshift,scale=sigz))
         else:
             LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
@@ -293,13 +295,15 @@ class GWgal(object):
             #LL= np.mean(stats.norm.expect(toreturn,loc=0.0098,scale=0.0004))
             thetatoput=1.5844686277555844
             phitoput=1.8377089838869982
+            redshift=0.0098 #0.008594041188054874 #0.00875389492140222
+            sigz=0.0004 #0.0016946015804142258 #0.0017261220703953587
             #Raul:not elegant but it will works
             theta=np.where(theta!=0,thetatoput,theta)
             theta=np.where(theta==0,thetatoput,theta)
             phi=np.where(phi!=0,phitoput,phi)
             phi=np.where(phi==0,phitoput,phi)
             
-            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.pdf(z,loc=0.0098,scale=0.0004))
+            LL = 0 #(H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.pdf(z,loc=0.0098,scale=0.0004))
 
         else:
             LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))

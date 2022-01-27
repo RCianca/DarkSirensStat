@@ -14,7 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'BS170817-PiToOne'
+fout = 'BS170817-mockcat'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -68,7 +68,7 @@ zLimSelection='skymap'
 #subset_names = ['GW190412'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
 subset_names = ['GW170817']
-#subset_names =  None
+#subset_names =  ['GW190814']
 
 ## Select events based on completeness at the nominal position
 select_events=True
@@ -160,4 +160,4 @@ SNRthresh=8
 
 # Use SNR at all orders or 1st order approximation.
 # SNR at all orders is computed from a pre-computed grid
-fullSNR=False
+fullSNR=True
