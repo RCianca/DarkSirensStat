@@ -14,10 +14,10 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'BS170817-mockcat'
+fout = 'BS170817-mockcat-comp1'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
-forcePcopl=0
+forcePcopl=1
 EM=1
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 

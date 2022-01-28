@@ -314,6 +314,7 @@ class GalCompleted(object):
             d = c.get_data()
             if EM==1:
                 #Raul: given a point in space, find nearest N host
+                #print(d.shape[0], d.shape)
                 #print('d={}'.format(d))
                 distances=np.zeros(d.shape[0])
                 theta_ref=1.5844686277555844
@@ -326,11 +327,12 @@ class GalCompleted(object):
                 #d=d.sort_values(["distances"], ascending=True)            
                 #d=d.head(9)
                 #print('d={}'.format(d))
-                for index, row in d.iterrows():
-                    distances[index]=np.sqrt((row['theta']-theta_ref)**2+(row['phi']-phi_ref)**2+(row['z']-z_ref)**2)
-                d['distances']=distances
-                d=d.sort_values(["distances"], ascending=True)            
-                d=d.head(1)
+                if (d.shape[0]>1):
+                    for index, row in d.iterrows():
+                        distances[index]=np.sqrt((row['theta']-theta_ref)**2+(row['phi']-phi_ref)**2+(row['z']-z_ref)**2)
+                    d['distances']=distances
+                    d=d.sort_values(["distances"], ascending=True) 
+                    d=d.head(1)
                 #print('d={}'.format(d))
                 
             pixname = "pix" + str(nside)

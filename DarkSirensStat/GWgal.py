@@ -124,9 +124,16 @@ class GWgal(object):
             
             
             _PEv = self.gals.total_completeness( *self.GWevents[eventName].find_event_coords(polarCoords=True), self.GWevents[eventName].zfiducial)
+            mytheta,myphi=self.GWevents[eventName].find_theta_phi(self.GWevents[eventName].selected_pixels)
+            mytheta=np.mean(mytheta)
+            myphi=np.mean(myphi)
+            myascension,mydeclination=ra_dec_from_th_phi(mytheta, myphi)
+            if forcePcopl==1:
+                    _PEv=1
             PEv[eventName] = _PEv
             if self.verbose:
-                print('<P_compl> for %s = %s; Completeness at (z_event, Om_event): %s' %(eventName, np.round(_PcAv, 3), np.round(_PEv, 3)))        
+                print('<P_compl> for %s = %s; Completeness at (z_event, Om_event): %s' %(eventName, np.round(_PcAv, 3), np.round(_PEv, 3))) 
+                print('Skylocation of event %s: theta=%s, phi=%s Right Asc=%s dec=%s'%(eventName,mytheta,myphi,myascension,mydeclination))
         self.PcAv = PcAv
         self.PEv = PEv
         
