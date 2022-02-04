@@ -82,6 +82,11 @@ class GLADE(GalCat):
             
             #gname='GLADE_2.4.txt'
             gname='GLADE_fakeBS_170817.txt'
+            #gname='GLADE_fakeBS.txt'
+            #gname='GLADE_fakeBS68.txt'
+            #gname='GLADE_fakeBS54.txt'
+            #gname='GLADE_fakeBS40.txt'
+            #gname='GLADE_fakeBS20.txt'
             #gname='GLADE_fakehost.txt'
             #gname='GLADE_fakehost_single.txt'
             #gname='GLADE_fakehost_single_170817.txt'
@@ -167,7 +172,6 @@ class GLADE(GalCat):
                     print('Dropping galaxies with flag2=%s...' %z_flag)
                     print('Kept %s points'%df.shape[0]+ ' or ' +"{0:.0%}".format(df.shape[0]/or_dim)+' of total' )
                 
-            
             if drop_z_uncorr:
                 df=df[df['flag3']==1]
                 if self.verbose:

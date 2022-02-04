@@ -172,6 +172,13 @@ def parmap(f, X):
 
 
 ###########################
+#--------------mygaus
+def gauss(x,x0,sigma,norm=True):
+        if norm:
+            a=1/(sigma*np.sqrt(2*np.pi))
+        else:
+            a=1
+        return a*np.exp(-(x-x0)**2/(2*sigma**2))  
 ###########################
 
     

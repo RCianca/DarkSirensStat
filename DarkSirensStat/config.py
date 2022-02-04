@@ -14,11 +14,16 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-fout = 'BS170817-mockcat-comp1'
+#fout = 'MockGWTest07'
+fout = 'testpeculiar'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=1
 EM=1
+#mock BNS dl
+#68 54 40 20 170817
+myredshift=0.0098 #0.0155368 #0.0120821 #0.00862733 #0.003692 #0.0098 
+mysigz= 0.0004 #0.0010199 #0.000851667 #0.000694791 #0.000511387 #0.0004 
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10
@@ -68,7 +73,7 @@ zLimSelection='skymap'
 #subset_names = ['GW190412'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
 subset_names = ['GW170817']
-#subset_names =  ['GW190814']
+#subset_names =  None
 
 ## Select events based on completeness at the nominal position
 select_events=True

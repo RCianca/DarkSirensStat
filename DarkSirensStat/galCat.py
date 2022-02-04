@@ -9,6 +9,8 @@
 # This module contains a abstract classes to handle a galaxy catalogue
 ####
 from config import EM
+from config import myredshift
+from config import mysigz
 import pandas as pd
 import healpy as hp
 import numpy as np
@@ -314,19 +316,10 @@ class GalCompleted(object):
             d = c.get_data()
             if EM==1:
                 #Raul: given a point in space, find nearest N host
-                #print(d.shape[0], d.shape)
-                #print('d={}'.format(d))
                 distances=np.zeros(d.shape[0])
-                theta_ref=1.5844686277555844
-                phi_ref=1.8377089838869982 
-                z_ref=0.00875389492140222 #0.0098#0.008594041188054874
-                #dist_ref=self.distance(theta_ref,phi_ref,z_ref)
-                #for i in range(d.shape[0]):
-                #    distances[i]=np.sqrt((d.iloc[i,1]-theta_ref)**2+(d.iloc[i,2]-phi_ref)**2+(d.iloc[i,3]-z_ref)**2)
-                #d['distances']=distances
-                #d=d.sort_values(["distances"], ascending=True)            
-                #d=d.head(9)
-                #print('d={}'.format(d))
+                theta_ref=1.5844686277555844#3.44616
+                phi_ref=1.8377089838869982#-0.408084 
+                z_ref= myredshift #0.0098 #0.015410590744339491
                 if (d.shape[0]>1):
                     for index, row in d.iterrows():
                         distances[index]=np.sqrt((row['theta']-theta_ref)**2+(row['phi']-phi_ref)**2+(row['z']-z_ref)**2)
