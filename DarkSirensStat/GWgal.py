@@ -295,8 +295,8 @@ class GWgal(object):
             phi=np.where(phi!=0,phitoput,phi)
             phi=np.where(phi==0,phitoput,phi)
             
-            #LL = 0
-            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.pdf(z,loc=myredshift,scale=mysigz))
+            LL = 0
+            #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.pdf(z,loc=myredshift,scale=mysigz))
 
         else:
             LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))

@@ -32,7 +32,7 @@ detectorPath = os.path.join(baseGWPath, 'detectors')
 clight = 2.99792458* 10**5
 
 
-O2BNS = ('GW170817',)
+O2BNS = ('GW170820',)
 O3BNS = ('GW190425', )
 O3BHNS = ('GW190426_152155', 'GW190426' )
 
@@ -383,4 +383,16 @@ def get_norm_posterior(lik_inhom, lik_hom, beta, grid, prior=None):
     
     post = tot_post/norm
     return post, lik_inhom/beta/norm, lik_hom/beta/norm
+
+#-----------------Raul:Fancy stuff----------------
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
