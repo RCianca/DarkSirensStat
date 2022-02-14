@@ -9,6 +9,7 @@
 # This module contains a abstract classes to handle a galaxy catalogue
 ####
 from config import EM
+from config import forcePcopl
 from config import myredshift
 from config import mysigz
 import pandas as pd
@@ -75,7 +76,11 @@ class GalCat(ABC):
         pass
     
     def completeness(self, theta, phi, z, oneZPerAngle=False):
-        return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
+        if not forcePcopl:
+            return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
+        else:
+            #return np.ones(theta.shape)
+            return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
 
 
     def group_correction(self, df, df_groups, which_z='z_cosmo'):

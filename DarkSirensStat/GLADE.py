@@ -293,6 +293,7 @@ class GLADE(GalCat):
                 df.loc[df.z_lower < 0.5*df.z, 'z_lower'] = 0.5*df.z
                 df.loc[:, 'z_upper'] = df.z + df.z_err
                 df.loc[:, 'z_upperbound'] = df.z + 3*df.z_err
+                #Raul:all numbers are divided by 2. See local code to restore the values
             
                 # ------ Estimate galaxy posteriors with contant-in-comoving prior
                 

@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'MockGWTest07'
-fout = 'testpeculiar20-no-errors'
+fout = 'SpeedTest'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=1
@@ -23,7 +23,7 @@ EM=1
 #mock BNS dl
 #68 54 40 20 170817
 myredshift=0.003692 #0.0155368 #0.0120821 #0.00862733 #0.003692 #0.0098 
-mysigz= 0.0004 #0.0010199 #0.000851667 #0.000694791 #0.000511387 #0.0004 #testconst=0.3528418527151356
+mysigz= 0.3528418527151356 #0.0010199 #0.000851667 #0.000694791 #0.000511387 #0.0004 #testconst=0.3528418527151356
 ## Prior limits
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10
