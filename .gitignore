@@ -3,4 +3,5 @@ results/
 data/
 GWcosmoVenv/
 minimalrequirements.txt
-
+DSCatalogueCreator/flagship_snapshot.tar.gz
+DSCatalogueCreator/flagship.fits
