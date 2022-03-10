@@ -1,0 +1,23 @@
+PlotTest/
+results/
+data/
+GWcosmoVenv/
+minimalrequirements.txt
+DSCatalogueCeator/flagship_snapshot.tar.gz
+step=7
+esp=-0.8
+passo=(r.max()-r.min())/(step)
+for l in range(step):
+    temp_r=r.min()+l*passo
+    boolmask=r <= temp_r
+    temp_vol=r[boolmask]
+    vol01=len(temp_vol)
+    temp_r0=temp_r+passo
+    #print('r1={},r2={},r2-r1={}'.format(temp_r,temp_r0,temp_r0-temp_r))
+    boolmask=r <= temp_r0
+    temp_vol=r[boolmask]
+    vol02=len(temp_vol)
+    rap_r=(((temp_r0/r.min())**esp -1)/((temp_r/r.min())**esp -1))
+    rap_v=(vol02/vol01)
+    #print(vol02,vol01)
+    print('r1/r2={} v1/v2={} rapporto={}'.format(rap_r,rap_v,rap_r/rap_v))
