@@ -9,6 +9,7 @@ DSCatalogueCreator/flagship_second_attempt.fits
 DSCatalogueCreator/11536.fits
 DSCatalogueCreator/EVA00.fits 
 DSCatalogueCreator/EVA01.fits
+DSCatalogueCreator/EVA02.fits
 DSCatalogueCreator/Numb_DS_of_z_int.txt
 DSCatalogueCreator/arr_of_int_lim.txt
 DSCatalogueCreator/two_point_radii_cutted.txt
@@ -17,3 +18,7 @@ DSCatalogueCreator/cos_inclination.txt
 DSCatalogueCreator/effective_primary_masses.txt
 DSCatalogueCreator/mass_ratio.txt
 DSCatalogueCreator/secondaryMasses.txt
+DSCatalogueCreator/allpsi.txt
+DSCatalogueCreator/*.png
+
+
