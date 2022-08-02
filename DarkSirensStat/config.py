@@ -72,7 +72,7 @@ zLimSelection='skymap'
 ## Names of events to analyse. If None, all events in the folder will be used
 #subset_names = ['GW190412'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
-subset_names = ['GW190814']
+subset_names = ['GW220801']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
