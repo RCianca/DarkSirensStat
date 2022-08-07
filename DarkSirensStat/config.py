@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'MockGWTest07'
-fout = 'Mock_Map'
+fout = 'Mock_Map_Gauss_7events'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -72,7 +72,7 @@ zLimSelection='skymap'
 ## Names of events to analyse. If None, all events in the folder will be used
 #subset_names = ['GW190412'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
-subset_names = ['GW190814']
+subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
