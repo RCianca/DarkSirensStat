@@ -276,7 +276,7 @@ class GLADE(GalCat):
                 if self.verbose:
                     print('Adding errors on z with %s values' %err_vals)
                 if err_vals=='GLADE':
-                    scales = np.where(df['flag2'].values==3, 1.5*1e-04, 1.5*1e-02)
+                    scales = np.where(df['flag2'].values==3, (1+df.z)*1e-03, (1+df.z)*1e-03)
                     print('Scales is {}'.format(scales))
                 elif err_vals=='const_perc':
                     scales=np.where(df['flag2'].values==3, df.z/100, df.z/10)
