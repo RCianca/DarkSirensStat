@@ -287,11 +287,11 @@ class GLADE(GalCat):
                 
                 # restrict error to <=z itself. otherwise for z very close to 0 input is infeasible for keelin distributions, which would break things silently
                 df.loc[:, 'z_err'] = np.minimum(scales, df.z.to_numpy())#original
-                df.loc[:, 'z_err'] = 0.002
+                #df.loc[:, 'z_err'] = 0.002
                 df.loc[:, 'z_lowerbound'] = df.z - 3*df.z_err
                 df.loc[df.z_lowerbound < 0, 'z_lowerbound'] = 0
                 df.loc[:, 'z_lower'] = df.z - df.z_err
-                df.loc[df.z_lower < df.z, 'z_lower'] = df.z
+                df.loc[df.z_lower < 0.5*df.z, 'z_lower'] = 0.5*df.z
                 df.loc[:, 'z_upper'] = df.z + df.z_err
                 df.loc[:, 'z_upperbound'] = df.z + 3*df.z_err
                 #Raul:all numbers are divided by 2. See local code to restore the values
