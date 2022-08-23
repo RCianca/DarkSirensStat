@@ -15,6 +15,7 @@
 from globals import *
 from keelin import *
 from betaHom import *
+from config import detector
 
 from SNRtools import oSNR
 
@@ -225,6 +226,11 @@ class BetaMC:#(Beta):
             self.filenames["L"] = '2017-08-06_DCH_C02_L1_O2_Sensitivity_strain_asd.txt'
             self.filenames["H"] = '2017-06-10_DCH_C02_H1_O2_Sensitivity_strain_asd.txt'
         elif self._observingRun == 'O3':
+            if detector=='ET':
+                print('using ET noise')
+                self.filenames["L"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
+                self.filenames["H"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
+
             self.filenames["L"] = 'O3-L1-C01_CLEAN_SUB60HZ-1240573680.0_sensitivity_strain_asd.txt'
             self.filenames["H"] = 'O3-H1-C01_CLEAN_SUB60HZ-1251752040.0_sensitivity_strain_asd.txt'
 
@@ -240,10 +246,14 @@ class BetaMC:#(Beta):
                 
                     noise = np.loadtxt(filepath, usecols=range(2))
                     f = noise[:,0]
+                    if detector=='ET':
+                        S = (noise[:,3])**2
                     S = (noise[:,1])**2
             
                     # O1 data is very weird at boundaries which extend further than for other files - cut them
                     mask = (f > 10) & (f < 6000)
+                    if detector=='ET':
+                        mask = (f > 1) & (f < 10000)
                     S = S[mask]
                     self.freq[detectorname] = f[mask]
             

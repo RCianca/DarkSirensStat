@@ -47,6 +47,9 @@ observingRun = 'O3'
 ## Select BBH or BNS
 eventType='BBH'
 
+detector='ET'
+print(detector)
+
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss
 massDist='O3'
 
