@@ -26,7 +26,9 @@ from globals import *
 windows = { 'H1O3': 10.,
             'L1O3': 10.,
              'L1O2': 2,
-            'H1O2': 4,  
+            'H1O2': 4,
+            'H1ET':10.,
+            'L1ET':10.,
           }
 
 
@@ -34,6 +36,8 @@ filenames = { 'H1O3': 'O3-H1-C01_CLEAN_SUB60HZ-1251752040.0_sensitivity_strain_a
             'L1O3': 'O3-L1-C01_CLEAN_SUB60HZ-1240573680.0_sensitivity_strain_asd.txt',
              'L1O2': '2017-08-06_DCH_C02_L1_O2_Sensitivity_strain_asd.txt',
             'H1O2': '2017-06-10_DCH_C02_H1_O2_Sensitivity_strain_asd.txt',
+             'H1ET': 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt',
+             'L1ET': 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt',
             }
 
 
@@ -174,7 +178,7 @@ class oSNR(object):
         pad=True
         try:
             max_exact = np.argwhere(vals>=flog.max())[0][0]
-            
+            #print('SNRtools: name={}, len windows={}, len flog={} '. format(self.name,windows[self.name],flog.shape[0]))
             filtered = savgol_filter(slog, int(flog.shape[0]/windows[self.name])+1, 3, deriv=0)
             filter_interp = interp1d(flog, filtered, bounds_error=False, fill_value='extrapolate')
             

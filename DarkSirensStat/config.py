@@ -48,6 +48,7 @@ observingRun = 'O3'
 eventType='BBH'
 
 detector='ET'
+#detector='vanilla'
 print(detector)
 
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss

@@ -140,6 +140,7 @@ class BetaMC:#(Beta):
             for detectorname in ["L", "H"]:
                 if detectorname in self.ifo_SNR:
                     filepath = os.path.join(detectorPath, self.filenames[detectorname])
+                    print('BetaMC:detectorname={}, filepath={}'.format(detectorname,filepath))
                     myoSNR = oSNR(  from_file=True, psd_path=filepath , verbose=True, approximant=approximant)
                     myoSNR.make_interpolator()
             
@@ -247,7 +248,10 @@ class BetaMC:#(Beta):
                     f = noise[:,0]
                     S = (noise[:,1])**2
                     if detector=='ET':
-                        S = (noise[:,3])**2
+                        noise = np.loadtxt(filepath, usecols=(0,3))
+                        f = noise[:,0]
+                        S = (noise[:,1])**2
+                        print('Sono in ET, len f={}, len S={}'.format(len(f),len(S)))
             
                     # O1 data is very weird at boundaries which extend further than for other files - cut them
                     mask = (f > 10) & (f < 6000)
@@ -255,6 +259,7 @@ class BetaMC:#(Beta):
                         mask = (f > 1) & (f < 10000)
                     S = S[mask]
                     self.freq[detectorname] = f[mask]
+                    print('Dopo mask, len S={}, len f={}'.format(len(S[mask]),len(f[mask]) ) )
             
                     import scipy.integrate as igt
                     
