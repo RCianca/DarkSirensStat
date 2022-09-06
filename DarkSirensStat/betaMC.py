@@ -251,6 +251,7 @@ class BetaMC:#(Beta):
                         noise = np.loadtxt(filepath, usecols=(0,3))
                         f = noise[:,0]
                         S = (noise[:,1])**2
+                        print(bcolors.WARNING + "Leggi sotto" + bcolors.ENDC)
                         print('Sono in ET, len f={}, len S={}'.format(len(f),len(S)))
             
                     # O1 data is very weird at boundaries which extend further than for other files - cut them
