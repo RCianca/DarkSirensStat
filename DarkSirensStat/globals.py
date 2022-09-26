@@ -12,6 +12,7 @@ import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 import sys
 import healpy as hp
+from scipy import interpolate
 
 dirName = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
@@ -395,4 +396,10 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    
+ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovingrate.txt')
+ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
+myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
+
+    
 

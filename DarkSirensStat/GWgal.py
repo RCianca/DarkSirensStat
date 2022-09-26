@@ -200,7 +200,7 @@ class GWgal(object):
             #print(zz)
             pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
             #np.savetxt('pixels.txt',pixels)
-            weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)     
+            weights *= myrate(zz)*(1+zGrid[np.newaxis, :])**(self.lamb-1)     
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
 
              
@@ -300,7 +300,7 @@ class GWgal(object):
             #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
 
         else:
-            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
+            LL = (H0/70)**3*np.mean(myrate(z)*jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
         #LL=(H0/70)**3*np.mean(self.gauss(z,0.0098, 0.0004))
         return LL
     

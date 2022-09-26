@@ -13,6 +13,7 @@
 
 #from beta import Beta
 from globals import *
+from globals import myrate
 from keelin import *
 from betaHom import *
 from config import detector
@@ -443,7 +444,7 @@ class BetaMC:#(Beta):
                 
                 
                 # add the lambda dependent GW prior weighting, put on top of the galaxy distribution (also use this a few lines below in the normalization sum!)
-                wGalInside *= (1+zGalInside)**(self.lamb-1)
+                wGalInside *= (1+zGalInside)**(self.lamb-1)*myrate(zGalInside)
                 
                 
                 galsample = self._sample_discrete(nSamplesCat, wGalInside)

@@ -80,9 +80,10 @@ class GLADE(GalCat):
         if not loaded:
         
             
-            #gname='GLADE_2.4.txt'
+                #gname='GLADE_2.4.txt'on
             #gname='GLADE_flagship.txt'
-            gname='GLADE_flagship_host.txt'
+            #gname='GLADE_flagship_host.txt'
+            gname='GLADE_flagship_host_alone.txt'
             #gname='GLADE_fakeBS_170817.txt'
             #gname='GLADE_fakeBS.txt'
             #gname='GLADE_fakeBS68.txt'
@@ -234,8 +235,8 @@ class GLADE(GalCat):
                     if self.verbose:
                         print('Kept %s points'%df.shape[0]+ ' or ' +"{0:.0%}".format(df.shape[0]/or_dim)+' of total' )
             #Raul: turn off correction with mockGW
-            group_correct=1
-            #print(bcolors.WARNING + "Warning: No group correction" + bcolors.ENDC)
+            group_correct=0
+            print(bcolors.WARNING + "Warning: No group correction" + bcolors.ENDC)
             if group_correct:
                 if not get_cosmo_z:
                     raise ValueError('To apply group corrections, compute cosmological redshift first')
