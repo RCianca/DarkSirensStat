@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'MockGWTest07'
-fout = 'Flagship_restore'
+fout = 'Restore_SNR_lamb0'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -47,11 +47,15 @@ observingRun = 'O3'
 ## Select BBH or BNS
 eventType='BBH'
 
+detector='ET'
+#detector='vanilla'
+print(detector)
+
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss
 massDist='O3'
 
 ## Specify the exponent of the redshift distribution , p(z) = dV/dz* (1+z)^(lamb-1)
-lamb=1
+lamb=0
 
 ## Specify parameters of the broken power law model
 gamma1=1.05
