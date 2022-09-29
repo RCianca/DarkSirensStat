@@ -245,20 +245,22 @@ class BetaMC:#(Beta):
                     if self.verbose:
                         print('Loading strain sensitivity from %s...' %filepath)
                 
-                    noise = np.loadtxt(filepath, usecols=range(2))
-                    f = noise[:,0]
-                    S = (noise[:,1])**2
+
                     if detector=='ET':
                         noise = np.loadtxt(filepath, usecols=(0,3))
                         f = noise[:,0]
                         S = (noise[:,1])**2
                         print(bcolors.WARNING + "Leggi sotto" + bcolors.ENDC)
                         print('Sono in ET, len f={}, len S={}'.format(len(f),len(S)))
+                        mask = (f > 1) & (f < 10000)
+                    else:
+                        noise = np.loadtxt(filepath, usecols=range(2))
+                        f = noise[:,0]
+                        S = (noise[:,1])**2
+                        mask = (f > 10) & (f < 6000)
             
                     # O1 data is very weird at boundaries which extend further than for other files - cut them
-                    mask = (f > 10) & (f < 6000)
-                    if detector=='ET':
-                        mask = (f > 1) & (f < 10000)
+                    
                     S = S[mask]
                     self.freq[detectorname] = f[mask]
                     print('Dopo mask, len S={}, len f={}'.format(len(S[mask]),len(f[mask]) ) )
