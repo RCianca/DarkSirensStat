@@ -15,7 +15,7 @@
 from globals import *
 from keelin import *
 from betaHom import *
-from config import detector
+
 from SNRtools import oSNR
 
 class BetaMC:#(Beta):
@@ -227,10 +227,7 @@ class BetaMC:#(Beta):
         elif self._observingRun == 'O3':
             self.filenames["L"] = 'O3-L1-C01_CLEAN_SUB60HZ-1240573680.0_sensitivity_strain_asd.txt'
             self.filenames["H"] = 'O3-H1-C01_CLEAN_SUB60HZ-1251752040.0_sensitivity_strain_asd.txt'
-            if detector=='ET':
-                print('using ET noise')
-                self.filenames["L"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
-                self.filenames["H"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
+
         
         if not self.fullSNR:
             for detectorname in ["L", "H"]:
@@ -240,21 +237,19 @@ class BetaMC:#(Beta):
 
                     if self.verbose:
                         print('Loading strain sensitivity from %s...' %filepath)
+                
                     if detector=='ET':
                         noise = np.loadtxt(filepath, usecols=(0,3))
                         f = noise[:,0]
                         S = (noise[:,1])**2
-                        mask = (f > 1) & (f < 10000)
                         print(bcolors.WARNING + "Leggi sotto" + bcolors.ENDC)
                         print('Sono in ET, len f={}, len S={}'.format(len(f),len(S)))
+                        mask = (f > 1) & (f < 10000)
                     else:
                         noise = np.loadtxt(filepath, usecols=range(2))
                         f = noise[:,0]
                         S = (noise[:,1])**2
                         mask = (f > 10) & (f < 6000)
-            
-                    # O1 data is very weird at boundaries which extend further than for other files - cut them
-                    
                     S = S[mask]
                     self.freq[detectorname] = f[mask]
             
@@ -439,7 +434,7 @@ class BetaMC:#(Beta):
                 
                 
                 # add the lambda dependent GW prior weighting, put on top of the galaxy distribution (also use this a few lines below in the normalization sum!)
-                wGalInside *= (1+zGalInside)**(self.lamb-1)
+                wGalInside *= myrate(zGalInside)*(1+zGalInside)**(self.lamb-1)
                 
                 
                 galsample = self._sample_discrete(nSamplesCat, wGalInside)

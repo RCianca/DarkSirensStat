@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'MockGWTest07'
-fout = 'Restore_SNR_lamb0'
+fout = 'A_ligo'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -47,9 +47,8 @@ observingRun = 'O3'
 ## Select BBH or BNS
 eventType='BBH'
 
-detector='ET'
-#detector='vanilla'
-print(detector)
+#detector='ET'
+detector='vanilla'
 
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss
 massDist='O3'
