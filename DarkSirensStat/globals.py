@@ -14,6 +14,8 @@ import sys
 import healpy as hp
 from scipy import interpolate
 
+from scipy import interpolate
+
 dirName = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 miscPath = os.path.join(dirName, 'data', 'misc')
@@ -403,3 +405,6 @@ myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
 
     
 
+ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovingrate.txt')
+ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
+myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')

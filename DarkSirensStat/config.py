@@ -15,7 +15,11 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'MockGWTest07'
+<<<<<<< HEAD
 fout = 'reset'
+=======
+fout = 'A_ligo_rate'
+>>>>>>> old_SNR
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=0
@@ -49,7 +53,10 @@ eventType='BBH'
 
 #detector='ET'
 detector='vanilla'
+<<<<<<< HEAD
 print(detector)
+=======
+>>>>>>> old_SNR
 
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss
 massDist='O3'

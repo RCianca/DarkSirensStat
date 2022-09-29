@@ -221,7 +221,7 @@ class GWgal(object):
             #Raul:Only for one test
             #LL = np.sum(my_skymap*stats.norm.pdf(zGrid,loc=redshift,scale=sigz))
         else:
-            LL = np.sum(my_skymap*weights)
+            LL = np.sum(my_skymap*weights*myrate(zGrid))
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
         sky_to_return=np.sum(my_skymap)
         weights_to_return=np.sum(weights)
@@ -295,7 +295,7 @@ class GWgal(object):
             phi=np.where(phi!=0,phitoput,phi)
             phi=np.where(phi==0,phitoput,phi)
             
-            LL = 0
+            #LL = 0
             #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z)*stats.norm.pdf(z,loc=myredshift,scale=mysigz))
             #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
 
