@@ -245,10 +245,6 @@ class BetaMC:#(Beta):
                     if self.verbose:
                         print('Loading strain sensitivity from %s...' %filepath)
                 
-<<<<<<< HEAD
-
-=======
->>>>>>> old_SNR
                     if detector=='ET':
                         noise = np.loadtxt(filepath, usecols=(0,3))
                         f = noise[:,0]
@@ -261,12 +257,7 @@ class BetaMC:#(Beta):
                         f = noise[:,0]
                         S = (noise[:,1])**2
                         mask = (f > 10) & (f < 6000)
-<<<<<<< HEAD
-            
-                    # O1 data is very weird at boundaries which extend further than for other files - cut them
-                    
-=======
->>>>>>> old_SNR
+
                     S = S[mask]
                     self.freq[detectorname] = f[mask]
                     print('Dopo mask, len S={}, len f={}'.format(len(S[mask]),len(f[mask]) ) )
@@ -452,11 +443,9 @@ class BetaMC:#(Beta):
                 
                 
                 # add the lambda dependent GW prior weighting, put on top of the galaxy distribution (also use this a few lines below in the normalization sum!)
-<<<<<<< HEAD
-                wGalInside *= (1+zGalInside)**(self.lamb-1)*myrate(zGalInside)
-=======
+
                 wGalInside *= myrate(zGalInside)*(1+zGalInside)**(self.lamb-1)
->>>>>>> old_SNR
+
                 
                 
                 galsample = self._sample_discrete(nSamplesCat, wGalInside)
