@@ -25,7 +25,9 @@ baseGWPath= os.path.join(dirName, 'data', 'GW')
 metaPath= os.path.join(baseGWPath, 'metadata') 
 
 detectorPath = os.path.join(baseGWPath, 'detectors')
-
+#Raul: replaced all 70 with 67
+scale=67
+pivot=0.67
 
 
 ###########################
@@ -77,11 +79,12 @@ MBSun=5.498
 MKSun=3.27
 
 # Cosmologival parameters used in GLADE for z-dL conversion
-H0GLADE=70
+H0GLADE=67
 Om0GLADE=0.27
 
 # Cosmologival parameters used for the analysis (RT minimal; table 2 of 2001.07619)
-H0GLOB=67.9 #69
+#H0GLOB=67.9 #69
+H0GLOB=67
 Om0GLOB=0.3
 Xi0Glob =1.
 cosmoglob = FlatLambdaCDM(H0=H0GLOB, Om0=Om0GLOB)
@@ -190,8 +193,10 @@ def get_SchParams(Lstar, phiStar, h0):
         Input: Hubble parameter h0, values of Lstar, phiStar for h0=0.7
         Output: Schechter function parameters L_*, phi_* rescaled by h0
         '''
-        Lstar = Lstar*(h0/0.7)**(-2)
-        phiStar = phiStar*(h0/0.7)**(3)
+        #Lstar = Lstar*(h0/0.7)**(-2)
+        #phiStar = phiStar*(h0/0.7)**(3)
+        Lstar = Lstar*(h0/pivot)**(-2)
+        phiStar = phiStar*(h0/pivot)**(3)
         return Lstar, phiStar
 
 
@@ -223,7 +228,7 @@ def th_phi_from_ra_dec(ra, dec):
     phi = np.deg2rad(ra)
     return theta, phi
 
-cosmo70GLOB = FlatLambdaCDM(H0=70, Om0=Om0GLOB)
+cosmo70GLOB = FlatLambdaCDM(H0=scale, Om0=Om0GLOB)
 
 def dLGW(z, H0, Xi0, n):
     '''
@@ -245,12 +250,13 @@ from scipy import interpolate
 dcom70fast = interpolate.interp1d(zGridGLOB, dcomGridGLOB, kind='cubic', bounds_error=False, fill_value=(0, np.NaN), assume_sorted=True)
 dL70fast = interpolate.interp1d(zGridGLOB, dLGridGLOB, kind='cubic', bounds_error=False, fill_value=(0 ,np.NaN), assume_sorted=True)
 
-H70fast = interpolate.interp1d(zGridGLOB, HGridGLOB, kind='cubic', bounds_error=False, fill_value=(70 ,np.NaN), assume_sorted=True)
+H70fast = interpolate.interp1d(zGridGLOB, HGridGLOB, kind='cubic', bounds_error=False, fill_value=(scale ,np.NaN), assume_sorted=True)
 
-
+#Raul: changed 70 into 67
 def z_from_dLGW_fast(r, H0, Xi0, n):
     from scipy import interpolate
-    z2dL = interpolate.interp1d(dLGridGLOB/H0*70*Xi(zGridGLOB, Xi0, n=n), zGridGLOB, kind='cubic', bounds_error=False, fill_value=(0,np.NaN), assume_sorted=True)
+    #z2dL = interpolate.interp1d(dLGridGLOB/H0*70*Xi(zGridGLOB, Xi0, n=n), zGridGLOB, kind='cubic', bounds_error=False, fill_value=(0,np.NaN), assume_sorted=True)
+    z2dL = interpolate.interp1d(dLGridGLOB/H0*scale*Xi(zGridGLOB, Xi0, n=n), zGridGLOB, kind='cubic', bounds_error=False, fill_value=(0,np.NaN), assume_sorted=True)
     return z2dL(r)
 
 
@@ -283,7 +289,7 @@ def dVdcom_dVdLGW(z, H0, Xi0, n):
 
 # D_com^2 / D_L^{gw}^2 remains
 
-    h7 = H0 / 70
+    h7 = H0 / scale
     
     #dcom = cosmo70GLOB.comoving_distance(z).value/h7
 
@@ -319,7 +325,7 @@ def uu(z):
     '''
     Dimensionless comoving distance. Does not depend on H0
     '''
-    return 70/clight*FlatLambdaCDM(H0=70, Om0=Om0GLOB).comoving_distance(z).value
+    return scale/clight*FlatLambdaCDM(H0=scale, Om0=Om0GLOB).comoving_distance(z).value
 
 def ddL_dz(z, H0, Xi0, n):
     '''
@@ -331,7 +337,7 @@ def E(z):
     '''
     E(z). Does not depend on H0
     '''
-    return FlatLambdaCDM(H0=70, Om0=Om0GLOB).efunc(z)
+    return FlatLambdaCDM(H0=scale, Om0=Om0GLOB).efunc(z)
 
 
 
