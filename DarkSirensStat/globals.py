@@ -25,9 +25,9 @@ baseGWPath= os.path.join(dirName, 'data', 'GW')
 metaPath= os.path.join(baseGWPath, 'metadata') 
 
 detectorPath = os.path.join(baseGWPath, 'detectors')
-#Raul: replaced all 70 with 67
+#Raul: replaced all 70 with 67 with scale
 scale=67
-pivot=0.67
+pivot=scale/100
 
 
 ###########################
