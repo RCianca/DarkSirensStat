@@ -14,8 +14,7 @@ do_inference=True
 goalParam = 'H0'
 
 ## Output folder name
-#fout = 'MockGWTest07'
-
+#fout = 'ET_newsigma'
 fout = 'ET_MultipleGW'
 
 #only to some  test, then remove 
@@ -81,7 +80,7 @@ zLimSelection='skymap'
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
-subset_names = ['GW221003']
+#subset_names = ['GW221003']
 subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007']
 #subset_names =  None
 
