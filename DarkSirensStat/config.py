@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'ET_MultipleGW'
+fout = 'ET_6GW_rate'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -29,7 +29,7 @@ mysigz= 0.3528418527151356 #0.0010199 #0.000851667 #0.000694791 #0.000511387 #0.
 Xi0min =  Xi0Glob # 0.3 
 Xi0max =  Xi0Glob # 10
 H0min =   30 # H0GLOB
-H0max =    140
+H0max =    130
 
 
 ## Number of points for posterior grid
@@ -80,8 +80,8 @@ zLimSelection='skymap'
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
-#subset_names = ['GW221003']
-subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007']
+subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221008_01']
+#subset_names = ['GW221003','GW221005']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
