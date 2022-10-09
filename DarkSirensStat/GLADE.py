@@ -79,9 +79,10 @@ class GLADE(GalCat):
             
         if not loaded:
             #gname='GLADE_2.4.txt'on
-            gname='GLADE_flagship.txt'
+            #gname='GLADE_flagship.txt'
             #gname='GLADE_flagship_host.txt'
             #gname='GLADE_flagship_host_alone.txt'
+            gname='GLADE_flagship_two_host_alone.txt'
             #gname='GLADE_fakeBS_170817.txt'
             #gname='GLADE_fakeBS.txt'
             #gname='GLADE_fakeBS68.txt'
