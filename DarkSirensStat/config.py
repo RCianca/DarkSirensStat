@@ -19,7 +19,7 @@ fout = 'ET_2GW_rate_alone'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
-forcePcopl=0
+forcePcopl=1
 EM=0
 #mock BNS dl
 #68 54 40 20 170817
@@ -81,7 +81,7 @@ zLimSelection='skymap'
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
 #subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221008_01']
-subset_names = ['GW221005','GW221007']
+subset_names = ['GW221007']#,'GW221007']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
