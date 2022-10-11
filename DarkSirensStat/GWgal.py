@@ -200,7 +200,9 @@ class GWgal(object):
             #print(zz)
             pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
             #np.savetxt('pixels.txt',pixels)
-            weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)     
+            weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
+            #Raul:try to exclud Lum weight
+                 
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
 
              
@@ -217,9 +219,8 @@ class GWgal(object):
         #Raul: Try to add EM info
         if (EM==1):
             LL = np.sum(my_skymap*weights*stats.norm.pdf(zGrid,loc=myredshift,scale=mysigz ))
-            #LL = np.sum(my_skymap*weights*gauss(zGrid,myredshift,mysigz,norm=False))
-            #Raul:Only for one test
-            #LL = np.sum(my_skymap*stats.norm.pdf(zGrid,loc=redshift,scale=sigz))
+
+        
         else:
             LL = np.sum(my_skymap*weights*myrate(zGrid))
             #LL = np.sum(my_skymap*weights)

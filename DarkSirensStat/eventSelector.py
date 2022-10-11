@@ -8,6 +8,7 @@
 
 from globals import *
 from abc import ABC, abstractmethod
+from config import forcePcopl
 
 class Selector(ABC):
     
@@ -78,6 +79,8 @@ class EventSelector(Selector):
             Pc = self.completenessFunc(theta, phi, zz.item())
         else:
             Pc = self.completenessFunc(theta, phi, zz, oneZPerAngle=True)
+        if (forcePcopl==1):
+            Pc=1
         
         return Pc>self.completnessThreshCentral
     

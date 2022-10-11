@@ -15,11 +15,11 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'ET_6GW_rate'
+fout = 'ET_2GW_rate_alone_equal_nolumerr_nofodder_fixedweights'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
-forcePcopl=0
+forcePcopl=1
 EM=0
 #mock BNS dl
 #68 54 40 20 170817
@@ -80,8 +80,8 @@ zLimSelection='skymap'
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
-subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221008_01']
-#subset_names = ['GW221003','GW221005']
+#subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221008_01']
+subset_names = ['GW221005','GW221007']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position
@@ -116,7 +116,7 @@ band= 'K' # B, K, or None .
 # Average galaxy density in comoving volume, used if band='None'. A number, or 'auto' (only for mask completeness) 
 Nbar = 'auto'
 # Band for lum weights
-band_weight = 'K'  # B, K, or None . 
+band_weight = None  # B, K, or None . 
 
 
 
