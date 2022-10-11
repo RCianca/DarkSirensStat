@@ -13,6 +13,7 @@ from config import forcePcopl
 from config import EM
 from config import myredshift
 from config import mysigz
+from config import fixed_weights
 from globals import *
 import pandas as pd
 from copy import deepcopy
@@ -200,7 +201,11 @@ class GWgal(object):
             #print(zz)
             pixels, weights, norm= self.gals.get_inhom_contained(zGrid, self.selectedGWevents[eventName].nside )
             #np.savetxt('pixels.txt',pixels)
-            weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)     
+            weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
+            #Raul:try to exclud Lum weight
+            if fixed_weights==1:
+                 temp=weights/weights
+                 weights=temp
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
 
              
@@ -217,11 +222,10 @@ class GWgal(object):
         #Raul: Try to add EM info
         if (EM==1):
             LL = np.sum(my_skymap*weights*stats.norm.pdf(zGrid,loc=myredshift,scale=mysigz ))
-            #LL = np.sum(my_skymap*weights*gauss(zGrid,myredshift,mysigz,norm=False))
-            #Raul:Only for one test
-            #LL = np.sum(my_skymap*stats.norm.pdf(zGrid,loc=redshift,scale=sigz))
+
+        
         else:
-            LL = np.sum(my_skymap*weights*myrate(zGrid))
+            LL = np.sum(my_skymap*weights*myrate(zGrid)*((1+zGrid)**(self.lamb-1)))
             #LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
         sky_to_return=np.sum(my_skymap)
