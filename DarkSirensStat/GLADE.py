@@ -82,7 +82,8 @@ class GLADE(GalCat):
             #gname='GLADE_flagship.txt'
             #gname='GLADE_flagship_host.txt'
             #gname='GLADE_flagship_host_alone.txt'
-            gname='GLADE_flagship_two_host_alone.txt'
+            #gname='GLADE_flagship_two_host_alone.txt'
+            gname='GLADE_flagship_two_host_alone_nofodder.txt'
             #gname='GLADE_fakeBS_170817.txt'
             #gname='GLADE_fakeBS.txt'
             #gname='GLADE_fakeBS68.txt'
@@ -273,11 +274,16 @@ class GLADE(GalCat):
             # ------ Add z errors
             
             #print(bcolors.WARNING + "not adding errors" + bcolors.ENDC)
+            eq_err=1
             if err_vals is not None:
                 if self.verbose:
                     print('Adding errors on z with %s values' %err_vals)
                 if err_vals=='GLADE':
-                    scales = np.where(df['flag2'].values==3, (1+df.z)*1e-03, (1+df.z)*1e-03)
+                    if eq_err==1:
+                        print(bcolors.WARNING + "Warning: Equal Error Run" + bcolors.ENDC)
+                        scales = np.where(df['flag2'].values==3, (1)*1e-03, (1)*1e-03)
+                    else:
+                        scales = np.where(df['flag2'].values==3, (1+df.z)*1e-03, (1+df.z)*1e-03)
                     print('Scales is {}'.format(scales))
                 elif err_vals=='const_perc':
                     scales=np.where(df['flag2'].values==3, df.z/100, df.z/10)
