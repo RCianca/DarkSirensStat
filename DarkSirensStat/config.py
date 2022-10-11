@@ -20,7 +20,6 @@ fout = 'ET_2GW_rate_alone_equal_nolumerr_nofodder_fixedweights'
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=1
-fixed_weights=1
 EM=0
 #mock BNS dl
 #68 54 40 20 170817
@@ -117,7 +116,7 @@ band= 'K' # B, K, or None .
 # Average galaxy density in comoving volume, used if band='None'. A number, or 'auto' (only for mask completeness) 
 Nbar = 'auto'
 # Band for lum weights
-band_weight = 'K'  # B, K, or None . 
+band_weight = None  # B, K, or None . 
 
 
 
