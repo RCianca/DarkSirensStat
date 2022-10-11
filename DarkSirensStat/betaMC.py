@@ -445,10 +445,9 @@ class BetaMC:#(Beta):
                 
                 # add the lambda dependent GW prior weighting, put on top of the galaxy distribution (also use this a few lines below in the normalization sum!)
                 if fixed_weights==1:
-                    temp=wGalInside/wGalInside
-                    wGalInside=temp
+                    temp=wGalInside+0.000001
 
-                wGalInside *= myrate(zGalInside)*(1+zGalInside)**(self.lamb-1)
+                wGalInside *= (myrate(zGalInside)*(1+zGalInside)**(self.lamb-1))/temp
                 #wGalInside *= (1+zGalInside)**(self.lamb-1)
 
                 

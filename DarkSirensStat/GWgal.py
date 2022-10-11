@@ -204,8 +204,8 @@ class GWgal(object):
             weights *= (1+zGrid[np.newaxis, :])**(self.lamb-1)
             #Raul:try to exclud Lum weight
             if fixed_weights==1:
-                 temp=weights/weights
-                 weights=temp
+                temp=weights+0.0000001
+                 
             my_skymap = self.selectedGWevents[eventName].likelihood_px(rGrid[np.newaxis, :], pixels[:, np.newaxis])
 
              
@@ -225,7 +225,8 @@ class GWgal(object):
 
         
         else:
-            LL = np.sum(my_skymap*weights*myrate(zGrid)*((1+zGrid)**(self.lamb-1)))
+            #LL = np.sum(my_skymap*weights*myrate(zGrid))
+            LL = np.sum(my_skymap*weights*myrate(zGrid)/temp)
             #LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
         sky_to_return=np.sum(my_skymap)
