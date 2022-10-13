@@ -13,6 +13,7 @@ from config import forcePcopl
 from config import EM
 from config import myredshift
 from config import mysigz
+from config import rate
 from globals import *
 import pandas as pd
 from copy import deepcopy
@@ -207,8 +208,9 @@ class GWgal(object):
 
              
         else: # use Diracs
-            
-            pixels, zs, weights, norm, no_norm_weights =  self.gals.get_inhom(self.selectedGWevents[eventName].nside)
+            #print('I am in Dirac: GWgal.py')
+            #pixels, zs, weights, norm, no_norm_weights =  self.gals.get_inhom(self.selectedGWevents[eventName].nside)
+            pixels, zs, weights, norm=  self.gals.get_inhom(self.selectedGWevents[eventName].nside)
             
             rs = dLGW(zs, H0=H0, Xi0=Xi0, n=n)
             
@@ -218,11 +220,19 @@ class GWgal(object):
 
         #Raul: Try to add EM info
         if (EM==1):
-            LL = np.sum(my_skymap*weights*stats.norm.pdf(zGrid,loc=myredshift,scale=mysigz ))
-
-        
+            LL = np.sum(my_skymap*weights*stats.norm.pdf(zGrid,loc=myredshift,scale=mysigz ))        
         else:
-            LL = np.sum(my_skymap*weights*myrate(zGrid))
+            if self._galRedshiftErrors:
+                if rate==1:
+                    LL = np.sum(my_skymap*weights*myrate(zGrid))
+                else:
+                    LL = np.sum(my_skymap*weights)#*myrate(zGrid))
+            else :
+                #print('dirac')
+                if rate==1:
+                    LL = np.sum(my_skymap*weights*myrate(zs))#zs quando c'è Dirac
+                else:
+                    LL = np.sum(my_skymap*weights) 
             #LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
         sky_to_return=np.sum(my_skymap)
@@ -302,8 +312,8 @@ class GWgal(object):
             #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
 
         else:
-            LL = (H0/70)**3*np.mean(myrate(z)*jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
-            #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
+            #LL = (H0/70)**3*np.mean(myrate(z)*jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
+            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
         #LL=(H0/70)**3*np.mean(self.gauss(z,0.0098, 0.0004))
         return LL
     

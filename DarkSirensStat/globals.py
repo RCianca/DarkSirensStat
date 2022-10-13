@@ -80,12 +80,12 @@ MKSun=3.27
 
 # Cosmologival parameters used in GLADE for z-dL conversion
 H0GLADE=67
-Om0GLADE=0.27
+Om0GLADE=0.319
 
 # Cosmologival parameters used for the analysis (RT minimal; table 2 of 2001.07619)
 #H0GLOB=67.9 #69
 H0GLOB=67
-Om0GLOB=0.3
+Om0GLOB=0.319
 Xi0Glob =1.
 cosmoglob = FlatLambdaCDM(H0=H0GLOB, Om0=Om0GLOB)
 

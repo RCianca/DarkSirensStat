@@ -84,6 +84,7 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_host_alone.txt'
             #gname='GLADE_flagship_two_host_alone.txt'
             gname='GLADE_flagship_two_host_alone_nofodder.txt'
+            #gname='GLADE_flagship_two_host_samezdiffang.txt'
             #gname='GLADE_fakeBS_170817.txt'
             #gname='GLADE_fakeBS.txt'
             #gname='GLADE_fakeBS68.txt'
@@ -281,7 +282,7 @@ class GLADE(GalCat):
                 if err_vals=='GLADE':
                     if eq_err==1:
                         print(bcolors.WARNING + "Warning: Equal Error Run" + bcolors.ENDC)
-                        scales = np.where(df['flag2'].values==3, (1)*1e-03, (1)*1e-03)
+                        scales = np.where(df['flag2'].values==3, 0.001, 0.001)
                     else:
                         scales = np.where(df['flag2'].values==3, (1+df.z)*1e-03, (1+df.z)*1e-03)
                     print('Scales is {}'.format(scales))

@@ -17,6 +17,7 @@ from globals import myrate
 from keelin import *
 from betaHom import *
 from config import detector
+from config import rate
 
 
 from SNRtools import oSNR
@@ -445,8 +446,11 @@ class BetaMC:#(Beta):
                 
                 # add the lambda dependent GW prior weighting, put on top of the galaxy distribution (also use this a few lines below in the normalization sum!)
 
-
-                wGalInside *= (myrate(zGalInside)*(1+zGalInside)**(self.lamb-1))
+                if rate==1:
+                    if self.lamb==0:print('lamb is 0 but rate is active') 
+                    wGalInside *= (myrate(zGalInside)*(1+zGalInside)**(self.lamb-1))
+                else:
+                    wGalInside *= (1+zGalInside)**(self.lamb-1)
                 #wGalInside *= (1+zGalInside)**(self.lamb-1)
 
                 
