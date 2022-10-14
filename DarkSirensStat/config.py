@@ -15,12 +15,14 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'ET_2GW_rate_narowerr'
+fout = 'ET_2GW_rate_narowerr_nogallerr_nolum_fullcat'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=1
 rate=1
+## Specify the exponent of the redshift distribution , p(z) = dV/dz* (1+z)^(lamb-1)
+lamb=0
 EM=0
 #mock BNS dl
 #68 54 40 20 170817
@@ -57,8 +59,6 @@ print(detector)
 ## Specify which mass distribution to use. Options: O2, O3, NS-flat, NS-gauss
 massDist='O3'
 
-## Specify the exponent of the redshift distribution , p(z) = dV/dz* (1+z)^(lamb-1)
-lamb=0
 
 ## Specify parameters of the broken power law model
 gamma1=1.05

@@ -447,7 +447,7 @@ class BetaMC:#(Beta):
                 # add the lambda dependent GW prior weighting, put on top of the galaxy distribution (also use this a few lines below in the normalization sum!)
 
                 if rate==1:
-                    if self.lamb==0:print('lamb is 0 but rate is active') 
+                    if self.lamb==1:print('lamb is 1 but rate is active, lamba shoul be 0') 
                     wGalInside *= (myrate(zGalInside)*(1+zGalInside)**(self.lamb-1))
                 else:
                     wGalInside *= (1+zGalInside)**(self.lamb-1)
