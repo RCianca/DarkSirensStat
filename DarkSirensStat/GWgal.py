@@ -312,8 +312,11 @@ class GWgal(object):
             #LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
 
         else:
-            #LL = (H0/70)**3*np.mean(myrate(z)*jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
-            LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
+            if rate==1:
+                LL = (H0/70)**3*np.mean(myrate(z)*jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
+                #maybe set LL=0 if we force Pcompl
+            else:
+                LL = (H0/70)**3*np.mean(jac*(1+z)**(self.lamb-1)*self.gals.eval_hom(theta, phi, z))
         #LL=(H0/70)**3*np.mean(self.gauss(z,0.0098, 0.0004))
         return LL
     

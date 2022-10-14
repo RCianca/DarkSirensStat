@@ -418,7 +418,8 @@ class GalCompleted(object):
             
             
             weights = d.w.to_numpy().copy()
-            
+            print('Galcat.py: weights={}'.format(weights))
+            #Raul:print it then remove or make it possible to set weights to one
             redshifts = d.z.to_numpy()
             allredshifts.append(redshifts)
             
