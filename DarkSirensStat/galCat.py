@@ -433,11 +433,14 @@ class GalCompleted(object):
                    
                 # multiplicative completion
                 weights /= completeness
+                print('Galcat.py: completeness={}'.format(completeness))
                 # downweighted for low completeness
                 weights *= self.confidence(completeness)
+                print('Galcat.py: self.confidence(completeness)={}'.format(self.confidence(completeness)))
                
                 # catalog weighting based also on completeness
                 catweight = w*np.mean(completeness)
+                print('Galcat.py: catweight={}'.format(catweight))
                 weights *= catweight
                 catweightTotal += catweight
            
@@ -449,6 +452,8 @@ class GalCompleted(object):
         allweights = np.hstack(allweights)
         #nudeweights=allweights
         allweights /= catweightTotal
+        print('Galcat.py: catweightTotal={}'.format(catweightTotal))
+        print('Galcat.py: c._completeness._comovingDensityGoal={}'.format(c._completeness._comovingDensityGoal))
                    
         return np.hstack(allpixels), np.hstack(allredshifts), allweights, catweightTotal
     
