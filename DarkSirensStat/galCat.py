@@ -79,8 +79,9 @@ class GalCat(ABC):
         if not forcePcopl:
             return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
         else:
-            #return np.ones(theta.shape)
-            return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
+            return np.ones(theta.shape)
+            print('using forcePcopl in completeness')
+            #return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
 
 
     def group_correction(self, df, df_groups, which_z='z_cosmo'):
@@ -433,15 +434,15 @@ class GalCompleted(object):
                    
                 # multiplicative completion
                 weights /= completeness
-                print('Galcat.py: completeness={}'.format(completeness))
+                print('Galcat.py: completeness={}, new weights={}'.format(completeness,weights))
                 # downweighted for low completeness
                 weights *= self.confidence(completeness)
-                print('Galcat.py: self.confidence(completeness)={}'.format(self.confidence(completeness)))
+                print('Galcat.py: self.confidence(completeness)={}, new weights={}'.format(self.confidence(completeness),weights))
                
                 # catalog weighting based also on completeness
                 catweight = w*np.mean(completeness)
-                print('Galcat.py: catweight={}'.format(catweight))
                 weights *= catweight
+                print('Galcat.py: catweight={}, new weights={}'.format(catweight,weights))
                 catweightTotal += catweight
            
             # normalize in case different goals are used for different catalogs, to make them comparable
