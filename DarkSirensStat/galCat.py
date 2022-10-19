@@ -79,7 +79,7 @@ class GalCat(ABC):
         if not forcePcopl:
             return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
         else:
-            print('using forcePcopl in completeness')
+            #print('using forcePcopl in completeness')
             return np.ones(theta.shape)
             #return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
 
@@ -419,7 +419,7 @@ class GalCompleted(object):
             
             
             weights = d.w.to_numpy().copy()
-            print('Galcat.py: weights={}'.format(weights))
+            print('Galcat.py: (loaded) weights={}'.format(weights))
             #Raul:print it then remove or make it possible to set weights to one
             redshifts = d.z.to_numpy()
             allredshifts.append(redshifts)
@@ -434,10 +434,10 @@ class GalCompleted(object):
                    
                 # multiplicative completion
                 weights /= completeness
-                print('Galcat.py: completeness={}, new weights={}'.format(completeness,weights))
+                print('Galcat.py: completeness={}, new weights(/=completeness)={}'.format(completeness,weights))
                 # downweighted for low completeness
                 weights *= self.confidence(completeness)
-                print('Galcat.py: self.confidence(completeness)={}, new weights={}'.format(self.confidence(completeness),weights))
+                print('Galcat.py: self.confidence(completeness)={}, new weights(=*self..)={}'.format(self.confidence(completeness),weights))
                
                 # catalog weighting based also on completeness
                 catweight = w*np.mean(completeness)
@@ -446,7 +446,7 @@ class GalCompleted(object):
                 catweightTotal += catweight
            
             # normalize in case different goals are used for different catalogs, to make them comparable
-            weights /= c._completeness._comovingDensityGoal
+            #weights /= c._completeness._comovingDensityGoal
   
             allweights.append(weights)
             print('last mod weights={}'.format(weights))
