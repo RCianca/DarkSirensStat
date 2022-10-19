@@ -79,8 +79,8 @@ class GalCat(ABC):
         if not forcePcopl:
             return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
         else:
-            return np.ones(theta.shape)
             print('using forcePcopl in completeness')
+            return np.ones(theta.shape)
             #return self._completeness.get(theta, phi, z, oneZPerAngle) + 1e-9
 
 
