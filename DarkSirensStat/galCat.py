@@ -418,7 +418,7 @@ class GalCompleted(object):
             allpixels.append(d[pixname].to_numpy())
             
             
-            weights = d.w.to_numpy().copy()
+            weights = d.w.to_numpy().copy() # Get intrinsic weigts, this can be separately set to one
             print('Galcat.py: (loaded) weights={}'.format(weights))
             #Raul:print it then remove or make it possible to set weights to one
             redshifts = d.z.to_numpy()
@@ -433,10 +433,10 @@ class GalCompleted(object):
                 completeness = c.completeness(d.theta.to_numpy(), d.phi.to_numpy(), redshifts, oneZPerAngle = True)
                    
                 # multiplicative completion
-                weights /= completeness #see eq 3.70 
+                weights /= completeness #see eq 3.70 is the division
                 #print('Galcat.py: completeness={}, new weights(/=completeness)={}'.format(completeness,weights))
                 # downweighted for low completeness
-                weights *= self.confidence(completeness)# 3.71 with smooth step instead of theta. If forcePcompl, this is one
+                weights *= self.confidence(completeness)# 3.71 with smooth step instead of theta. If forcePcompl, this is one if we have forcePcompl
                 #print('Galcat.py: self.confidence(completeness)={}, new weights(=*self..)={}'.format(self.confidence(completeness),weights))
                
                 # catalog weighting based also on completeness
@@ -446,7 +446,7 @@ class GalCompleted(object):
                 catweightTotal += catweight
            
             # normalize in case different goals are used for different catalogs, to make them comparable
-            #weights /= c._completeness._comovingDensityGoal
+            weights /= c._completeness._comovingDensityGoal # Raul: why we need this, this look like nbar, the expected number of gal in a volume
   
             allweights.append(weights)
             #print('last mod weights={}'.format(weights))
