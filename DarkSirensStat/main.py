@@ -401,6 +401,7 @@ def main():
                 np.savetxt(weightsPath, liks[event][3])
                 print('weights normalization={}'.format(liks[event][4]))
                 print('Liks shape:{}'.format(len(liks)))
+                #print('Main: weighs={}'.format(liks[event][3]))
                 #np.savetxt(weightsNudePath, liks[event][5])
             print('Done.')
         else:

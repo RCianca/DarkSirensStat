@@ -429,31 +429,29 @@ class GalCompleted(object):
                 
             else:
            
-                # completeness eval for each gal
+                # completeness eval for each gal if forcePcompl==1 this is one
                 completeness = c.completeness(d.theta.to_numpy(), d.phi.to_numpy(), redshifts, oneZPerAngle = True)
                    
                 # multiplicative completion
-                weights /= completeness
-                print('Galcat.py: completeness={}, new weights(/=completeness)={}'.format(completeness,weights))
+                weights /= completeness #see eq 3.70 
+                #print('Galcat.py: completeness={}, new weights(/=completeness)={}'.format(completeness,weights))
                 # downweighted for low completeness
-                weights *= self.confidence(completeness)
-                print('Galcat.py: self.confidence(completeness)={}, new weights(=*self..)={}'.format(self.confidence(completeness),weights))
+                weights *= self.confidence(completeness)# 3.71 with smooth step instead of theta. If forcePcompl, this is one
+                #print('Galcat.py: self.confidence(completeness)={}, new weights(=*self..)={}'.format(self.confidence(completeness),weights))
                
                 # catalog weighting based also on completeness
                 catweight = w*np.mean(completeness)
-                weights *= catweight
-                print('Galcat.py: catweight={}, new weights={}'.format(catweight,weights))
+                weights *= catweight #volume is linked to the number of gals, so this is the integral in 3.70
+                #print('Galcat.py: catweight={}, new weights={}'.format(catweight,weights))
                 catweightTotal += catweight
            
             # normalize in case different goals are used for different catalogs, to make them comparable
             #weights /= c._completeness._comovingDensityGoal
   
             allweights.append(weights)
-            print('last mod weights={}'.format(weights))
+            #print('last mod weights={}'.format(weights))
            
         allweights = np.hstack(allweights)
-        #nudeweights=allweights
-        allweights /= catweightTotal
         print('allweights={}'.format(allweights))
         print('Galcat.py: catweightTotal={}'.format(catweightTotal))
         print('Galcat.py: c._completeness._comovingDensityGoal={}'.format(c._completeness._comovingDensityGoal))
