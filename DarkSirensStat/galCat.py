@@ -58,6 +58,7 @@ class GalCat(ABC):
 
         self.selectedData = self.data[mask]
         if self.verbose:
+            print('selectedData cols={}'.format(selectedData.columns))
             print('%s galaxies kept' %self.selectedData.shape[0])
         
     def set_z_range_for_selection(self, zMin, zMax):
