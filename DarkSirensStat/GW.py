@@ -89,6 +89,7 @@ class Skymap3D(object):
     def _read_O3(self, fname, convert_nested=True):
         
         skymap, metadata = fits.read_sky_map(fname, nest=None, distances=True) #Read the skymap
+        #print('metadata nest={}'.format(metadata['nest']))
         self.event_name = get_ename(fname, verbose=self.verbose)
         if self.verbose:
                 print('\nEvent: %s' %self.event_name)
@@ -197,7 +198,6 @@ class Skymap3D(object):
         input: theta phi in rad
         output: corresponding pixel with nside given by that of the skymap
         '''
-
         pix = hp.ang2pix(self.nside, theta, phi, nest=self.nest)
         return pix
 
