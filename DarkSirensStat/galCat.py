@@ -455,6 +455,7 @@ class GalCompleted(object):
             #print('last mod weights={}'.format(weights))
            
         allweights = np.hstack(allweights)
+        print('allpixels={}'.format(allpixels))
         print('allweights={}'.format(allweights))
         print('Galcat.py: catweightTotal={}'.format(catweightTotal))
         print('Galcat.py: c._completeness._comovingDensityGoal={}'.format(c._completeness._comovingDensityGoal))
