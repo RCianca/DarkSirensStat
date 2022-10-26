@@ -58,7 +58,9 @@ class GalCat(ABC):
 
         self.selectedData = self.data[mask]
         if self.verbose:
-            print('selectedData:\n {}'.format(self.selectedData))
+            print('Selected Galaxies')
+            with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+                print(self.selectedData)
             print('%s galaxies kept' %self.selectedData.shape[0])
         
     def set_z_range_for_selection(self, zMin, zMax):

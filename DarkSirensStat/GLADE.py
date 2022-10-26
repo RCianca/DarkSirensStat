@@ -87,8 +87,8 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_20rand_twohost.txt'
             #gname='GLADE_flagship_100rand_twohost.txt'
             #gname='GLADE_flagship_500rand_twohost.txt'
-            #gname='GLADE_flagship_500rand_sixhost.txt'
-            gname='GLADE_flagship_500rand_sixhost_05moved.txt'
+            gname='GLADE_flagship_500rand_sixhost.txt'
+            #gname='GLADE_flagship_500rand_sixhost_05moved.txt'
             #gname='GLADE_flagship_lineof03.txt'
             #gname='GLADE_flagship_lineof03_offline1.txt'
             #gname='GLADE_flagship_lineof03_offline2.txt'
@@ -297,7 +297,7 @@ class GLADE(GalCat):
                         scales = np.where(df['flag2'].values==3, 0.001, 0.001)
                     else:
                         scales = np.where(df['flag2'].values==3, (1+df.z)*1e-03, (1+df.z)*1e-03)
-                    print('Scales is {}'.format(scales))
+                    #print('Scales is {}'.format(scales))
                 elif err_vals=='const_perc':
                     scales=np.where(df['flag2'].values==3, df.z/100, df.z/10)
                 elif err_vals=='const':
