@@ -15,14 +15,14 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'ET_lineof05_offset2_norate'
+fout = 'ET_newmaps_6GW_rate'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=1
-rate=0
+rate=1
 ## Specify the exponent of the redshift distribution , p(z) = dV/dz* (1+z)^(lamb-1)
-lamb=1
+lamb=0
 EM=0
 #mock BNS dl
 #68 54 40 20 170817
@@ -81,8 +81,8 @@ zLimSelection='skymap'
 #subset_names = ['GW190924_021846','GW190527_092055','GW190814','GW190708_232457','GW190412','GW190421_213856','GW190708_232457','GW190915_235702']
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
-#subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221009']
-subset_names = ['GW221005']
+subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221009']
+#subset_names = ['GW221005']
 #subset_names =  None
 
 ## Select events based on completeness at the nominal position

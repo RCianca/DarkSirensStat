@@ -422,7 +422,7 @@ class GalCompleted(object):
             
             
             weights = d.w.to_numpy().copy() # Get intrinsic weigts, this can be separately set to one
-            print('Galcat.py: (loaded) weights={}'.format(weights))
+            #print('Galcat.py: (loaded) weights={}'.format(weights))
             #Raul:print it then remove or make it possible to set weights to one
             redshifts = d.z.to_numpy()
             allredshifts.append(redshifts)
@@ -455,10 +455,10 @@ class GalCompleted(object):
             #print('last mod weights={}'.format(weights))
            
         allweights = np.hstack(allweights)
-        print('allpixels={}'.format(allpixels))
-        print('allweights={}'.format(allweights))
-        print('Galcat.py: catweightTotal={}'.format(catweightTotal))
-        print('Galcat.py: c._completeness._comovingDensityGoal={}'.format(c._completeness._comovingDensityGoal))
+        #print('allpixels={}'.format(allpixels))
+        #print('allweights={}'.format(allweights))
+        #print('Galcat.py: catweightTotal={}'.format(catweightTotal))
+        #print('Galcat.py: c._completeness._comovingDensityGoal={}'.format(c._completeness._comovingDensityGoal))
                    
         return np.hstack(allpixels), np.hstack(allredshifts), allweights, catweightTotal
     
