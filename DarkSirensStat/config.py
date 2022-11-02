@@ -15,14 +15,14 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'ET_newmaps_6GW_rate'
+fout = 'ET_newmap_5000_6GW_norate'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
 forcePcopl=1
-rate=1
+rate=0
 ## Specify the exponent of the redshift distribution , p(z) = dV/dz* (1+z)^(lamb-1)
-lamb=0
+lamb=1
 EM=0
 #mock BNS dl
 #68 54 40 20 170817
