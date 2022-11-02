@@ -91,7 +91,8 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_500rand_sixhost.txt'
             #gname='GLADE_flagship_500rand_sixhost_05moved.txt'
             #gname='GLADE_flagship_5000rand_sixhost.txt'
-            gname='GLADE_flagship_500000rand_sixhost.txt'
+            #gname='GLADE_flagship_500000rand_sixhost.txt'
+            gname='GLADE_flagship_5000000rand_sixhost.txt'
             
             #gname='GLADE_flagship_lineof03.txt'
             #gname='GLADE_flagship_lineof03_offline1.txt'
