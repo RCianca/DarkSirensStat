@@ -44,7 +44,7 @@ class BetaMC:#(Beta):
                  mBreak=36.76,
                  #mass_params = {'alpha1': 1.05, 'mMax': 86.16, 'mBreak':36.7},
                  fullSNR=False,
-                 approximant='IMRPhenomXAS',
+                 approximant='IMRPhenomD',
                  ifo_SNR='HL' , # 'H': USES ONLY H1  # 'L': USES ONLY L1  # # 'HL': USES min H1, L1 
                  fit_hom=False,
                  **kwargs):

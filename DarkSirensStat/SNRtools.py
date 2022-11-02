@@ -63,7 +63,7 @@ class oSNR(object):
     
     '''
     
-    def __init__(self, from_file=True, psd_path=None, psd_name ='aLIGOEarlyHighSensitivityP1200087', psd_base_path=None, approximant='IMRPhenomXAS', force_recompute = False, verbose=False):
+    def __init__(self, from_file=True, psd_path=None, psd_name ='aLIGOEarlyHighSensitivityP1200087', psd_base_path=None, approximant='IMRPhenomD', force_recompute = False, verbose=False):
         
         self.from_file=from_file
         if from_file:
@@ -314,7 +314,7 @@ ifos = {'L1': 'Livingston', 'H1': 'Hanford'}
         
 
 
-def tabulate_SNR_from_files(approximant='IMRPhenomXAS', npoints=200, mmin=1., mmax=1000., dL_pivot_Gpc=1., deltaf=1./40 , store=True, force_recompute=False):
+def tabulate_SNR_from_files(approximant='IMRPhenomD', npoints=200, mmin=1., mmax=1000., dL_pivot_Gpc=1., deltaf=1./40 , store=True, force_recompute=False):
       
     
 
@@ -334,7 +334,7 @@ def tabulate_SNR_from_files(approximant='IMRPhenomXAS', npoints=200, mmin=1., mm
  
     
  
-def tabulate_SNR_from_analytic(psd_name, approximant='IMRPhenomXAS', npoints=200, mmin=1., mmax=1000., dL_pivot_Gpc=1., deltaf=1./40 , store=True, force_recompute=False):
+def tabulate_SNR_from_analytic(psd_name, approximant='IMRPhenomD', npoints=200, mmin=1., mmax=1000., dL_pivot_Gpc=1., deltaf=1./40 , store=True, force_recompute=False):
       
     
 
@@ -357,7 +357,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--from_file", default=0., type=float, required=True)
     parser.add_argument("--psd_name", default='aLIGOEarlyHighSensitivityP1200087', type=str, required=False)
-    parser.add_argument("--approximant", default='IMRPhenomXAS', type=str, required=False)
+    parser.add_argument("--approximant", default='IMRPhenomD', type=str, required=False)
     parser.add_argument("--npoints", default=200, type=float, required=False) 
     parser.add_argument("--mmin", default=1., type=float, required=False)
     parser.add_argument("--mmax", default=1000., type=float, required=False)
