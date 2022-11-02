@@ -81,6 +81,7 @@ class GLADE(GalCat):
             #gname='GLADE_2.4.txt'on
             #gname='GLADE_flagship.txt'
             #gname='GLADE_flagship_host.txt'
+            
             #gname='GLADE_flagship_host_alone.txt'
             #gname='GLADE_flagship_two_host_alone.txt'
             #gname='GLADE_flagship_two_host_alone_nofodder.txt'
@@ -89,7 +90,8 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_500rand_twohost.txt'
             #gname='GLADE_flagship_500rand_sixhost.txt'
             #gname='GLADE_flagship_500rand_sixhost_05moved.txt'
-            gname='GLADE_flagship_5000rand_sixhost.txt'
+            #gname='GLADE_flagship_5000rand_sixhost.txt'
+            gname='GLADE_flagship_500000rand_sixhost.txt'
             
             #gname='GLADE_flagship_lineof03.txt'
             #gname='GLADE_flagship_lineof03_offline1.txt'
