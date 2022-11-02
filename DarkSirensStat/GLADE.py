@@ -94,6 +94,7 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_500000rand_sixhost.txt'
             gname='GLADE_flagship_5000000rand_sixhost.txt'
             
+            
             #gname='GLADE_flagship_lineof03.txt'
             #gname='GLADE_flagship_lineof03_offline1.txt'
             #gname='GLADE_flagship_lineof03_offline2.txt'
