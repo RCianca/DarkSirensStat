@@ -720,10 +720,10 @@ class BetaMC:#(Beta):
             QsqET = Qsq(costhetaET, phiET, cosinclsample)
        
 
-        return self._SNR(m1, m2, zsample, H0, Xi0, QsqL, QsqH)
+        return self._SNR(m1, m2, zsample, H0, Xi0, QsqL, QsqH,QsqET)
          
     
-    def _SNR(self, m1, m2, z, H0, Xi0, QsqL, QsqH):
+    def _SNR(self, m1, m2, z, H0, Xi0, QsqL, QsqH,QsqET):
         
         m1=np.asarray(m1)
         m2=np.asarray(m2)
@@ -775,10 +775,10 @@ class BetaMC:#(Beta):
             
             
         else:
-            return self._SNR1stOrder(m1, m2, z, H0, Xi0, QsqL, QsqH)
+            return self._SNR1stOrder(m1, m2, z, H0, Xi0, QsqL, QsqH, QsqET)
 
 
-    def _SNR1stOrder(self, m1, m2, z, H0, Xi0, QsqL, QsqH):
+    def _SNR1stOrder(self, m1, m2, z, H0, Xi0, QsqL, QsqH, QsqET):
         mtot = m1 + m2
         Mc = (m1*m2)**(0.6)/mtot**(0.2)
         h7 = H0/pivot
@@ -803,11 +803,14 @@ class BetaMC:#(Beta):
         
         SNR_L = np.zeros(m1.shape)
         SNR_H = np.zeros(m1.shape)
+        SNR_ET = np.zeros(m1.shape)
         
         if 'L' in self.ifo_SNR:
             SNR_L = fac * np.sqrt(QsqL*np.interp(fGW, self.freq["L"], self.integr["L"]))
         if 'H' in self.ifo_SNR:
             SNR_H = fac * np.sqrt(QsqH*np.interp(fGW, self.freq["H"], self.integr["H"]))
+        if 'ET' in self.ifo_SNR:
+            SNR_ET = fac * np.sqrt(QsqET*np.interp(fGW, self.freq["ET"], self.integr["ET"]))
        
         if self.ifo_SNR=='HL':
                 return np.minimum(SNR_L, SNR_H)
@@ -815,6 +818,8 @@ class BetaMC:#(Beta):
                 return SNR_H
         elif self.ifo_SNR=='L':
                 return SNR_L
+        elif self.ifo_SNR=='ET':
+                return SNR_ET
         
     # searches for the redshift after which no more events will be detected, depending on H0 and Xi0.
     # search is carried out until self.zmax, if it needs to be. Usually no search is necessary.
@@ -832,7 +837,7 @@ class BetaMC:#(Beta):
         def SNRmax(z):
             def goal(m):
                 # assume perfect orientation for both but take min: this means that we look at sources perfectly oriented for the weaker detector, which is the limiting criterion in our detection decision elsewhere
-                return -self._SNR(m, m, z, H0, Xi0, QsqL=1, QsqH=1)
+                return -self._SNR(m, m, z, H0, Xi0, QsqL=1, QsqH=1,QsqET=1)
             # (minimize -min is indeed maximize min, so maximize the weaker one)
             res = minimize_scalar(goal, bounds = (self.mMin, self.mMax), method='bounded')
             if res.success == False:
