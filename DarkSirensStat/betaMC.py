@@ -23,7 +23,7 @@ from config import rate
 from SNRtools import oSNR
 
 class BetaMC:#(Beta):
-    
+    pivot=67
     def __init__(self, priorlimits, selector,
                  gals = None, 
                  nSamples=40000, 
@@ -45,12 +45,14 @@ class BetaMC:#(Beta):
                  #mass_params = {'alpha1': 1.05, 'mMax': 86.16, 'mBreak':36.7},
                  fullSNR=False,
                  approximant='IMRPhenomD',
-                 ifo_SNR='HL' , # 'H': USES ONLY H1  # 'L': USES ONLY L1  # # 'HL': USES min H1, L1 
+                 ifo_SNR='HL' , # 'H': USES ONLY H1  # 'L': USES ONLY L1  # # 'HL': USES min H1, L1 ET
                  fit_hom=False,
                  **kwargs):
     
-        
-        self.ifo_SNR = ifo_SNR
+        if detector==ET:
+            self.ifo_SNR = 'ET'
+        else:
+            self.ifo_SNR = ifo_SNR
         self.fullSNR=fullSNR
         self.lamb=lamb
         self._gals = gals
@@ -140,7 +142,7 @@ class BetaMC:#(Beta):
         if fullSNR:
             
             self.SNRtables={}
-            for detectorname in ["L", "H"]:
+            for detectorname in sel.filenames:
                 if detectorname in self.ifo_SNR:
                     filepath = os.path.join(detectorPath, self.filenames[detectorname])
                     print('BetaMC:detectorname={}, filepath={}'.format(detectorname,filepath))
@@ -154,9 +156,11 @@ class BetaMC:#(Beta):
         elif self.ifo_SNR=='H':
                 print('Detection model: must have SNR>%s  in Hanford '%self.SNRthresh)
         elif self.ifo_SNR=='L':
-                print('Detection model: must have SNR>%s  in Livingston '%self.SNRthresh) 
+                print('Detection model: must have SNR>%s  in Livingston '%self.SNRthresh)
+        elif self.ifo_SNR=='ET':
+                print('Detection model: must have SNR>%s  in ET '%self.SNRthresh)  
         else:
-            raise ValueError('ifo_SNR must havone of the values: H , L , HL')
+            raise ValueError('ifo_SNR must havone of the values: H , L , HL,ET')
         
         if verbose:
             if self._properAnisotropy:
@@ -181,7 +185,7 @@ class BetaMC:#(Beta):
             
             # assume perfect orientation for both but take min: this means that we look at sources perfectly oriented for the weaker detector, which is the limiting criterion in our detection decision elsewhere
             # (minimize -min is indeed maximize min, -> maximize the weaker one)
-            val = -self._SNR(m/(1+zPiv), m/(1+zPiv), zPiv, H0=70, Xi0=1, QsqL=1, QsqH=1)*dL70fast(zPiv) #Independent of zPiv, H0, Xi0
+            val = -self._SNR(m/(1+zPiv), m/(1+zPiv), zPiv, H0=pivot, Xi0=1, QsqL=1, QsqH=1)*dL70fast(zPiv) #Independent of zPiv, H0, Xi0
             # guide optimizer to low masses since _SNR returns a flat 0 for too heavy BHs and it might run to the upper mass bound then
             if np.fabs(val) < 0.001:
                 val = m
@@ -210,11 +214,11 @@ class BetaMC:#(Beta):
             self.dMaxReal = (self.SNRmaxNumerator)/(self.SNRthresh-self.SNRsigmas*self._sigmaSNR)
             
             if self.verbose:
-                print("Maximal (theoretical) detector reach for {} is {:.1f} Mpc, corresponding to z = {:.2}, ({:.2} - {:.2})".format(observingRun, self.dMax, z_from_dLGW_fast(self.dMax, H0=70, Xi0=1, n=nGlob),  z_from_dLGW_fast(self.dMax, H0=priorlimits.H0min, Xi0=priorlimits.Xi0max, n=nGlob),  z_from_dLGW_fast(self.dMax, H0=priorlimits.H0max, Xi0=priorlimits.Xi0min, n=nGlob)))
+                print("Maximal (theoretical) detector reach for {} is {:.1f} Mpc, corresponding to z = {:.2}, ({:.2} - {:.2})".format(observingRun, self.dMax, z_from_dLGW_fast(self.dMax, H0=pivot, Xi0=1, n=nGlob),  z_from_dLGW_fast(self.dMax, H0=priorlimits.H0min, Xi0=priorlimits.Xi0max, n=nGlob),  z_from_dLGW_fast(self.dMax, H0=priorlimits.H0max, Xi0=priorlimits.Xi0min, n=nGlob)))
                 
                 if fluctuatingSNR:
             
-                    print("Maximal detector reach with SNR noise for {} is {:.1f} Mpc, corresponding to z = {:.2}, ({:.2} - {:.2})".format(observingRun, self.dMaxReal, z_from_dLGW_fast(self.dMaxReal, H0=70, Xi0=1, n=nGlob),  z_from_dLGW_fast(self.dMaxReal, H0=priorlimits.H0min, Xi0=priorlimits.Xi0max, n=nGlob),  z_from_dLGW_fast(self.dMaxReal, H0=priorlimits.H0max, Xi0=priorlimits.Xi0min, n=nGlob)))
+                    print("Maximal detector reach with SNR noise for {} is {:.1f} Mpc, corresponding to z = {:.2}, ({:.2} - {:.2})".format(observingRun, self.dMaxReal, z_from_dLGW_fast(self.dMaxReal, H0=pivot, Xi0=1, n=nGlob),  z_from_dLGW_fast(self.dMaxReal, H0=priorlimits.H0min, Xi0=priorlimits.Xi0max, n=nGlob),  z_from_dLGW_fast(self.dMaxReal, H0=priorlimits.H0max, Xi0=priorlimits.Xi0min, n=nGlob)))
                 
         
         self.zmax = z_from_dLGW(self.dMaxReal, H0=priorlimits.H0max, Xi0=priorlimits.Xi0min, n=nGlob)
@@ -236,10 +240,11 @@ class BetaMC:#(Beta):
                 print('using ET noise')
                 self.filenames["L"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
                 self.filenames["H"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
+                self.filenames["ET"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt' #Load the noise
 
         
         if not self.fullSNR:
-            for detectorname in ["L", "H"]:
+            for detectorname in self.filenames:  # Now we can have how may detector we want
                 
                 if detectorname in self.ifo_SNR:
                     filepath = os.path.join(detectorPath, self.filenames[detectorname])
@@ -685,6 +690,7 @@ class BetaMC:#(Beta):
        
         costhetaL, phiL = self._equat2detector('livingston', costhetasample, phisample, tsample)
         costhetaH, phiH = self._equat2detector('hanford', costhetasample, phisample, tsample)
+        costhetaET, phiET = self._equat2detector('EinstTel', costhetasample, phisample, tsample)
        
         cosinclsample = 1-2*np.random.uniform(size=nSamples)
        
@@ -710,6 +716,8 @@ class BetaMC:#(Beta):
             QsqL = Qsq(costhetaL, phiL, cosinclsample)
         if 'H' in self.ifo_SNR:
             QsqH = Qsq(costhetaH, phiH, cosinclsample)
+        if 'ET' in self.ifo_SNR:
+            QsqET = Qsq(costhetaET, phiET, cosinclsample)
        
 
         return self._SNR(m1, m2, zsample, H0, Xi0, QsqL, QsqH)
@@ -726,7 +734,7 @@ class BetaMC:#(Beta):
         if self.fullSNR:
             # call interpolator
                         
-            h7 = H0/70
+            h7 = H0/pivot
             # dist should be in Gpc for input of oSNR
             dist_true = Xi(z=z, Xi0=Xi0,n=nGlob)*dL70fast(z)/h7*1e-3
             
@@ -746,11 +754,14 @@ class BetaMC:#(Beta):
             
             SNR_L = np.zeros(m1.shape)
             SNR_H = np.zeros(m1.shape)
+            SNR_ET = np.zeros(m1.shape)
             
             if 'L' in self.ifo_SNR:
                 SNR_L[keep] = self.SNRtables["L"].get_oSNR(m1det[keep], m2det[keep], dist_true)*np.sqrt(QsqL)
             if 'H' in self.ifo_SNR:
                 SNR_H[keep] = self.SNRtables["H"].get_oSNR(m1det[keep], m2det[keep], dist_true)*np.sqrt(QsqH)
+            if 'ET' in self.ifo_SNR:
+                SNR_ET[keep] = self.SNRtables["ET"].get_oSNR(m1det[keep], m2det[keep], dist_true)*np.sqrt(QsqET)
             
             
             if self.ifo_SNR=='HL':
@@ -759,6 +770,8 @@ class BetaMC:#(Beta):
                 return SNR_H
             elif self.ifo_SNR=='L':
                 return SNR_L
+            elif self.ifo_SNR=='ET':
+                return SNR_ET
             
             
         else:
@@ -768,7 +781,7 @@ class BetaMC:#(Beta):
     def _SNR1stOrder(self, m1, m2, z, H0, Xi0, QsqL, QsqH):
         mtot = m1 + m2
         Mc = (m1*m2)**(0.6)/mtot**(0.2)
-        h7 = H0/70
+        h7 = H0/pivot
         dist_true = Xi(z=z, Xi0=Xi0,n=nGlob)*dL70fast(z)/h7
        
         Mc *= (1+z)
@@ -895,6 +908,24 @@ class BetaMC:#(Beta):
                 
             elif detector == 'hanford':
             
+                c = np.cos(0.513263 + 2*np.pi*t)
+                s = -np.sin(0.513263 + 2*np.pi*t)
+                
+                trafos[:,0,0] = 0.586405*c + 0.587785*s
+                trafos[:,0,1] = 0.587785*c - 0.586405*s
+                trafos[:,0,2] = 0.557348
+                
+                trafos[:,1,0] = -0.426048*c + 0.809017*s
+                trafos[:,1,1] = 0.809017*c + 0.426048*s
+                trafos[:,1,2] = -0.404937
+                
+                trafos[:,2,0] = -0.688921*c
+                trafos[:,2,1] =  0.688921*s
+                trafos[:,2,2] =  0.724837
+
+            elif detector=='EinstTel':
+                print('usingET with Hanford Coord')
+
                 c = np.cos(0.513263 + 2*np.pi*t)
                 s = -np.sin(0.513263 + 2*np.pi*t)
                 

@@ -29,6 +29,7 @@ windows = { 'H1O3': 10.,
             'H1O2': 4,
             'H1ET':20.,
             'L1ET':20.,
+            'ET':20  #Added ET: find how this work
           }
 
 
@@ -38,6 +39,7 @@ filenames = { 'H1O3': 'O3-H1-C01_CLEAN_SUB60HZ-1251752040.0_sensitivity_strain_a
             'H1O2': '2017-06-10_DCH_C02_H1_O2_Sensitivity_strain_asd.txt',
              'H1ET': 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt',
              'L1ET': 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt',
+             'ET': 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt',  #Added ET: find how this work
             }
 
 
