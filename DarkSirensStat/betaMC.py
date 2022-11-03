@@ -142,7 +142,7 @@ class BetaMC:#(Beta):
         if fullSNR:
             
             self.SNRtables={}
-            for detectorname in sel.filenames:
+            for detectorname in self.filenames:
                 if detectorname in self.ifo_SNR:
                     filepath = os.path.join(detectorPath, self.filenames[detectorname])
                     print('BetaMC:detectorname={}, filepath={}'.format(detectorname,filepath))
@@ -241,6 +241,7 @@ class BetaMC:#(Beta):
                 self.filenames["L"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
                 self.filenames["H"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
                 self.filenames["ET"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt' #Load the noise
+                print(len(self.filenames))
 
         
         if not self.fullSNR:
