@@ -185,7 +185,7 @@ class BetaMC:#(Beta):
             
             # assume perfect orientation for both but take min: this means that we look at sources perfectly oriented for the weaker detector, which is the limiting criterion in our detection decision elsewhere
             # (minimize -min is indeed maximize min, -> maximize the weaker one)
-            val = -self._SNR(m/(1+zPiv), m/(1+zPiv), zPiv, H0=pivot, Xi0=1, QsqL=1, QsqH=1)*dL70fast(zPiv) #Independent of zPiv, H0, Xi0
+            val = -self._SNR(m/(1+zPiv), m/(1+zPiv), zPiv, H0=pivot, Xi0=1, QsqL=1, QsqH=1,QsqET=1)*dL70fast(zPiv) #Independent of zPiv, H0, Xi0
             # guide optimizer to low masses since _SNR returns a flat 0 for too heavy BHs and it might run to the upper mass bound then
             if np.fabs(val) < 0.001:
                 val = m
@@ -233,15 +233,15 @@ class BetaMC:#(Beta):
         if self._observingRun == 'O2':
             self.filenames["L"] = '2017-08-06_DCH_C02_L1_O2_Sensitivity_strain_asd.txt'
             self.filenames["H"] = '2017-06-10_DCH_C02_H1_O2_Sensitivity_strain_asd.txt'
-        elif self._observingRun == 'O3':
+        elif ((self._observingRun == 'O3') and (detector != 'ET')):
             self.filenames["L"] = 'O3-L1-C01_CLEAN_SUB60HZ-1240573680.0_sensitivity_strain_asd.txt'
             self.filenames["H"] = 'O3-H1-C01_CLEAN_SUB60HZ-1251752040.0_sensitivity_strain_asd.txt'
-            if detector=='ET':
-                print('using ET noise')
-                self.filenames["L"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
-                self.filenames["H"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
-                self.filenames["ET"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt' #Load the noise
-                print(len(self.filenames))
+        elif detector=='ET':
+            print('using ET noise')
+            #self.filenames["L"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
+            #self.filenames["H"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt'
+            self.filenames["ET"] = 'ET-0000A-18_ETDSensitivityCurveTxtFile.txt' #Load the noise
+            print(len(self.filenames))
 
         
         if not self.fullSNR:
@@ -749,6 +749,8 @@ class BetaMC:#(Beta):
                 QsqL = QsqL[keep]
             if not np.isscalar(QsqH):
                 QsqH = QsqH[keep]
+            if not np.isscalar(QsqET):
+                QsqET = QsqET[keep]
             if not np.isscalar(z):
                 z = z[keep]
                 dist_true=dist_true[keep]
