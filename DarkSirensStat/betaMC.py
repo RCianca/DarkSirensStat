@@ -45,11 +45,11 @@ class BetaMC:#(Beta):
                  #mass_params = {'alpha1': 1.05, 'mMax': 86.16, 'mBreak':36.7},
                  fullSNR=False,
                  approximant='IMRPhenomD',
-                 ifo_SNR='HL' , # 'H': USES ONLY H1  # 'L': USES ONLY L1  # # 'HL': USES min H1, L1 ET
+                 ifo_SNR='ET' , # 'H': USES ONLY H1  # 'L': USES ONLY L1  # # 'HL': USES min H1, L1 ET
                  fit_hom=False,
                  **kwargs):
     
-        if detector==ET:
+        if detector=='ET':
             self.ifo_SNR = 'ET'
         else:
             self.ifo_SNR = ifo_SNR
