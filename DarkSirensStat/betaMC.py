@@ -932,7 +932,7 @@ class BetaMC:#(Beta):
                 trafos[:,2,2] =  0.724837
 
             elif detector=='EinstTel':
-                print('usingET with Hanford Coord')
+                #print('usingET with Hanford Coord')
 
                 c = np.cos(0.513263 + 2*np.pi*t)
                 s = -np.sin(0.513263 + 2*np.pi*t)
