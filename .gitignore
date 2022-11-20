@@ -22,5 +22,7 @@ DSCatalogueCreator/mass_ratio.txt
 DSCatalogueCreator/secondaryMasses.txt
 DSCatalogueCreator/allpsi.txt
 DSCatalogueCreator/*.png
+DSCatalogueCreator/EVA02_detected12_oneyear.fits
+DSCatalogueCreator/wrongsnrEVA02.fits
 
 

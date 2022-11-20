@@ -115,7 +115,7 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_5000incr.txt'
             #-------------cone increment----------------
             #gname='GLADE_flagship_cone05_10incr.txt'
-            gname='GLADE_flagship_cone05_100incr.txt'
+            #gname='GLADE_flagship_cone05_100incr.txt'
             #gname='GLADE_flagship_cone05_500incr.txt'
             #gname='GLADE_flagship_cone05_1000incr.txt'
             #gname='GLADE_flagship_cone05_2000incr.txt'
@@ -138,7 +138,8 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_lineof07.txt'
             #gname='GLADE_flagship_angulardisp05.txt'
             #gname='GLADE_flagship_angulardisp05_newsig.txt'
-            
+            #--------------Volume---------------------------
+            gname='GLADE_flagship_volume_host.txt'
             #gname='GLADE_flagship_two_host_samezdiffang.txt'
             #gname='GLADE_fakeBS_170817.txt'
             #gname='GLADE_fakeBS.txt'

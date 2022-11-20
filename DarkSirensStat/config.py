@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'ET_cone'
+fout = 'Flag_volume_comp_20DS'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -82,8 +82,8 @@ zLimSelection='skymap'
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
 #subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221009']
-subset_names = ['GW221005']
-#subset_names =  None
+#subset_names = ['GW221005']
+subset_names =  None
 
 ## Select events based on completeness at the nominal position
 select_events=True
