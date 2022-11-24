@@ -14,7 +14,7 @@
 from beta import Beta
 from globals import *
 from scipy.integrate import quad
-
+pivot=67
 class BetaHom(Beta):
     
     def __init__(self, dMax, zR=10, **kwargs):
@@ -43,7 +43,7 @@ class BetaHom(Beta):
     
         # exact forumla without integrals, but beware the normalization being different
         z = z_from_dLGW(self.dMax, Xi0=Xi0, n=nGlob, H0 = H0)
-        return (H0/70)**3 / ( Xi(z, Xi0, n=nGlob)*(1+z) )**3
+        return (H0/pivot)**3 / ( Xi(z, Xi0, n=nGlob)*(1+z) )**3
         
     
     

@@ -167,7 +167,7 @@ nHomSamples=15000
 which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
-betaHomdMax = 600 #roughly O3 
+betaHomdMax = 'flat' #roughly O3 
 #betaHomMax = 425.7 # O2 
 
 
