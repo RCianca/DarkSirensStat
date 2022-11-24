@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'Flag_volume_comp_20DS'
+fout = 'Flag_volume_cone14_zcenter_20DS'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -82,8 +82,13 @@ zLimSelection='skymap'
 #subset_names = ['GW220803','GW220804','GW220805','GW220806','GW220807','GW220808','GW220809']
 #subset_names = ['GW220810']
 #subset_names = ['GW221003','GW221004','GW221005','GW221006','GW221007','GW221009']
-#subset_names = ['GW221005']
-subset_names =  None
+subset_names = ['GW22159','GW221439','GW221418','GW221437','GW221457','GW221416','GW221435','GW221455','GW221414','GW221433','GW221453','GW221412','GW221432','GW221452','GW221411','GW221430','GW221450','GW221409','GW221448','GW221438']#20 ma non in linea
+#subset_names = ['GW221400','GW221401','GW221402','GW221403','GW221404','GW221405','GW221406','GW221407','GW221408','GW221409','GW221410','GW221411','GW221412','GW221413','GW221414','GW221415','GW221416','GW221417','GW221418','GW221419','GW221420','GW221421','GW221422','GW221423','GW221424']#25
+#subset_names = ['GW221400','GW221401','GW221402','GW221403','GW221404','GW221405','GW221406','GW221407','GW221408','GW221409','GW221410','GW221411','GW221412','GW221413','GW221414','GW221415','GW221416','GW221417','GW221418','GW221419']#20
+#subset_names = ['GW221402','GW221403','GW221404','GW221405','GW221406','GW221407','GW221408','GW221409','GW221410','GW221411','GW221412','GW221413','GW221414','GW221415','GW221416']#15
+#subset_names = ['GW221405','GW221406','GW221407','GW221408','GW221409','GW221410','GW221411','GW221412','GW221413','GW221414']#10
+#subset_names = ['GW221408','GW221409','GW221410','GW221411','GW221412']#5
+#subset_names =  None
 
 ## Select events based on completeness at the nominal position
 select_events=True
@@ -159,7 +164,7 @@ nHomSamples=15000
 # --------------------------------------------------------------
 
 ## Which beta to use. 'fit', 'MC', 'hom', 'cat'
-which_beta = 'MC'
+which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
 betaHomdMax = 600 #roughly O3 
@@ -171,7 +176,7 @@ zR = 10
 # n of MC samples for beta MC
 nSamplesBetaMC= 250000
 nUseCatalogBetaMC = True
-SNRthresh=8
+SNRthresh=100
 
 # Use SNR at all orders or 1st order approximation.
 # SNR at all orders is computed from a pre-computed grid
