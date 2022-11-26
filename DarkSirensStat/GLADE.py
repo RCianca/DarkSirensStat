@@ -150,7 +150,8 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_volume_cone_15000_host.txt'
             #gname='GLADE_flagship_volume_cone_18000_host.txt'
             #gname='GLADE_flagship_cone13_host.txt'
-            gname='GLADE_flagship_cone14_host.txt'
+            #gname='GLADE_flagship_cone14_host.txt'
+            gname='GLADE_flagship_cone15_host.txt'
             
             #gname='GLADE_flagship_two_host_samezdiffang.txt'
             #gname='GLADE_fakeBS_170817.txt'
