@@ -276,7 +276,7 @@ def z_from_dLGW(dL_GW_val, H0, Xi0, n):
     from scipy.optimize import fsolve
     #print(cosmo.H0)
     func = lambda z : dLGW(z, H0, Xi0, n=n) - dL_GW_val
-    z = fsolve(func, 0.5)
+    z = fsolve(func, 0.77)
     return z[0]
 
 def dVdcom_dVdLGW(z, H0, Xi0, n):
