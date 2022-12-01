@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'Flag_volume_cone15_5_00DS'
+fout = 'Flag_volume_cone16_10DS'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -79,9 +79,17 @@ zLimSelection='skymap'
 ## Names of events to analyse. If None, all events in the folder will be used
 #subset_names = ['GW221501'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #------------------------Pre-selected-runs----------------------------------
-#subset_names = ['GW221500','GW221501','GW221502','GW221503','GW221504','GW221505','GW221506','GW221507','GW221508','GW221509']
 
-subset_names = ['GW221520','GW221521','GW221522','GW221523','GW221524']
+subset_names = ['GW221600','GW221611','GW221602','GW221613','GW221604','GW221615','GW221606','GW221617','GW221608','GW221619']
+
+#subset_names = ['GW221500','GW221511','GW221502','GW221513','GW221504','GW221515','GW221506','GW221517','GW221508','GW221519','GW221520','GW221531','GW221522','GW221533','GW221524','GW221535','GW221526','GW221537','GW221528','GW221539']
+
+#subset_names = ['GW221500','GW221511','GW221502','GW221513','GW221504','GW221515','GW221506','GW221517','GW221508','GW221519','GW221520','GW221531','GW221522','GW221533','GW221524']
+
+#subset_names = ['GW221500','GW221511','GW221502','GW221513','GW221504','GW221515','GW221506','GW221517','GW221508','GW221519']
+
+
+#subset_names = ['GW221520']
 
 #subset_names = ['GW221400','GW221421','GW221441','GW221402','GW221423','GW221443','GW221404','GW221425','GW221445','GW221406']#10 ma non in linea
 #subset_names = ['GW221459','GW221408','GW221405','GW221420','GW221427','GW221429','GW221401','GW221434','GW221449','GW221447']#10 ma non in linea
@@ -169,7 +177,7 @@ nHomSamples=15000
 which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
-betaHomdMax =1000 #600 roughly O3 #1000 for ET  
+betaHomdMax =300 #600 roughly O3 #1000 for ET  
 #betaHomMax = 425.7 # O2 
 
 
