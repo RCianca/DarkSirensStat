@@ -275,6 +275,9 @@ class GWgal(object):
         '''
         Computes likelihood homogeneous part for one event
         '''
+        if forcePcopl==1:
+            LL=0
+        return LL
         
         theta, phi, r = self.selectedGWevents[eventName].sample_posterior(nSamples=self.nHomSamples)
         

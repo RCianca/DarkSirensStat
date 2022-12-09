@@ -154,8 +154,20 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_cone15_host.txt'
             #gname='GLADE_flagship_cone16_host.txt'
             #-----------------volume comoving-------------------------
-            gname='GLADE_flagship_cone15_host_dc.txt'
+            #gname='GLADE_flagship_cone15_host_dc.txt'
             #gname='GLADE_flagship_cone16_host_dc.txt'
+            #gname='GLADE_flagship_cone17_host_dc.txt'
+            gname='GLADE_flagship_cone19_host_dc.txt'
+            #-------------line-----------------------------------------
+            #gname='host_of_GW2216xx.txt'
+            #gname='GLADE_line16_50_host.txt'
+            #gname='GLADE_line16_10_host.txt'
+            #gname='GLADE_line16_113.txt'
+            #gname='GLADE_line18_11.txt'
+            #gname='GLADE_line18_20.txt'
+            #gname='GLADE_line18_31.txt'
+            #gname='GLADE_line18_50.txt'
+            #gname='GLADE_line18_20_allhost.txt'
             
             #gname='GLADE_flagship_two_host_samezdiffang.txt'
             #gname='GLADE_fakeBS_170817.txt'

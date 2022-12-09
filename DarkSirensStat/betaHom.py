@@ -17,7 +17,7 @@ from scipy.integrate import quad
 pivot=67
 class BetaHom(Beta):
     
-    def __init__(self, dMax, zR=10, **kwargs):
+    def __init__(self, dMax, zR=20, **kwargs):
         Beta.__init__(self, **kwargs)
         self.dMax=dMax
         self.zR=zR
