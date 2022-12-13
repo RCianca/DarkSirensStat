@@ -138,9 +138,9 @@ def trunc_gaussian_pdf(x, mu = 1, sigma = 1, lower = 0):
 #        if sigma.ndim < 2:
 #            sigma = sigma[:, np.newaxis]
     
-    
+    #sigma=x*0.1
     Phialpha = 0.5*erfc(-(lower-mu)/(np.sqrt(2)*sigma))
-
+    #print('sigma is {} len is {}'.format(sigma,len(sigma)))
     return np.where(x>0, 1/(np.sqrt(2*np.pi)*sigma)/(1-Phialpha) * np.exp(-(x-mu)**2/(2*sigma**2)) ,0.)
     
 ###########################

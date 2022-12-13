@@ -157,7 +157,7 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_cone15_host_dc.txt'
             #gname='GLADE_flagship_cone16_host_dc.txt'
             #gname='GLADE_flagship_cone17_host_dc.txt'
-            gname='GLADE_flagship_cone19_host_dc.txt'
+            #gname='GLADE_flagship_cone19_host_dc.txt'
             #-------------line-----------------------------------------
             #gname='host_of_GW2216xx.txt'
             #gname='GLADE_line16_50_host.txt'
@@ -168,6 +168,25 @@ class GLADE(GalCat):
             #gname='GLADE_line18_31.txt'
             #gname='GLADE_line18_50.txt'
             #gname='GLADE_line18_20_allhost.txt'
+            #------------cone_increment--------------------------------
+            #gname='GLADE_flagship_cone18_dc_10_host.txt'
+            #gname='GLADE_flagship_cone18_dc_20_host.txt'
+            #gname='GLADE_flagship_cone18_dc_30_host.txt'
+            #gname='GLADE_flagship_cone18_dc_50_host.txt'
+            #gname='GLADE_flagship_cone18_dc_100_host.txt'
+            #gname='GLADE_flagship_cone18_dc_500_host.txt'
+            #gname='GLADE_flagship_cone18_dc_1000_host.txt'
+            
+            #gname='GLADE_flagship_cone18_dc_10_hostdrop8.txt'
+            #gname='GLADE_flagship_cone18_dc_20_hostdrop8.txt'
+            #gname='GLADE_flagship_cone18_dc_30_hostdrop8.txt'
+            #gname='GLADE_flagship_cone18_dc_50_hostdrop8.txt'
+            #gname='GLADE_flagship_cone18_dc_100_hostdrop8.txt'
+            #gname='GLADE_flagship_cone18_dc_500_hostdrop8.txt'
+            #gname='GLADE_flagship_cone18_dc_1000_hostdrop8.txt'
+            #gname='puppet_host.txt'
+            gname='puppet_line_host.txt'
+            
             
             #gname='GLADE_flagship_two_host_samezdiffang.txt'
             #gname='GLADE_fakeBS_170817.txt'

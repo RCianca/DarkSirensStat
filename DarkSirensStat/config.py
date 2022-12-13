@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'Cone_19_00DSz3'
+fout = 'puppet_line'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -79,11 +79,13 @@ zLimSelection='skymap'
 ## Names of events to analyse. If None, all events in the folder will be used
 #subset_names = ['GW221501'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #------------------------Pre-selected-runs----------------------------------
-subset_names = ['GW221900','GW221901','GW221902','GW221903','GW221904','GW221905','GW221906','GW221907','GW221908','GW221909','GW221910','GW221911','GW221912','GW221913']
+#subset_names = ['GW221900','GW221901','GW221902','GW221903','GW221904','GW221905','GW221906','GW221907','GW221908','GW221909','GW221910','GW221911','GW221912','GW221913']
 #subset_names=['GW221914','GW221915','GW221916','GW221917','GW221918','GW221919','GW221920','GW221921','GW221922','GW221923','GW221924','GW221925','GW221926','GW221927']
 #subset_names=['GW221928','GW221929','GW221930','GW221931','GW221932','GW221933','GW221934','GW221935','GW221936','GW221937','GW221938','GW221939','GW221940','GW221941']
 
-#subset_names = ['GW221800','GW221801','GW221802','GW221803','GW221804','GW221805','GW221806','GW221807','GW221808','GW221809',]
+subset_names = ['GW221804']
+
+#subset_names = ['GW221800','GW221801','GW221802','GW221803','GW221804','GW221805','GW221806','GW221807','GW221808','GW221809']
 
 #subset_names = ['GW221700','GW221701','GW221703','GW221704','GW221705','GW221706','GW221707','GW221709','GW221710','GW221711']
 #subset_names = ['GW221702','GW221708']
@@ -189,7 +191,7 @@ nHomSamples=15000
 which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
-betaHomdMax =26081.3 #600 roughly O3 #13000 for ET use this now or 15000 or 15978.6
+betaHomdMax =15978.6 #600 roughly O3 #13000 for ET use this now or 15000 or 15978.6
 #betaHomMax = 425.7 # O2 
 
 
