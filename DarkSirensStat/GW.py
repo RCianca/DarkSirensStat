@@ -22,9 +22,8 @@ from scipy.integrate import quad
 from ligo.skymap.io import fits
 from os import listdir
 from os.path import isfile, join
-
-
-
+#rr=[]
+#gausslike=[]
 
 
 class Skymap3D(object):
@@ -74,8 +73,7 @@ class Skymap3D(object):
         #Raul:to save 'pix' from inhom like
         self.raulpix=np.zeros(len(self.p_posterior))
         self.set_credible_region(level)
-        self.r=[]
-        self.gausslike=[]
+
     
     
     def read_map(self, fname):
@@ -281,15 +279,16 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        #return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )
-        mysigma=r*0.01
-        self.r.append(r)
-        self.gausslike.append(scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=mysigma))
-        np.savetxt('~/DarkSirenStat/PlotTest/dl.txt',np.asarray(self.r))
-        np.savetxt('~/DarkSirenStat/PlotTest/gausslike.txt',np.asarray(self.gausslike))
-        #print(trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=mysigma, lower=0 ))
+        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
+        #Raul: some test on the GW-likelihood
+        #mysigma=100
+        #rr.append(r)
+        #gausslike.append(scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=mysigma))
+        #np.savetxt('/home/rciancarella/DarkSirensStat/PlotTest/dl.txt',np.asarray(rr))
+        #np.savetxt('/home/rciancarella/DarkSirensStat/PlotTest/gausslike.txt',
+        #           np.asarray(gausslike))
         #return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=mysigma, lower=0 )
-        return scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=mysigma)
+        #return scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=mysigma)
     
     
     def sample_posterior(self, nSamples):
