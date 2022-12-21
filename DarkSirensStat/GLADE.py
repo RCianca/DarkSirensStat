@@ -153,12 +153,12 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_cone14_host.txt'
             #gname='GLADE_flagship_cone15_host.txt'
             #gname='GLADE_flagship_cone16_host.txt'
-            gname='gw2220xx_host.txt'
             #-----------------volume comoving-------------------------
             #gname='GLADE_flagship_cone15_host_dc.txt'
             #gname='GLADE_flagship_cone16_host_dc.txt'
             #gname='GLADE_flagship_cone17_host_dc.txt'
             #gname='GLADE_flagship_cone19_host_dc.txt'
+            gname='gw2220xx_host.txt'
             #-------------line-----------------------------------------
             #gname='host_of_GW2216xx.txt'
             #gname='GLADE_line16_50_host.txt'

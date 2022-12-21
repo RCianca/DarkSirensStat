@@ -13,8 +13,7 @@ from astropy.cosmology import FlatLambdaCDM
 import sys
 import healpy as hp
 from scipy import interpolate
-
-from scipy import interpolate
+from scipy.signal import find_peaks
 
 dirName = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
@@ -384,13 +383,21 @@ def haversine(phi, theta, phi0, theta0):
 
 def get_norm_posterior(lik_inhom, lik_hom, beta, grid, prior=None):
     
-    tot_post = (lik_inhom+lik_hom)/beta
+    mytot_post =(lik_inhom+lik_hom)/beta
+    maxima,_= find_peaks(mytot_post,height=0)
+    if len(maxima)>1:
+        first_index=maxima[0]
+        last_index=maxima[-1]
+        mymin=np.min(mytot_post[first_index:last_index])
+        tot_post=np.where(mytot_post>mymin, mytot_post ,mymin)
+    else:
+        tot_post=mytot_post
     if prior is not None:
-        tot_post*=prior
+        tot_post*=prior 
         
     norm = np.trapz( tot_post, grid)
     
-    post = tot_post/norm
+    post =tot_post/norm
     return post, lik_inhom/beta/norm, lik_hom/beta/norm
 
 #-----------------Raul:Fancy stuff----------------
