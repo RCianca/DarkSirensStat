@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'puppet_line'
+fout = 'GW2220_05'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -79,11 +79,18 @@ zLimSelection='skymap'
 ## Names of events to analyse. If None, all events in the folder will be used
 #subset_names = ['GW221501'] #['GW190924_021846'] #['GW190924_021846'] #['GW190425',] #['GW190814']
 #------------------------Pre-selected-runs----------------------------------
+#subset_names = ['GW222000','GW222001','GW222002','GW222003','GW222004','GW222005','GW222006','GW222007','GW222008','GW222009','GW222010','GW222011','GW222012','GW222013']
+#subset_names = ['GW222014','GW222015','GW222016','GW222017','GW222018','GW222019','GW222020','GW222021','GW222022','GW222023','GW222024','GW222025','GW222026','GW222027']
+#subset_names = ['GW222028','GW222029','GW222030','GW222031','GW222032','GW222033','GW222034','GW222035','GW222036','GW222037','GW222038','GW222039','GW222040','GW222041']
+#subset_names = ['GW222042','GW222043','GW222044','GW222045','GW222046','GW222047','GW222048','GW222049','GW222050','GW222051','GW222052','GW222053','GW222054','GW222055']
+#subset_names = ['GW222056','GW222057','GW222058','GW222059','GW222060','GW222061','GW222062','GW222063','GW222064','GW222065','GW222066','GW222067','GW222068','GW222069']
+subset_names = ['GW222070','GW222071']
+
 #subset_names = ['GW221900','GW221901','GW221902','GW221903','GW221904','GW221905','GW221906','GW221907','GW221908','GW221909','GW221910','GW221911','GW221912','GW221913']
 #subset_names=['GW221914','GW221915','GW221916','GW221917','GW221918','GW221919','GW221920','GW221921','GW221922','GW221923','GW221924','GW221925','GW221926','GW221927']
 #subset_names=['GW221928','GW221929','GW221930','GW221931','GW221932','GW221933','GW221934','GW221935','GW221936','GW221937','GW221938','GW221939','GW221940','GW221941']
 
-subset_names = ['GW221804']
+#subset_names = ['GW221800']
 
 #subset_names = ['GW221800','GW221801','GW221802','GW221803','GW221804','GW221805','GW221806','GW221807','GW221808','GW221809']
 
@@ -191,7 +198,7 @@ nHomSamples=15000
 which_beta = 'hom'
 
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
-betaHomdMax =15978.6 #600 roughly O3 #13000 for ET use this now or 15000 or 15978.6
+betaHomdMax =15000 #600 roughly O3, for ET use this now or 15000 or 15978.6
 #betaHomMax = 425.7 # O2 
 
 
