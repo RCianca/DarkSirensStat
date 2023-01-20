@@ -382,16 +382,16 @@ def haversine(phi, theta, phi0, theta0):
 
 
 def get_norm_posterior(lik_inhom, lik_hom, beta, grid, prior=None):
-    
-    mytot_post =(lik_inhom+lik_hom)/beta
-    maxima,_= find_peaks(mytot_post,height=0)
-    if len(maxima)>1:
-        first_index=maxima[0]
-        last_index=maxima[-1]
-        mymin=np.min(mytot_post[first_index:last_index])
-        tot_post=np.where(mytot_post>mymin, mytot_post ,mymin)
-    else:
-        tot_post=mytot_post
+    tot_post=(lik_inhom+lik_hom)/beta
+    #mytot_post =(lik_inhom+lik_hom)/beta
+    #maxima,_= find_peaks(mytot_post,height=0)
+    #if len(maxima)>1:
+    #    first_index=maxima[0]
+    #    last_index=maxima[-1]
+    #    mymin=np.min(mytot_post[first_index:last_index])
+    #    tot_post=np.where(mytot_post>mymin, mytot_post ,mymin)
+    #else:
+    #    tot_post=mytot_post
     if prior is not None:
         tot_post*=prior 
         
@@ -417,7 +417,6 @@ ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingr
 myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
 
     
-
-ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovingrate.txt')
-ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
-myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
+zz=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myzz.txt')
+ww=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myweights.txt')
+stat_weights=interpolate.interp1d(zz,ww,kind='cubic',fill_value='extrapolate')

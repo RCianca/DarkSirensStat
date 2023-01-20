@@ -158,7 +158,24 @@ class GLADE(GalCat):
             #gname='GLADE_flagship_cone16_host_dc.txt'
             #gname='GLADE_flagship_cone17_host_dc.txt'
             #gname='GLADE_flagship_cone19_host_dc.txt'
-            gname='gw2220xx_host.txt'
+            #gname='gw2220xx_host.txt'
+            #gname='gw23xxxx_host.txt'
+            #gname='gw23xxxx_host_flag.txt'
+            #gname='gw24xxxx_host_flag.txt'
+            #gname='gw25xxxx_host_flag.txt'
+            #gname='gw26xxxx_host_flag.txt'
+            #gname='gw27xxxx_host_flag.txt'
+            #gname='gw27xxxx_host_flag_dc.txt'
+            #gname='host_of_GW23xxxx.txt'
+            #gname='host_of_GW24xxxx.txt'
+            #------------Catalogue with stat_weights--------------------------
+            #gname='diluted_flag_host.txt'   #100%
+            #gname='uniform_comoving_father_of_diluted_host.txt' #100%
+            #gname='diluted_flag.txt'
+            #gname='uniform_comoving_father_of_diluted.txt'
+            #------------------GW28------------------------------------------
+            #gname='diluted_flag_GW28_comp100_host.txt'   #100%
+            gname='uniform_comoving_father_of_diluted_GW28_comp100_host.txt' #100%            
             #-------------line-----------------------------------------
             #gname='host_of_GW2216xx.txt'
             #gname='GLADE_line16_50_host.txt'

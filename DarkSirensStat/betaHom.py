@@ -21,6 +21,7 @@ class BetaHom(Beta):
         Beta.__init__(self, **kwargs)
         self.dMax=dMax
         self.zR=zR
+
         
     
     def get_beta(self, H0s, Xi0s, n=nGlob, **kwargs):
@@ -63,5 +64,6 @@ class BetaHom(Beta):
         norm = quad(lambda x: cosmo.differential_comoving_volume(x).value, 0, self.zR )[0]
         num = quad(lambda x:  cosmo.differential_comoving_volume(x).value, 0, zMax )[0]
         return num/norm
+        #return 1/norm
         
         return beta
