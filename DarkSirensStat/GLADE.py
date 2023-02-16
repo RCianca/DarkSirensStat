@@ -175,7 +175,26 @@ class GLADE(GalCat):
             #gname='uniform_comoving_father_of_diluted.txt'
             #------------------GW28------------------------------------------
             #gname='diluted_flag_GW28_comp100_host.txt'   #100%
-            gname='uniform_comoving_father_of_diluted_GW28_comp100_host.txt' #100%            
+            #gname='uniform_comoving_father_of_diluted_GW28_comp100_host.txt' #100%
+            #gname='selected_autoconsistent_host.txt'   #100%
+            #gname='selected_autoconsistent_halved_host.txt'   #8.3%
+            #gname='selected_autoconsistent_halved_10bins_host.txt'   #8.3%
+            #gname='uniform_comoving_autoconsistent_host.txt' #100%
+            #--------------------GW29-------------------------------------
+            #gname='selected_autoconsistent_halved_host_29.txt'   #8.3%
+            #gname='selected_autoconsistent_halved_10bins_host.txt'   #8.3% do it
+            #gname='uniform_comoving_autoconsistent_host_29.txt' #100% 
+            #--------------------GW30-------------------------------------
+            #gname='selected_autoconsistent_halved_host_30.txt'   #8.3%
+            #gname='uniform_comoving_autoconsistent_host_30.txt' #100%
+            #gname='gw23cat_uniform_30_host.txt'
+            #gname='gw23cat_uniform_30_1oct_host.txt' #deltadl1%
+            #gname='gw23cat_uniform_31_1oct_host.txt' #deltadl5%
+            #gname='gw23cat_uniform_32_1oct_host.txt' #deltadl10%
+            #gname='gw23cat_uniform_30_1oct_halved_host.txt'
+            #gname='gw23cat_uniform_32_1oct_halved_host.txt'
+            #--------------------GW33-------------------------------------
+            gname='uniform_comoving_autoconsistent.txt' #100%
             #-------------line-----------------------------------------
             #gname='host_of_GW2216xx.txt'
             #gname='GLADE_line16_50_host.txt'

@@ -230,9 +230,9 @@ class GWgal(object):
             else :
                 #print('dirac')
                 if rate==1:
-                    LL = np.sum(my_skymap*weights*myrate(zs))#zs quando c'è Dirac
+                    LL = np.sum(my_skymap*weights*myrate(zs))#zs if we are in Dirac
                 else:
-                    LL = np.sum(my_skymap*weights)#*stat_weights(zs)) 
+                    LL = np.sum(my_skymap*weights*stat_weights(zs)) 
             #LL = np.sum(my_skymap*weights)
         #LL = 0#np.sum(self.gauss(zz,0.0098,0.0004))
         sky_to_return=np.sum(my_skymap)
