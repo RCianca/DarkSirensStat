@@ -413,9 +413,9 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     
-ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovingrate.txt')
-ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
-myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
+#ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovingrate.txt')
+#ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
+#myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
 
     
 #zz=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myzz.txt')
@@ -431,9 +431,9 @@ myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
 #ww=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myweights_autoconsistent_halved_10bins.txt')
 #-------------------catgw23_run30-----------------------------------------------------
 statw=0
-zz=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/catgw23_run30_z.txt')
-if statw==1:
-    ww=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/catgw23_run30_w.txt')
-else:
-    ww=np.ones(len(zz))
-stat_weights=interpolate.interp1d(zz,ww,kind='cubic',fill_value='extrapolate')
+#zz=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/catgw23_run30_z.txt')
+#if statw==1:
+#    ww=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/catgw23_run30_w.txt')
+#else:
+#    ww=np.ones(len(zz))
+#stat_weights=interpolate.interp1d(zz,ww,kind='cubic',fill_value='extrapolate')
