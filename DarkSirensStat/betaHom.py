@@ -14,6 +14,8 @@
 from beta import Beta
 from globals import *
 from scipy.integrate import quad
+#some import to speed up the hom case, remove after
+from globals import GlobNorm
 pivot=67
 class BetaHom(Beta):
     
@@ -23,7 +25,6 @@ class BetaHom(Beta):
         self.zR=zR
 
         
-    
     def get_beta(self, H0s, Xi0s, n=nGlob, **kwargs):
         
         H0s = np.atleast_1d(H0s)
@@ -57,11 +58,11 @@ class BetaHom(Beta):
         # to which the given monochromatic population of source could be detected,
         # given the sensitivity of the detector network
         # zMax is the corespondig
-        
+        #print('zR={}, dMax={}'.format(self.zR,self.dMax))
         zMax = z_from_dLGW(self.dMax, H0,  Xi0, n=n)
         cosmo=FlatLambdaCDM(H0=H0, Om0=Om0GLOB)
                 
-        norm = quad(lambda x: cosmo.differential_comoving_volume(x).value, 0, self.zR )[0]
+        norm = GlobNorm#quad(lambda x: cosmo.differential_comoving_volume(x).value, 0, self.zR )[0]
         num = quad(lambda x:  cosmo.differential_comoving_volume(x).value, 0, zMax )[0]
         return num/norm
         #return 1/norm

@@ -15,7 +15,7 @@ goalParam = 'H0'
 
 ## Output folder name
 #fout = 'ET_newsigma'
-fout = 'newruns35_with_uniform_autoconsistent_11'
+fout = 'test_speed_up_beta'
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
@@ -176,10 +176,10 @@ which_beta = 'hom'
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
 betaHomdMax =15978.6 #600 roughly O3, for ET use this now or 15000 or 15978.6
 #betaHomMax = 425.7 # O2 
-
+#If you change this, and still doing test, change also globals
 
 # Max redshift  of the region R,  if beta is 'fit'
-zR = 20
+zR = 20 #If you change this, and still doing test, change also globals
 # n of MC samples for beta MC
 nSamplesBetaMC= 250000
 nUseCatalogBetaMC = True

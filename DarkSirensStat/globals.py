@@ -10,6 +10,7 @@
 import os
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
+from scipy.integrate import quad
 import sys
 import healpy as hp
 from scipy import interpolate
@@ -416,6 +417,17 @@ ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovi
 ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
 myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
 
+#-------------------------------Speed Up beta, just for test------------------------
+#from config import betaHomdMax
+#from config import zR
+
+zR=20
+#dMax=15978.6
+#zMax = z_from_dLGW(dMax, H0,  Xi0, n=n)
+
+#GlobNum=quad(lambda x:  cosmoglob.differential_comoving_volume(x).value, 0, zMax )[0]
+GlobNorm=quad(lambda x: cosmoglob.differential_comoving_volume(x).value, 0, zR )[0]
+#-----------------------------------------------------------------------------------
     
 #zz=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myzz.txt')
 #ww=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myweights.txt')
