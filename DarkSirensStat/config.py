@@ -176,10 +176,10 @@ which_beta = 'hom'
 # only used when which_beta='hom'. If 'scale', use individually SNR rescaled dmax estimate. If 'flat' use d of event. If a number use that for all events. 
 betaHomdMax =15978.6 #600 roughly O3, for ET use this now or 15000 or 15978.6
 #betaHomMax = 425.7 # O2 
-#If you change this, and still doing test, change also globals
+
 
 # Max redshift  of the region R,  if beta is 'fit'
-zR = 20 #If you change this, and still doing test, change also globals
+zR = 20 
 # n of MC samples for beta MC
 nSamplesBetaMC= 250000
 nUseCatalogBetaMC = True
