@@ -415,7 +415,7 @@ class bcolors:
     
 #ratex=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/zz_comovingrate.txt')
 #ratey=np.loadtxt('/home/rciancarella/DarkSirensStat/DSCatalogueCreator/comovingrate.txt')
-#myrate=interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
+myrate=1#interpolate.interp1d(ratex,ratey,kind='cubic',fill_value='extrapolate')
 
     
 #zz=np.loadtxt('/home/rciancarella/DarkSirensStat/data/GLADE/myzz.txt')
