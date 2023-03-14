@@ -13,7 +13,9 @@ import os
 import time
 import sys
 import shutil
-
+#--------------------------
+from multiprocessing import Pool
+#--------------------------
 
 from globals import *
 from GW import get_all_events
@@ -373,6 +375,18 @@ def main():
     ######
     if do_inference:
         print('\n-----  COMPUTING BETAS ....')
+        #with Pool as p:
+        #    betas=p.starmap(beta_case,)
+        #print('I am in beta, now I print the argument to then use starmap()')
+        #print('which_beta={}'.format(which_beta))
+        #print('myGWgal.selectedGWevents={}'.format(myGWgal.selectedGWevents))
+        #print('lims={}'.format(lims))
+        #print('H0grid={}'.format(H0grid))
+        #print('Xi0grid={}'.format(Xi0grid))
+        #print('evSelector={}'.format(evSelector))
+        #print('gals={}'.format(gals))
+        #print('massDist={}'.format(massDist))
+        #print('fullSNR={}'.format(fullSNR))
         betas = beta_case(which_beta, myGWgal.selectedGWevents, lims, H0grid, Xi0grid, evSelector, gals, massDist, 
                           lamb, 
                           gamma1, gamma2, betaq, mMin, mMax, deltam, b, mBreak,
