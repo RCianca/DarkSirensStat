@@ -65,6 +65,7 @@ class GWgal(object):
         #    print('\n --- GW events: ')
         #    for event in GWevents.keys():
         #        print(event)
+
     
     
     def _select_events(self):
@@ -213,6 +214,8 @@ class GWgal(object):
             pixels, zs, weights, norm=  self.gals.get_inhom(self.selectedGWevents[eventName].nside)
             
             rs = dLGW(zs, H0=H0, Xi0=Xi0, n=n)
+
+            
             
             weights *= (1+zs)**(self.lamb-1)
             

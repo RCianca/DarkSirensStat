@@ -265,6 +265,13 @@ class Skymap3D(object):
         #pix = self.find_pix(ra, dec)
         #LL = self.p[pix]*self.norm[pix]*scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])  #  = self.dp_dr(r, ra, dec)/r**2
         return self.likelihood_px(r, self.find_pix(theta, phi))
+
+    #RC: Homogeneous Malmquist effect. noth a refined implementation but still    
+    def malm_homogen(d,err):
+        exponent=(err**2)*(7/2)
+        ret=1*np.exp(-exponent)
+        return ret
+
     
     def likelihood_px(self, r, pix):
         '''
@@ -279,7 +286,10 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
+        #RC: inserting the Malmquist
+        Malm=malm_homogen(r,0.1)
+        real_r=r*Malm
+        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=real_r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
         #Raul: some test on the GW-likelihood
         #mysigma=100
         #rr.append(r)
