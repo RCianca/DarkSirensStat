@@ -12,6 +12,7 @@
 from config import delta
 from config import fout
 from config import EM
+from config import Malm_delta
 import healpy as hp
 import pandas as pd
 import scipy.stats
@@ -281,7 +282,7 @@ class Skymap3D(object):
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
         #RC: inserting the Malmquist
-        Malm=malm_homogen(r,0.15)
+        Malm=malm_homogen(r,Malm_delta)
         real_r=r*Malm
         return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=real_r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
         #Raul: some test on the GW-likelihood
