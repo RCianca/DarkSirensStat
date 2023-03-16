@@ -17,7 +17,7 @@ goalParam = 'H0'
 #fout = 'ET_newsigma'
 fout = 'GW36_testmalm_11'
 #Malmquist param
-Malm_delta=0.15
+Malm_delta=0.125
 
 #only to some  test, then remove 
 delta=1#(0.318639,0.674490,0.977925,0.994458,1.281552,1.644854,1.959964,2)
