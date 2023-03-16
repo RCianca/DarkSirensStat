@@ -402,6 +402,12 @@ def get_norm_posterior(lik_inhom, lik_hom, beta, grid, prior=None):
     return post, lik_inhom/beta/norm, lik_hom/beta/norm
 
 #-----------------Raul:Fancy stuff----------------
+    #RC: Homogeneous Malmquist effect. noth a refined implementation but still    
+def malm_homogen(d,err):
+    exponent=(err**2)*(7/2)
+    ret=1*np.exp(-exponent)
+    return ret
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'

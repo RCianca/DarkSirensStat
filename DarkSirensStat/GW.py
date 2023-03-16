@@ -12,6 +12,7 @@
 from config import delta
 from config import fout
 from config import EM
+from config import Malm_delta
 import healpy as hp
 import pandas as pd
 import scipy.stats
@@ -265,6 +266,7 @@ class Skymap3D(object):
         #pix = self.find_pix(ra, dec)
         #LL = self.p[pix]*self.norm[pix]*scipy.stats.norm.pdf(x=r, loc=self.mu[pix], scale=self.sigma[pix])  #  = self.dp_dr(r, ra, dec)/r**2
         return self.likelihood_px(r, self.find_pix(theta, phi))
+
     
     def likelihood_px(self, r, pix):
         '''
@@ -279,7 +281,10 @@ class Skymap3D(object):
         #myclip_b=np.infty
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
-        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
+        #RC: inserting the Malmquist
+        Malm=malm_homogen(r,Malm_delta)
+        real_r=r*Malm
+        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=real_r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
         #Raul: some test on the GW-likelihood
         #mysigma=100
         #rr.append(r)
