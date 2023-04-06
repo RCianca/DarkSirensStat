@@ -282,9 +282,9 @@ class Skymap3D(object):
         #a, b = (myclip_a - self.mu[pix]) / self.sigma[pix], (myclip_b - self.mu[pix]) / self.sigma[pix]
         #return  self.p_likelihood_selected[pix]*scipy.stats.truncnorm(a=a, b=b, loc=self.mu[pix], scale=self.sigma[pix]).pdf(r)
         #RC: inserting the Malmquist
-        Malm=malm_homogen(r,Malm_delta)
-        real_r=r*Malm
-        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=real_r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
+        #Malm=malm_homogen(r,Malm_delta)
+        #real_r=Malm
+        return self.p_likelihood_selected[pix]*trunc_gaussian_pdf(x=r, mu=self.mu[pix], sigma=self.sigma[pix], lower=0 )#Raul: we are far, so the gaussian will not be truncated, but nice stuff
         #Raul: some test on the GW-likelihood
         #mysigma=100
         #rr.append(r)
