@@ -276,6 +276,7 @@ def z_from_dLGW(dL_GW_val, H0, Xi0, n):
     from scipy.optimize import fsolve
     #print(cosmo.H0)
     func = lambda z : dLGW(z, H0, Xi0, n=n) - dL_GW_val
+    #z = fsolve(func, 0.77)
     z = fsolve(func, 0.77)
     return z[0]
 
@@ -402,7 +403,7 @@ def get_norm_posterior(lik_inhom, lik_hom, beta, grid, prior=None):
     return post, lik_inhom/beta/norm, lik_hom/beta/norm
 
 #-----------------Raul:Fancy stuff----------------
-    #RC: Homogeneous Malmquist effect. noth a refined implementation but still    
+    #RC: Homogeneous Malmquist effect. not a refined implementation but still    
 def malm_homogen(d,err):
     #exponent=(err**2)*(7/2)
     #ret=1*np.exp(-exponent)
