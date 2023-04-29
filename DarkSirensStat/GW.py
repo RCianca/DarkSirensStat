@@ -142,7 +142,9 @@ class Skymap3D(object):
         self.level = level
         
         px = self.get_credible_region_pixels(level=level)
-        
+        #Rauldebug
+        print('sono in GW.py linea 146')
+        print('{}'.format(px))
         # further remove bad pixels where no skymap is available
         
         pxmask = np.isfinite(self.mu[px]) & (self.mu[px] >= 0)
@@ -389,7 +391,9 @@ class Skymap3D(object):
     def get_credible_region_pixels(self, level=None):
         if level is None:
             level=self.level
-        return self.all_pixels[self.p_posterior>self._get_credible_region_pth(level=level)]
+        #Rauldebug:
+        print('Sono in GW.py linea 395')
+        return self.all_pixels[self.p_posterior>0]#self._get_credible_region_pth(level=level)]
     
     
 #    def likelihood_in_credible_region(self, r, level=0.99, verbose=False):

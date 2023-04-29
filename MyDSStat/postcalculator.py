@@ -112,9 +112,8 @@ def LikeofH0(iterator):
     to_sum=np.zeros(len(z_gals))
     for j in range(len(z_gals)):
         #dl=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB).luminosity_distance(z_gals[j]).value
-        dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
-        angular_prob=1#sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*norm
+        dl = Dl_z(z_gals[j], Htemp, Om0GLOB)              #angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
+        to_sum[j]=likelihood_line(mu,dl,s)*1#*norm
     tmp=np.sum(to_sum)#*norm
     return tmp
 
@@ -153,7 +152,7 @@ def vol_beta(iterator):
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
 #------------------trigger---------------------
-generation=0
+generation=1
 read=1
 DS_read=0
 save=1
@@ -163,7 +162,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='rho_constante_03'
+runpath='CatGeneration'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -243,8 +242,8 @@ if read==1:
 #################################DS control room#########################################
 
 if DS_read==1:
-    name='catname'
-    sample = pd.read_csv(name+'_DSs.txt.txt', sep=" ", header=None)
+    #name=os.path.join(folder,'catname')#move to te right folder
+    sample = pd.read_csv(folder+'_DSs.txt.txt', sep=" ", header=None)
     colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     sample.columns=colnames
     ds_z=np.asarray(sample['z'])
@@ -252,7 +251,7 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
 else:
-    NumDS=60
+    NumDS=1
     zds_max=1.05
     zds_min=0.95
 
