@@ -58,11 +58,14 @@ class BetaHom(Beta):
         # given the sensitivity of the detector network
         # zMax is the corespondig
         #print('zR={}, dMax={}'.format(self.zR,self.dMax))
+        #betadmin=4408.51
         zMax = z_from_dLGW(self.dMax, H0,  Xi0, n=n)
+        #zmin = z_from_dLGW(betadmin, H0,  Xi0, n=n)
+        zmin=0
         cosmo=FlatLambdaCDM(H0=H0, Om0=Om0GLOB)
                 
-        norm = quad(lambda x: cosmo.differential_comoving_volume(x).value, 0, self.zR )[0]
-        num = quad(lambda x:  cosmo.differential_comoving_volume(x).value, 0, zMax )[0]
+        norm = quad(lambda x: cosmo.differential_comoving_volume(x).value, zmin, self.zR )[0]
+        num = quad(lambda x:  cosmo.differential_comoving_volume(x).value, zmin, zMax )[0]
         return num/norm
         #return 1/norm
         

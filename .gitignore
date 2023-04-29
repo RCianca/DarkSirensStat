@@ -25,4 +25,5 @@ DSCatalogueCreator/*.png
 DSCatalogueCreator/EVA02_detected12_oneyear.fits
 DSCatalogueCreator/wrongsnrEVA02.fits
 
-
+MyDSStat/results
+MyDSStat/FullExplorer.txt
