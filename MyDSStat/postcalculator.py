@@ -152,10 +152,10 @@ def just_vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mu*(1+5*0.1)
-    zMax = fsolve(func, 0.5)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mu*(1-5*0.1)
-    zmin = fsolve(func, 0.5)[0]
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -betaHomdMax
+    zMax = fsolve(func, 0.3)[0] 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdmin
+    zmin = fsolve(func, 0.3)[0]
     norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,0,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
@@ -173,7 +173,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Beta-Pdet1_Search_Volume_01'
+runpath='Beta-Pdet1_EnzoSetup'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -189,8 +189,7 @@ dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
 dl_min=cosmoflag.luminosity_distance(z_inf_cat).value
 dl_max=cosmoflag.luminosity_distance(z_sup_cat).value
 
-betaHomdMax=Dl_z(z_sup_cat,np.min(H0Grid),Om0GLOB)
-dl_min_beta=Dl_z(z_inf_cat,np.max(H0Grid),Om0GLOB)
+
 #---------angular stuff------------------
 radius_deg= np.sqrt(10/np.pi)
 sigma90=radius_deg/np.sqrt(2)
@@ -262,9 +261,12 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
 else:
-    NumDS=150
+    NumDS=50
     zds_max=1.05
     zds_min=0.95
+    
+    betaHomdMax=Dl_z(zds_max,href,Om0GLOB)
+    betaHomdmin=Dl_z(zds_min,href,Om0GLOB)
 
     cutted=MyCat[MyCat['z']<=zds_max]
     cutted=cutted[cutted['z']>=zds_min]
@@ -292,7 +294,7 @@ beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 dlsigma=0.1
 fullrun=[]
-allbetas=[]
+#allbetas=[]
 s=dlsigma
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
@@ -315,27 +317,27 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(14) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(just_vol_beta, arr)
+        #beta=p.map(just_vol_beta, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
-    beta=np.asarray(beta)
-    allbetas.append(beta)
-    #############################################################################################
+    #beta=np.asarray(beta)
+    #allbetas.append(beta)
+#############################################################################################
 ##############################BETA#################################################################
-#with Pool(14) as p:
-#    beta=p.map(just_vol_beta, arr)
-#beta=np.asarray(beta)
+with Pool(14) as p:
+    beta=p.map(just_vol_beta, arr)
+beta=np.asarray(beta)
 ###################################################################################################
 ###########################Saving Results & posterior##############################################
 betapath=os.path.join(folder,runpath+'_beta.txt')
-np.savetxt(betapath,allbetas)
+np.savetxt(betapath,beta)#allbetas
 print('Beta Saved')
 fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
 np.savetxt(fullrunpath,fullrun)
-fullrun_beta=[]
+fullrun_beta=fullrun/beta#[]
 print('All likelihood Saved')
-for i in range(NumDS):
-    fullrun_beta.append(fullrun[i]/allbetas[i])
+#for i in range(NumDS):
+#    fullrun_beta.append(fullrun[i]/allbetas[i])
 combined=[]
 for i in range(len(fullrun_beta)):
     #combined=combined+post[i]
@@ -351,4 +353,4 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp postcalculator.py '+folder)
+os.system('cp postcalculator.py '+folder+'/run_postcalculator.py')
