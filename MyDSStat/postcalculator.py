@@ -31,14 +31,14 @@ def z_from_dL(dL_val):
     Returns redshift for a given luminosity distance dL (in Mpc)'''
     
     func = lambda z :cosmoflag.luminosity_distance(z).value - dL_val
-    z = fsolve(func, 0.77)
+    z = fsolve(func, 0.02)
     return z[0]
 def z_from_dcom(dc_val):
     '''
     Returns redshift for a given comoving distance dc (in Mpc)'''
     
     func = lambda z :cosmoflag.comoving_distance(z).value - dc_val
-    z = fsolve(func, 0.77)
+    z = fsolve(func, 0.02)
     return z[0]
 @njit
 def sphere_uncorr_gauss(x,y,mux,muy,sigx,sigy):
@@ -152,10 +152,10 @@ def just_vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -betaHomdMax
-    zMax = fsolve(func, 0.3)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdmin
-    zmin = fsolve(func, 0.3)[0]
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)
+    zMax = fsolve(func, 0.1)[0] 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
+    zmin = fsolve(func, 0.1)[0]
     norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,0,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
@@ -173,7 +173,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Beta-Pdet1_EnzoSetup'
+runpath='Beta-dl_max_dl_min_nearmu_sigma10_big'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -181,8 +181,8 @@ H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
 nsamp=6500000+2156000
-z_inf_cat=0.85#0.79
-z_sup_cat=1.15#2
+z_inf_cat=0.05#0.79
+z_sup_cat=2.5#2
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
 dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
@@ -240,13 +240,13 @@ if generation==1:
     MyCat['z']=z_gals
     MyCat['phi']=new_phi_gals
     MyCat['theta']=new_theta_gals
-    cat_name='FullExplorer.txt'
+    cat_name='FullExplorer_big.txt'
     print('Saving '+cat_name)
     MyCat.to_csv(cat_name, header=None, index=None, sep=' ')
 #------------------------Reading the catalogue----------------------------------
 if read==1:
     print('Reading the catalogue ')
-    MyCat = pd.read_csv('FullExplorer.txt', sep=" ", header=None)
+    MyCat = pd.read_csv('FullExplorer_big.txt', sep=" ", header=None)
     colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     MyCat.columns=colnames
 #################################DS control room#########################################
@@ -262,8 +262,8 @@ if DS_read==1:
     ds_theta=np.asarray(sample['theta'])
 else:
     NumDS=50
-    zds_max=1.05
-    zds_min=0.95
+    zds_max=1.02
+    zds_min=0.98
     
     betaHomdMax=Dl_z(zds_max,href,Om0GLOB)
     betaHomdmin=Dl_z(zds_min,href,Om0GLOB)
@@ -294,7 +294,7 @@ beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 dlsigma=0.1
 fullrun=[]
-#allbetas=[]
+allbetas=[]
 s=dlsigma
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
@@ -317,27 +317,27 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(14) as p:
         My_Like=p.map(LikeofH0, arr)
-        #beta=p.map(just_vol_beta, arr)
+        beta=p.map(just_vol_beta, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
-    #beta=np.asarray(beta)
-    #allbetas.append(beta)
+    beta=np.asarray(beta)
+    allbetas.append(beta)
 #############################################################################################
 ##############################BETA#################################################################
-with Pool(14) as p:
-    beta=p.map(just_vol_beta, arr)
-beta=np.asarray(beta)
+#with Pool(14) as p:
+#    beta=p.map(just_vol_beta, arr)
+#beta=np.asarray(beta)
 ###################################################################################################
 ###########################Saving Results & posterior##############################################
 betapath=os.path.join(folder,runpath+'_beta.txt')
-np.savetxt(betapath,beta)#allbetas
+np.savetxt(betapath,allbetas)#allbetas
 print('Beta Saved')
 fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
 np.savetxt(fullrunpath,fullrun)
-fullrun_beta=fullrun/beta#[]
+fullrun_beta=[]#fullrun/beta#[]
 print('All likelihood Saved')
-#for i in range(NumDS):
-#    fullrun_beta.append(fullrun[i]/allbetas[i])
+for i in range(NumDS):
+    fullrun_beta.append(fullrun[i]/allbetas[i])
 combined=[]
 for i in range(len(fullrun_beta)):
     #combined=combined+post[i]
