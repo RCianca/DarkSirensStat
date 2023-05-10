@@ -123,7 +123,7 @@ def multibeta(iterator):
     Htemp=H0Grid[i]
     #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdMax
-    zmax = fsolve(func, 0.5)[0]
+    zmax = fsolve(func, 0.02)[0]
     Num=normalisation(z_gals,zmax)
     if Num==0:
         Num=Num+1
@@ -133,7 +133,7 @@ def multibetaline(iterator):
     Htemp=H0Grid[i]
     #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdMax
-    z1 = fsolve(func, 0.5)[0]
+    z1 = fsolve(func, 0.02)[0]
     ret=beta_line(z_gals,0,z1,10)
     return ret
 
@@ -142,9 +142,9 @@ def vol_beta(iterator):
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdMax
-    zMax = fsolve(func, 0.5)[0] 
+    zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - dl_min_beta
-    zmin = fsolve(func, 0.2)[0]  
+    zmin = fsolve(func, 0.02)[0]  
     norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,zmin,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
@@ -152,10 +152,10 @@ def just_vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)
-    zMax = fsolve(func, 0.1)[0] 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
+    zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
-    zmin = fsolve(func, 0.1)[0]
+    zmin = 0 #fsolve(func, 0.02)[0]
     norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,0,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
@@ -173,16 +173,17 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Beta-dl_max_dl_min_nearmu_sigma10_big'
+runpath='FullExpBig-150_BetaEnzo'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
 H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
-nsamp=6500000+2156000
+nsamp=3000000#6500000+2156000
 z_inf_cat=0.05#0.79
 z_sup_cat=2.5#2
+cat_name='FullExplorer_big.txt'
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
 dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
@@ -215,16 +216,14 @@ print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, th
 if generation==1:
 #------------------points generator------------------
     u = np.random.uniform(0,1,size=nsamp) # uniform random vector of size nsamp
-    dc_gals_all     = np.cbrt((u*0**3)+((1-u)*dcom_max**3))
-    #dc_gals_all     = (u*dcom_min)+(1-u)*dcom_max
+    dc_gals_all     = np.cbrt((u*dcom_min**3)+((1-u)*dcom_max**3))
     phi_gals   = np.random.uniform(phi_min,phi_max,nsamp)
     theta_gals = np.arccos( np.random.uniform(np.cos(theta_max),np.cos(theta_min),nsamp) )
     dc_gals=dc_gals_all[dc_gals_all>=dcom_min]
-    #print(len(dc_gals_all),len(dc_gals),len(dc_gals)/len(dc_gals_all))
     num=np.arange(len(dc_gals))
     z_gals=np.zeros(len(dc_gals))
     dl_gals=np.zeros(len(dc_gals))
-
+# need to use pool here
     for i in tqdm(range(len(dc_gals))):
         z=z_from_dcom(dc_gals[i])
         z_gals[i]=z
@@ -240,13 +239,13 @@ if generation==1:
     MyCat['z']=z_gals
     MyCat['phi']=new_phi_gals
     MyCat['theta']=new_theta_gals
-    cat_name='FullExplorer_big.txt'
     print('Saving '+cat_name)
     MyCat.to_csv(cat_name, header=None, index=None, sep=' ')
 #------------------------Reading the catalogue----------------------------------
 if read==1:
-    print('Reading the catalogue ')
-    MyCat = pd.read_csv('FullExplorer_big.txt', sep=" ", header=None)
+    #cat_name='FullExplorer.txt'
+    print('Reading the catalogue: ' + cat_name)
+    MyCat = pd.read_csv(cat_name, sep=" ", header=None)
     colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     MyCat.columns=colnames
 #################################DS control room#########################################
@@ -261,7 +260,7 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
 else:
-    NumDS=50
+    NumDS=150
     zds_max=1.02
     zds_min=0.98
     
@@ -299,11 +298,11 @@ s=dlsigma
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
-    tmp=MyCat[MyCat['phi']<=DS_phi+5.5*sigma_phi]
-    tmp=tmp[tmp['phi']>=DS_phi-5.5*sigma_phi]
+    tmp=MyCat[MyCat['phi']<=DS_phi+5*sigma_phi]
+    tmp=tmp[tmp['phi']>=DS_phi-5*sigma_phi]
     DS_theta=ds_theta[i]
-    tmp=tmp[tmp['theta']<=DS_theta+5.5*sigma_theta]
-    tmp=tmp[tmp['theta']>=DS_theta-5.5*sigma_theta]
+    tmp=tmp[tmp['theta']<=DS_theta+5*sigma_theta]
+    tmp=tmp[tmp['theta']>=DS_theta-5*sigma_theta]
     mu=ds_dl[i]
     dsz=ds_z[i]
     dlrange=s*mu*5
