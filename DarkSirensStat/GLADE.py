@@ -194,11 +194,11 @@ class GLADE(GalCat):
             #gname='gw23cat_uniform_30_1oct_halved_host.txt'
             #gname='gw23cat_uniform_32_1oct_halved_host.txt'
             #--------------------GW33-------------------------------------
-            #gname='uniform_comoving_autoconsistent.txt' #100%
+            gname='uniform_comoving_autoconsistent.txt' #100%
             #------------------minimalExample----------------------------
             #gname='MinimalCat.txt' #100%
             #gname='MockGlade.txt' #100%
-            gname='genova_uniform_samezasminimal.txt' #100%
+            #gname='genova_uniform_samezasminimal.txt' #100%
             #-------------line-----------------------------------------
             #gname='host_of_GW2216xx.txt'
             #gname='GLADE_line16_50_host.txt'

@@ -97,8 +97,8 @@ def beta_line(galaxies,z0,z1,zmax):
     ret=num/denom
     return ret
 @njit
-def likelihood_line(mu,dl,k=0.1):
-    sigma=k*mu
+def likelihood_line(mu,dl,k):
+    sigma=k*dl
     norm=1/(np.sqrt(2*np.pi)*sigma)
     body=np.exp(-((dl-mu)**2)/(2*sigma**2))
     ret=norm*body
@@ -122,9 +122,12 @@ def multibeta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdMax
-    zmax = fsolve(func, 0.02)[0]
-    Num=normalisation(z_gals,zmax)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
+    zMax = fsolve(func, 0.02)[0] 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
+    zmin = fsolve(func, 0.02)[0]
+    
+    Num=beta_line(z_gals,zmin,zMax,20)
     if Num==0:
         Num=Num+1
     return Num
@@ -155,7 +158,7 @@ def just_vol_beta(iterator):
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
     zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
-    zmin = 0 #fsolve(func, 0.02)[0]
+    zmin = fsolve(func, 0.02)[0]
     norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,0,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
@@ -173,7 +176,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='FullExpBig-150_BetaEnzo'
+runpath='FullExp-50_sigmawithcat'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -183,7 +186,7 @@ H0Grid=np.linspace(H0min,H0max,1000)
 nsamp=3000000#6500000+2156000
 z_inf_cat=0.05#0.79
 z_sup_cat=2.5#2
-cat_name='FullExplorer_big.txt'
+cat_name='FullExplorer.txt'
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
 dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
@@ -260,7 +263,7 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
 else:
-    NumDS=150
+    NumDS=50
     zds_max=1.02
     zds_min=0.98
     
