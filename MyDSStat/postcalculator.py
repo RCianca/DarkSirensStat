@@ -25,7 +25,26 @@ Om0GLOB=0.319
 Xi0Glob =1.
 clight = 2.99792458* 10**5#km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
-#----------------------Functions----------------------------------------
+#-----------------Functions--------------------------
+def Mises_Fisher(theta,phi,DS_theta,DS_phi,conc):
+    meanvec=hp.ang2vec(DS_theta,DS_phi)
+    meanvec=np.asarray(meanvec,dtype=np.float128)
+    norm=np.sqrt(np.dot(meanvec,meanvec))
+    meanvec=meanvec/norm
+    
+    var=hp.ang2vec(theta,phi)
+    var=np.asarray(var,dtype=np.float128)
+    norm=np.sqrt(np.dot(var,var))
+    var=var/norm
+    
+    factor=np.dot(conc*var,meanvec)
+    factor=np.float128(factor)
+    #Normalization is futile, we will devide by the sum
+    #fullnorm=conc/(2*np.pi*(np.exp(conc)-np.exp(-conc)))
+    ret=np.float128(np.exp(factor))#/fullnorm
+    #ret=factor
+    return ret
+
 def z_from_dL(dL_val):
     '''
     Returns redshift for a given luminosity distance dL (in Mpc)'''
@@ -40,6 +59,7 @@ def z_from_dcom(dc_val):
     func = lambda z :cosmoflag.comoving_distance(z).value - dc_val
     z = fsolve(func, 0.02)
     return z[0]
+
 @njit
 def sphere_uncorr_gauss(x,y,mux,muy,sigx,sigy):
     #correlation is 0 so is a multiplication of two gaussians
@@ -62,9 +82,34 @@ def sphere_uncorr_gauss(x,y,mux,muy,sigx,sigy):
     #yfactor=((y-muy)/sigy)**2
     #norm=2*np.pi*sigx*sigy
     factor=((diff_len)/sigy)**2
-    ret=np.exp(-(1/2)*(factor))/norm
+    ret=np.exp(-(1/2)*(factor))#/norm
     #ret=np.exp(-1/2*(xfactor+yfactor))
     return ret
+
+def gaussian_prob_distribution_on_sphere(phi, theta, phi0, theta0, radius, sigma):
+    # If input is a single point, convert to a list
+    if isinstance(phi, float) or isinstance(phi, int):
+        phi = np.array([phi])
+        theta = np.array([theta])
+
+    # Calculate the distance from each point to the fixed point
+    distances = np.zeros_like(phi)
+    x = radius * np.sin(phi) * np.cos(theta)
+    y = radius * np.sin(phi) * np.sin(theta)
+    z = radius * np.cos(phi)
+    dx = x - radius * np.sin(phi0) * np.cos(theta0)
+    dy = y - radius * np.sin(phi0) * np.sin(theta0)
+    dz = z - radius * np.cos(phi0)
+    distances = np.sqrt(dx*dx + dy*dy + dz*dz)
+
+    # Calculate the Gaussian probability distribution for each point
+    prob = 1.0/(sigma*np.sqrt(2*np.pi)) * np.exp(-distances*distances/(2*sigma*sigma))
+
+    # If input was a single point, return a single probability value
+    if len(prob) == 1:
+        return prob[0]
+
+    return prob
 
 @njit
 def E_z(z, H0, Om):
@@ -81,24 +126,10 @@ def Dl_z(z, H0, Om):
 
 
 
-@njit
-def normalisation(galaxies,zmax):
-    #is a beta after some simplification with the likelihood
-    #cat must be complete, omega must be a constant we set that all to 1
-    ret=len(galaxies[galaxies<=zmax])
-    return ret
-
-
 #--------------------Posterior Function----------------------------
 @njit
-def beta_line(galaxies,z0,z1,zmax):
-    denom=len(galaxies[(galaxies>=z0)*(galaxies<=z1)])
-    num=len(galaxies[galaxies<=zmax])
-    ret=num/denom
-    return ret
-@njit
 def likelihood_line(mu,dl,k):
-    sigma=k*dl
+    sigma=k*true_mu
     norm=1/(np.sqrt(2*np.pi)*sigma)
     body=np.exp(-((dl-mu)**2)/(2*sigma**2))
     ret=norm*body
@@ -113,32 +144,37 @@ def LikeofH0(iterator):
     for j in range(len(z_gals)):
         #dl=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB).luminosity_distance(z_gals[j]).value
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
+        #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
         to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*norm
     tmp=np.sum(to_sum)#*norm
     return tmp
 
-def multibeta(iterator):
+@njit
+def beta_line(galaxies,z0,z1,zmax):
+    denom=len(galaxies[(galaxies>=z0)&(galaxies<=z1)])
+    num=len(galaxies[galaxies<=zmax])
+    ret=num/denom
+    return ret
+
+def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
     zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
     zmin = fsolve(func, 0.02)[0]
+    tmp=allz[allz>=zmin]
+    tmp=tmp[tmp<=zMax]
     
-    Num=beta_line(z_gals,zmin,zMax,20)
-    if Num==0:
-        Num=Num+1
-    return Num
-def multibetaline(iterator):
-    i=iterator
-    Htemp=H0Grid[i]
-    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdMax
-    z1 = fsolve(func, 0.02)[0]
-    ret=beta_line(z_gals,0,z1,10)
+    gal_invol=len(tmp)
+    gal_incat=len(allz[allz<=20])
+    if gal_invol==0:
+        gal_invol=gal_invol+1
+
+    ret=gal_invol/gal_incat
     return ret
+
 
 def vol_beta(iterator):
     i=iterator
@@ -158,8 +194,8 @@ def just_vol_beta(iterator):
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
     zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
-    zmin = fsolve(func, 0.02)[0]
-    norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,0,20)[0]
+    zmin = 0 #fsolve(func, 0.02)[0]
+    norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,z1,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
 ###########################################################################################################
@@ -176,7 +212,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='FullExp-50_sigmawithcat'
+runpath='dl_inGal'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -186,7 +222,7 @@ H0Grid=np.linspace(H0min,H0max,1000)
 nsamp=3000000#6500000+2156000
 z_inf_cat=0.05#0.79
 z_sup_cat=2.5#2
-cat_name='FullExplorer.txt'
+cat_name='FullExplorer_big.txt'
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
 dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
@@ -267,8 +303,13 @@ else:
     zds_max=1.02
     zds_min=0.98
     
-    betaHomdMax=Dl_z(zds_max,href,Om0GLOB)
-    betaHomdmin=Dl_z(zds_min,href,Om0GLOB)
+    DS_dlinf=Dl_z(zds_min,href,Om0GLOB)
+    DS_dlsup=Dl_z(zds_max,href,Om0GLOB)
+    func = lambda z :Dl_z(z, H0min, Om0GLOB) -DS_dlinf*(1-0.1*5)
+    z1 = fsolve(func, 0.02)[0] 
+    func = lambda z :Dl_z(z, H0max, Om0GLOB) -DS_dlsup*(1+0.1*5)
+    z2 = fsolve(func, 0.02)[0] 
+
 
     cutted=MyCat[MyCat['z']<=zds_max]
     cutted=cutted[cutted['z']>=zds_min]
@@ -306,7 +347,8 @@ for i in tqdm(range(NumDS)):
     DS_theta=ds_theta[i]
     tmp=tmp[tmp['theta']<=DS_theta+5*sigma_theta]
     tmp=tmp[tmp['theta']>=DS_theta-5*sigma_theta]
-    mu=ds_dl[i]
+    true_mu=ds_dl[i]
+    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#ds_dl[i]#
     dsz=ds_z[i]
     dlrange=s*mu*5
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
@@ -319,11 +361,12 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(14) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(just_vol_beta, arr)
+        beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
     beta=np.asarray(beta)
     allbetas.append(beta)
+
 #############################################################################################
 ##############################BETA#################################################################
 #with Pool(14) as p:
