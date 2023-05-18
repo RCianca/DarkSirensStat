@@ -160,10 +160,12 @@ def beta_line(galaxies,z0,z1,zmax):
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
     zmin = fsolve(func, 0.02)[0]
+    #z_gals Try to use the cone no cuts :default is allz:
+    #Next: z_cone and z_gals to reduce time---se if the volume is equal :define z_cone:
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
     
@@ -191,11 +193,11 @@ def just_vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)#25729.5 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)
     zMax = fsolve(func, 0.02)[0] 
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
-    zmin = 0 #fsolve(func, 0.02)[0]
-    norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,z1,20)[0]
+    zmin = fsolve(func, 0.02)[0]
+    norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,0,20)[0]
     num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
 ###########################################################################################################
@@ -212,7 +214,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='dl_inGal'
+runpath='RC_varbeta_sigma1'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -287,6 +289,7 @@ if read==1:
     MyCat = pd.read_csv(cat_name, sep=" ", header=None)
     colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     MyCat.columns=colnames
+    allz=np.asarray(MyCat['z'])
 #################################DS control room#########################################
 
 if DS_read==1:
@@ -299,7 +302,7 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
 else:
-    NumDS=50
+    NumDS=250
     zds_max=1.02
     zds_min=0.98
     
@@ -335,25 +338,24 @@ else:
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.1
+dlsigma=0.01
 fullrun=[]
 allbetas=[]
 s=dlsigma
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
-    tmp=MyCat[MyCat['phi']<=DS_phi+5*sigma_phi]
-    tmp=tmp[tmp['phi']>=DS_phi-5*sigma_phi]
+    tmp=MyCat[MyCat['phi']<=DS_phi+3.5*sigma_phi]
+    tmp=tmp[tmp['phi']>=DS_phi-3.5*sigma_phi]
     DS_theta=ds_theta[i]
-    tmp=tmp[tmp['theta']<=DS_theta+5*sigma_theta]
-    tmp=tmp[tmp['theta']>=DS_theta-5*sigma_theta]
+    tmp=tmp[tmp['theta']<=DS_theta+3.5*sigma_theta]
+    tmp=tmp[tmp['theta']>=DS_theta-3.5*sigma_theta]
     true_mu=ds_dl[i]
     mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#ds_dl[i]#
     dsz=ds_z[i]
     dlrange=s*mu*5
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
-    
     z_gals=np.asarray(tmp['z'])
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
@@ -399,3 +401,32 @@ grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
 os.system('cp postcalculator.py '+folder+'/run_postcalculator.py')
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
+ax.tick_params(axis='both', which='major', labelsize=25)
+ax.yaxis.get_offset_text().set_fontsize(25)
+ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
+
+href=67
+x=H0Grid
+xmin=np.min(x)
+xmax=np.max(x)
+ax.set_xlim(xmin, xmax)
+ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
+#ax.set_ylabel(r'$P(H_0)$', fontsize=20)
+ax.set_ylabel(r'$Posterior(H_0)$', fontsize=30)
+if xmin<href<xmax:
+    ax.axvline(x = href, color = 'k', linestyle='dashdot',label = 'H0=67')
+
+Mycol='navy'
+ax.plot(x,combined[-1]/np.trapz(combined[-1],x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
+ax.legend(fontsize=13, ncol=2) 
+newdist=(combined[-1])/np.trapz(combined[-1],x)
+mean=np.trapz(x*newdist,x)/np.trapz(newdist,x)
+std=np.sqrt(np.trapz(newdist*(x-mean)**2,x)/np.trapz(newdist,x))
+plt.figtext(0.75,0.6,'Mean={:0.2f}'.format(mean),fontsize=18,c=Mycol)
+plt.figtext(0.75,0.55,'Std={:0.2f}'.format(std),fontsize=18, c=Mycol)
+print('mean={},std={} std/mean={}%'.format(mean,std,100*std/mean))
+plotpath=os.path.join(folder,runpath+'_PostTot.pdf')
+plt.savefig(plotpath, format="pdf", bbox_inches="tight")
