@@ -26,6 +26,23 @@ Xi0Glob =1.
 clight = 2.99792458* 10**5#km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
 #-----------------Functions--------------------------
+def uniform_volume(iterations):
+#for i in tqdm(range(flagship.shape[0])):
+#for i in range(iterations):
+    i=iterations
+    numevent=i
+    phigal=new_phi_gals[i]
+    thetagal=new_theta_gals[i]
+    dc=dc_gals[i]
+    #----------z----------------------
+    zz=z_from_dcom(dc)
+    dl=Dl_z(zz,href,Om0GLOB)
+    #----------row to append---------------------
+    proxy_row={'Ngal':numevent,'Comoving Distance':dc,'Luminosity Distance':dl,
+               'z':zz,'phi':phigal,'theta':thetagal
+          }
+    return proxy_row
+
 def Mises_Fisher(theta,phi,DS_theta,DS_phi,conc):
     meanvec=hp.ang2vec(DS_theta,DS_phi)
     meanvec=np.asarray(meanvec,dtype=np.float128)
@@ -124,6 +141,14 @@ def r_z(z, H0, Om):
 def Dl_z(z, H0, Om):
     return r_z(z, H0, Om)*(1+z)
 
+def z_from_dcom(dc_val):
+    '''
+    Returns redshift for a given comoving distance dc (in Mpc)'''
+    
+    func = lambda z :cosmoflag.comoving_distance(z).value - dc_val
+    z = fsolve(func, 0.2)
+    return z[0]
+
 
 
 #--------------------Posterior Function----------------------------
@@ -214,7 +239,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='RC_varbeta_sigma1'
+runpath='RC_lowz_sigma20_noapprox'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -224,6 +249,7 @@ H0Grid=np.linspace(H0min,H0max,1000)
 nsamp=3000000#6500000+2156000
 z_inf_cat=0.05#0.79
 z_sup_cat=2.5#2
+NCORE=14
 cat_name='FullExplorer_big.txt'
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
@@ -261,27 +287,48 @@ if generation==1:
     phi_gals   = np.random.uniform(phi_min,phi_max,nsamp)
     theta_gals = np.arccos( np.random.uniform(np.cos(theta_max),np.cos(theta_min),nsamp) )
     dc_gals=dc_gals_all[dc_gals_all>=dcom_min]
-    num=np.arange(len(dc_gals))
-    z_gals=np.zeros(len(dc_gals))
-    dl_gals=np.zeros(len(dc_gals))
+    #num=np.arange(len(dc_gals))
+    #z_gals=np.zeros(len(dc_gals))
+    #dl_gals=np.zeros(len(dc_gals))
 # need to use pool here
-    for i in tqdm(range(len(dc_gals))):
-        z=z_from_dcom(dc_gals[i])
-        z_gals[i]=z
-        dl_gals[i]=Dl_z(z,href,Om0GLOB)
+    #for i in tqdm(range(len(dc_gals))):
+    #    z=z_from_dcom(dc_gals[i])
+    #    z_gals[i]=z
+    #   dl_gals[i]=Dl_z(z,href,Om0GLOB)
     new_phi_gals=np.random.choice(phi_gals,len(dc_gals))
     new_theta_gals=np.random.choice(theta_gals,len(dc_gals))
-
+    numevent=int(0)
+    proxy_row={'Ngal':numevent,'Comoving Distance':0,'Luminosity Distance':0,
+                   'z':0,'phi':0,'theta':0
+              }
     colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     MyCat = pd.DataFrame(columns=colnames)
-    MyCat['Ngal']=num
-    MyCat['Comoving Distance']=dc_gals
-    MyCat['Luminosity Distance']=dl_gals
-    MyCat['z']=z_gals
-    MyCat['phi']=new_phi_gals
-    MyCat['theta']=new_theta_gals
+    arr=np.arange(0,len(dc_gals),dtype=int)
+    data=[]
+    tmp=[]
+    print('Generating the catalogue using pool, please wait...')
+    with Pool(NCORE) as p:
+        tmp=p.map(uniform_volume, arr)
+    MyCat=MyCat.append(tmp, ignore_index=True)
+
+    #MyCat = pd.DataFrame(columns=colnames)
+    #MyCat['Ngal']=num
+    #MyCat['Comoving Distance']=dc_gals
+    #MyCat['Luminosity Distance']=dl_gals
+    #MyCat['z']=z_gals
+    #MyCat['phi']=new_phi_gals
+    #MyCat['theta']=new_theta_gals
     print('Saving '+cat_name)
     MyCat.to_csv(cat_name, header=None, index=None, sep=' ')
+    del tmp
+    del data
+    del u    
+    del dc_gals
+    del phi_gals
+    del theta_gals
+    del new_phi_gals
+    del new_theta_gals
+    del dc_gals_all
 #------------------------Reading the catalogue----------------------------------
 if read==1:
     #cat_name='FullExplorer.txt'
@@ -302,9 +349,9 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
 else:
-    NumDS=250
-    zds_max=1.02
-    zds_min=0.98
+    NumDS=150
+    zds_max=0.27#1.02
+    zds_min=0.2#0.98
     
     DS_dlinf=Dl_z(zds_min,href,Om0GLOB)
     DS_dlsup=Dl_z(zds_max,href,Om0GLOB)
@@ -338,7 +385,7 @@ else:
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.01
+dlsigma=0.2
 fullrun=[]
 allbetas=[]
 s=dlsigma
@@ -361,7 +408,7 @@ for i in tqdm(range(NumDS)):
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
     #print(tmp.shape[0])
-    with Pool(14) as p:
+    with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
         beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
