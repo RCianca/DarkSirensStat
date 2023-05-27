@@ -28,3 +28,8 @@ DSCatalogueCreator/wrongsnrEVA02.fits
 MyDSStat/results
 MyDSStat/FullExplorer.txt
 MyDSStat/FullExplorer_big.txt
+MyDSStat/Uniform_from_flag_big.txt
+MyDSStat/weights.txt
+MyDSStat/weights_bin.txt
+MyDSStat/Flag.txt
+MyDSStat/sampled_from_uniform.txt
