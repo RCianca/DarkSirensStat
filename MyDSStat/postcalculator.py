@@ -280,9 +280,9 @@ def just_vol_beta(iterator):
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
 #------------------trigger---------------------
-generation=0
+generation=1
 read=1
-DS_read=1
+DS_read=0
 save=1
 #----------------------------------------------
 path='results'
@@ -290,23 +290,23 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='uniform_confront_sample'
+runpath='SpeedUP'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
 H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
-nsamp=100#6500000+2156000
+nsamp=1000000#6500000+2156000
 z_inf_cat=0.05#0.79
 z_sup_cat=2.5#2
-NCORE=15
+NCORE=6
 
-z_bin=np.loadtxt('weights_bin.txt')
-w_hist=np.loadtxt('weights.txt')
+#z_bin=np.loadtxt('weights_bin.txt')
+#w_hist=np.loadtxt('weights.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='Uniform_from_flag_big.txt'
+#w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
+cat_name='Speed.txt'
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
 dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
