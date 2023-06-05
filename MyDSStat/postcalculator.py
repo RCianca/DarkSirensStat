@@ -157,16 +157,17 @@ def z_from_dcom(dc_val):
 
 #--------------------Posterior Function----------------------------
 @njit
-def truncated_part(x, mu, k, lower = 0):
+def truncated_part(x, mu, k):
     #x is the dl of the gal
     #mu is the pos of the DS
     #lower set to zero. This should move the DS
         #https://stats.stackexchange.com/questions/2037/estimating-mean-and-st-dev-of-a-truncated-gaussian-curve-without-spike
+    wall=dlmaxcat
     sigma=k*true_mu
-    Phialpha = 0.5*math.erfc(-(lower-mu)/(np.sqrt(2)*sigma))
+    Phialpha = 0.5*math.erfc(-(x-wall)/(np.sqrt(2)*sigma))
     #Phialpha = 0.5*(1+math.erf((-mu)/(np.sqrt(2)*sigma)))
     #print('sigma is {} len is {}'.format(sigma,len(sigma)))
-    return np.where(x>0, (1/((np.sqrt(2*np.pi)*sigma)*(1-Phialpha))) * np.exp(-(x-mu)**2/(2*sigma**2)) ,0.)
+    return np.where(x>0, (1/((np.sqrt(2*np.pi)*sigma)*(1-Phialpha+0.000001))) * np.exp(-(x-mu)**2/(2*sigma**2)) ,0.)
 @njit
 def likelihood_line(mu,dl,k):
     sigma=k*true_mu
@@ -186,7 +187,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
@@ -280,7 +281,7 @@ def just_vol_beta(iterator):
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
 #------------------trigger---------------------
-generation=1
+generation=0
 read=1
 DS_read=0
 save=1
@@ -290,7 +291,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='SpeedUP'
+runpath='stat_flag150_02'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -300,13 +301,13 @@ H0Grid=np.linspace(H0min,H0max,1000)
 nsamp=1000000#6500000+2156000
 z_inf_cat=0.05#0.79
 z_sup_cat=2.5#2
-NCORE=6
+NCORE=15
 
-#z_bin=np.loadtxt('weights_bin.txt')
-#w_hist=np.loadtxt('weights.txt')
+z_bin=np.loadtxt('weights_bin.txt')
+w_hist=np.loadtxt('weights.txt')
+#w_hist=np.loadtxt('weights_halved.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-#w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='Speed.txt'
+cat_name='Flag.txt'
 
 dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
 dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
@@ -416,7 +417,7 @@ if DS_read==1:
     ds_theta=np.asarray(sample['theta'])
     NumDS=len(ds_z)
 else:
-    NumDS=20#150
+    NumDS=150#150
     zds_max=1.42#1.42#1.02
     zds_min=1.38#1.38#0.98
     
@@ -453,9 +454,10 @@ how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
 s=dlsigma
+dlmaxcat=Dl_z(np.max(allz),href,Om0GLOB)
 #---------------------USE WHEN YOU HAVE A N(z)
-#denom_cat=allz[allz<=20]
-#denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
+denom_cat=allz[allz<=20]
+denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -477,7 +479,7 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline, arr)
+        beta=p.map(multibetaline_stat, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
     beta=np.asarray(beta)
@@ -522,7 +524,7 @@ ax.tick_params(axis='both', which='major', labelsize=25)
 ax.yaxis.get_offset_text().set_fontsize(25)
 ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
 
-href=67
+
 x=H0Grid
 xmin=np.min(x)
 xmax=np.max(x)
