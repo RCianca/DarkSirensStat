@@ -187,7 +187,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
@@ -211,19 +211,27 @@ def multibetaline(iterator):
     Htemp=H0Grid[i]
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
+    #zsup = fsolve(func, 0.02)[0]
+    #func=lambda z :Dl_z(z, href, Om0GLOB) -(mu+s*how_many_sigma*mu)
+    #myzmax = fsolve(func, 0.02)[0]
+    #zMax=min(zsup,zmax_cat)
+    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    #z_gals Try to use the cone no cuts :default is allz:
-    #Next: z_cone and z_gals to reduce time---se if the volume is equal :define z_cone:
+    #zinf = fsolve(func, 0.02)[0]
+    #func=lambda z :Dl_z(z, href, Om0GLOB) -(mu-s*how_many_sigma*mu)
+    #myzmin = fsolve(func, 0.02)[0]
+    #zmin=max(zinf,zmin_cat)
+
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
     
     gal_invol=len(tmp)
-    gal_incat=len(allz[allz<=20])
+    #gal_incat=len(allz[allz<=20])
     if gal_invol==0:
         gal_invol=gal_invol+1
 
-    ret=gal_invol/gal_incat
+    ret=gal_invol#/gal_incat
     return ret
 @njit
 def sum_stat_weights(array_of_z):
@@ -291,54 +299,53 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='stat_flag150_02'
+runpath='bounduary_test_02-davedere'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
 H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
-nsamp=1000000#6500000+2156000
-z_inf_cat=0.05#0.79
-z_sup_cat=2.5#2
 NCORE=15
-
-z_bin=np.loadtxt('weights_bin.txt')
-w_hist=np.loadtxt('weights.txt')
+#z_bin=np.loadtxt('weights_bin.txt')
+#w_hist=np.loadtxt('weights.txt')
 #w_hist=np.loadtxt('weights_halved.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='Flag.txt'
+cat_name='FullExplorer_big.txt'
 
-dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
-dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
-dl_min=cosmoflag.luminosity_distance(z_inf_cat).value
-dl_max=cosmoflag.luminosity_distance(z_sup_cat).value
-
-
-#---------angular stuff------------------
-radius_deg= np.sqrt(10/np.pi)
-sigma90=radius_deg/np.sqrt(2)
-sigma_deg=sigma90/1.5
-circle_deg=6*sigma_deg
-sigma_theta=np.radians(sigma_deg)
-sigma_phi=np.radians(sigma_deg)
-radius_rad=np.radians(circle_deg)
-#print('Sigma phi={},Sigma theta={}'.format(sigma_phi,sigma_phi))
-#print('Sigma phi={}°,Sigma theta={}°'.format(sigma_deg,sigma_deg))
-#----------------------------------------------------------------
-phi_min=0
-phi_max=np.pi/2
-theta_min=0
-theta_max=np.pi/2
-#print('phi min={},phi Max={}'.format(phi_min,phi_max))
-#print('theta min={},theta Max={}'.format(theta_min,theta_max))
-
-print('Cosmology: Flat Universe. H0={}, OmegaM={}'.format(href,Om0GLOB))
-print('Parameters:\nH0_min={}, H0_max={}'.format(H0min,H0max))
-print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(z_inf_cat,z_sup_cat,phi_min,phi_max,theta_min,theta_max))
 
 if generation==1:
 #------------------points generator------------------
+    nsamp=1000000#6500000+2156000
+    z_inf_cat=0.05#0.79
+    z_sup_cat=2.5#2
+
+    dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
+    dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
+    dl_min=cosmoflag.luminosity_distance(z_inf_cat).value
+    dl_max=cosmoflag.luminosity_distance(z_sup_cat).value
+
+
+    #---------angular stuff------------------
+    radius_deg= np.sqrt(10/np.pi)
+    sigma90=radius_deg/np.sqrt(2)
+    sigma_deg=sigma90/1.5
+    circle_deg=6*sigma_deg
+    sigma_theta=np.radians(sigma_deg)
+    sigma_phi=np.radians(sigma_deg)
+    radius_rad=np.radians(circle_deg)
+    #----------------------------------------------------------------
+    phi_min=0
+    phi_max=np.pi/2
+    theta_min=0
+    theta_max=np.pi/2
+
+
+    print('Cosmology: Flat Universe. H0={}, OmegaM={}'.format(href,Om0GLOB))
+    print('Parameters:\nH0_min={}, H0_max={}'.format(H0min,H0max))
+    print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(z_inf_cat,z_sup_cat,phi_min,phi_max,theta_min,theta_max))
+
+
     u = np.random.uniform(0,1,size=nsamp) # uniform random vector of size nsamp
     dc_gals_all     = np.cbrt((u*dcom_min**3)+((1-u)*dcom_max**3))
     phi_gals   = np.random.uniform(phi_min,phi_max,nsamp)
@@ -394,6 +401,25 @@ if read==1:
     colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
+    Min_Box_dl=MyCat['Luminosity Distance'].min()
+    Max_Box_dl=MyCat['Luminosity Distance'].max()
+    #---------angular stuff------------------
+    radius_deg= np.sqrt(10/np.pi)
+    sigma90=radius_deg/np.sqrt(2)
+    sigma_deg=sigma90/1.5
+    circle_deg=6*sigma_deg
+    sigma_theta=np.radians(sigma_deg)
+    sigma_phi=np.radians(sigma_deg)
+    radius_rad=np.radians(circle_deg)
+    #----------------------------------------------------------------
+    phi_min=MyCat['phi'].min()
+    phi_max=MyCat['phi'].max()
+    theta_min=MyCat['theta'].min()
+    theta_max=MyCat['theta'].max()
+    print('Cosmology: Flat Universe. H0={}, OmegaM={}'.format(href,Om0GLOB))
+    print('Parameters:\nH0_min={}, H0_max={}'.format(H0min,H0max))
+    print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
+    print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
 
 if DS_read==1:
@@ -417,16 +443,18 @@ if DS_read==1:
     ds_theta=np.asarray(sample['theta'])
     NumDS=len(ds_z)
 else:
-    NumDS=150#150
-    zds_max=1.42#1.42#1.02
-    zds_min=1.38#1.38#0.98
+    NumDS=25#150
+    #Selezionare in dcom non z: implementa anche Dirac 
+    zds_max=1.3#1.42#1.02
+    zds_min=1.1#1.38#0.98
     
-    #DS_dlinf=Dl_z(zds_min,href,Om0GLOB)
-    #DS_dlsup=Dl_z(zds_max,href,Om0GLOB)
-
-
-    cutted=MyCat[MyCat['z']<=zds_max]
-    cutted=cutted[cutted['z']>=zds_min]
+    mydlmax=Dl_z(zds_max,href,Om0GLOB)
+    mydcmax=mydlmax/(1+zds_max)
+    mydlmin=Dl_z(zds_min,href,Om0GLOB)
+    mydcmin=mydlmin/(1+zds_min)
+    #-----------------------------------------------------------------------------
+    cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
+    cutted=cutted[cutted['Comoving Distance']>=mydcmin]
     cutted=cutted[cutted['phi']<= phi_max-10*sigma_phi]
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
@@ -446,18 +474,22 @@ else:
     ds_theta=np.asarray(sample['theta'])
 ###################################################################################
 #---------------------Start analysis--------------------------------------
+#some global stuff###########################################
+zmax_cat=np.max(allz)
+zmin_cat=np.min(allz)
+##############################################################
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.01
+dlsigma=0.1
 how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
 s=dlsigma
 dlmaxcat=Dl_z(np.max(allz),href,Om0GLOB)
 #---------------------USE WHEN YOU HAVE A N(z)
-denom_cat=allz[allz<=20]
-denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
+#denom_cat=allz[allz<=20]
+#denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -479,7 +511,7 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline_stat, arr)
+        beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
     beta=np.asarray(beta)
