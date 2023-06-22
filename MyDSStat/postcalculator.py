@@ -187,7 +187,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
@@ -211,23 +211,39 @@ def multibetaline(iterator):
     Htemp=H0Grid[i]
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    #zsup = fsolve(func, 0.02)[0]
-    #func=lambda z :Dl_z(z, href, Om0GLOB) -(mu+s*how_many_sigma*mu)
-    #myzmax = fsolve(func, 0.02)[0]
-    #zMax=min(zsup,zmax_cat)
+    zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    #zinf = fsolve(func, 0.02)[0]
-    #func=lambda z :Dl_z(z, href, Om0GLOB) -(mu-s*how_many_sigma*mu)
-    #myzmin = fsolve(func, 0.02)[0]
-    #zmin=max(zinf,zmin_cat)
+    zmin=max(zmin,zmin_cat)
 
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
+    #---------------------------Volume-------------------------------------------------
+    #colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
+    phimax=np.max(sliced_for_beta['phi'])
+    phimin=np.min(sliced_for_beta['phi'])
+    thetamax=np.max(sliced_for_beta['theta'])
+    thetamin=np.min(sliced_for_beta['theta'])
+    delta_phi=phimax-phimin
+    theta_part=np.cos(thetamin)-np.cos(thetamax)
+    integrand=lambda x:clight*(r_z(x, Htemp, Om0GLOB))**2/(htemp)
+    z_part=integrate.quad(integrand,zmin,zmax)[0]
+
+    Volume=delta_phi*theta_part*z_part#integrand
+    gal_invol=len(tmp)*Volume
     
-    gal_invol=len(tmp)
-    #gal_incat=len(allz[allz<=20])
+    #func = lambda z :Dl_z(z, href, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
+    #zMax_fix = fsolve(func, 0.02)[0] 
+    #zM=min(zMax_fix,zmax_cat)
+    
+    #func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    #zmin_fix = fsolve(func, 0.02)[0]
+    #zm=max(zmin_fix,zmin_cat)    
+    
+    #integrand=lambda x:clight*(r_z(x, Htemp, Om0GLOB))**2/(Htemp)
+    #Tot_z_part=integrate.quad(integrand,zmin_cat,zmax_cat)[0]
+    gal_incat=len(allz[allz<=20])*delta_phi*theta_part*Tot_z_part
     if gal_invol==0:
         gal_invol=gal_invol+1
 
@@ -267,12 +283,18 @@ def vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - betaHomdMax
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu+s*how_many_sigma*mu)
     zMax = fsolve(func, 0.02)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - dl_min_beta
-    zmin = fsolve(func, 0.02)[0]  
-    norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,zmin,20)[0]
-    num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    zmin = fsolve(func, 0.02)[0] 
+    
+    integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
+    num=integrate.quad(integrand,zmin,zMax)[0]
+    integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
+    norm=integrate.quad(integrand,0,20)[0]    
+    
+    #norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,zmin,20)[0]
+    #num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
 def just_vol_beta(iterator):
     i=iterator
@@ -299,7 +321,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='bounduary_test_02-davedere'
+runpath='bounduary_test_17'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -443,10 +465,10 @@ if DS_read==1:
     ds_theta=np.asarray(sample['theta'])
     NumDS=len(ds_z)
 else:
-    NumDS=25#150
+    NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.3#1.42#1.02
-    zds_min=1.1#1.38#0.98
+    zds_max=1.75#1.42#1.02
+    zds_min=0.5#1.38#0.98
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -477,16 +499,18 @@ else:
 #some global stuff###########################################
 zmax_cat=np.max(allz)
 zmin_cat=np.min(allz)
+integrand=lambda x:clight*(r_z(x, href, Om0GLOB))**2/(href)
+Tot_z_part=integrate.quad(integrand,zmin_cat,zmax_cat)[0]
 ##############################################################
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 dlsigma=0.1
-how_many_sigma=3.5
+how_many_sigma=5
 fullrun=[]
 allbetas=[]
 s=dlsigma
-dlmaxcat=Dl_z(np.max(allz),href,Om0GLOB)
+
 #---------------------USE WHEN YOU HAVE A N(z)
 #denom_cat=allz[allz<=20]
 #denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
@@ -504,6 +528,7 @@ for i in tqdm(range(NumDS)):
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
+    sliced_for_beta=tmp
     z_gals=np.asarray(tmp['z'])
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
@@ -511,7 +536,7 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline, arr)
+        beta=p.map(vol_beta, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
     beta=np.asarray(beta)
