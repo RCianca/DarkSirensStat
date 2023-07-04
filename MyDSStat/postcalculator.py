@@ -142,6 +142,16 @@ def r_z(z, H0, Om):
     integral, error = integrate.quad(integrand, 0, z)
     return integral*c/H0
 
+def r_z_vett(z, H0, Om):
+    c = clight
+    integral = np.zeros_like(z)  # Array vuoto per salvare i risultati
+
+    for i, z_val in enumerate(z):
+        integrand = lambda x: 1 / E_z(x, H0, Om)
+        integral[i], error = integrate.quad(integrand, 0, z_val)
+
+    return integral * c / H0
+
 def Dl_z(z, H0, Om):
     return r_z(z, H0, Om)*(1+z)
 
@@ -209,29 +219,30 @@ def stat_weights(array_of_z):
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
+    cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    zMax=min(zMax,zmax_cat)
+    #zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    zmin=max(zmin,zmin_cat)
+    #zmin=max(zmin,zmin_cat)
 
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
     #---------------------------Volume-------------------------------------------------
     #colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
-    phimax=np.max(sliced_for_beta['phi'])
-    phimin=np.min(sliced_for_beta['phi'])
-    thetamax=np.max(sliced_for_beta['theta'])
-    thetamin=np.min(sliced_for_beta['theta'])
-    delta_phi=phimax-phimin
-    theta_part=np.cos(thetamin)-np.cos(thetamax)
-    integrand=lambda x:clight*(r_z(x, Htemp, Om0GLOB))**2/(htemp)
-    z_part=integrate.quad(integrand,zmin,zmax)[0]
+    #phimax=np.max(sliced_for_beta['phi'])
+    #phimin=np.min(sliced_for_beta['phi'])
+    #thetamax=np.max(sliced_for_beta['theta'])
+    #thetamin=np.min(sliced_for_beta['theta'])
+    #delta_phi=phimax-phimin
+    #theta_part=np.cos(thetamin)-np.cos(thetamax)
+    #integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
+    #z_part=integrate.quad(integrand,zmin,zMax)[0]
 
-    Volume=delta_phi*theta_part*z_part#integrand
-    gal_invol=len(tmp)*Volume
+    #Volume=delta_phi*theta_part*z_part#integrand
+    gal_invol=(len(tmp))
     
     #func = lambda z :Dl_z(z, href, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     #zMax_fix = fsolve(func, 0.02)[0] 
@@ -241,13 +252,13 @@ def multibetaline(iterator):
     #zmin_fix = fsolve(func, 0.02)[0]
     #zm=max(zmin_fix,zmin_cat)    
     
-    #integrand=lambda x:clight*(r_z(x, Htemp, Om0GLOB))**2/(Htemp)
-    #Tot_z_part=integrate.quad(integrand,zmin_cat,zmax_cat)[0]
-    gal_incat=len(allz[allz<=20])*delta_phi*theta_part*Tot_z_part
+    #integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
+    #Tot_z_part=integrate.quad(integrand,0,20)[0]
+    gal_incat=len(allz[allz<=20])
     if gal_invol==0:
         gal_invol=gal_invol+1
 
-    ret=gal_invol#/gal_incat
+    ret=gal_invol/gal_incat
     return ret
 @njit
 def sum_stat_weights(array_of_z):
@@ -257,19 +268,29 @@ def sum_stat_weights(array_of_z):
 def multibetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB)# -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB)# - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
     #z_gals Try to use the cone no cuts :default is allz:
     #Next: z_cone and z_gals to reduce time---se if the volume is equal :define z_cone:
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
     
+    #phimax=np.max(sliced_for_beta['phi'])
+    #phimin=np.min(sliced_for_beta['phi'])
+    #thetamax=np.max(sliced_for_beta['theta'])
+    #thetamin=np.min(sliced_for_beta['theta'])
+    #delta_phi=phimax-phimin
+    #theta_part=np.cos(thetamin)-np.cos(thetamax)
+    #integrand=lambda x:clight*(r_z(x, Htemp, Om0GLOB))**2/(Htemp)
+    #z_part=integrate.quad(integrand,zmin,zMax)[0]
+
+    Volume=delta_phi*theta_part*z_part#integrand
     #gal_invol=len(tmp)
-    num=sum_stat_weights(tmp)
+    num=sum_stat_weights(tmp)*Volume
     #denom_cat=allz[allz<=20]
-    #denom=np.sum(w(denom_cat))
+    vol_denom=denom*delta_phi*theta_part*Tot_z_part
     #gal_incat=len(allz[allz<=20])
     if num==0:
         num=num+1
@@ -288,25 +309,38 @@ def vol_beta(iterator):
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0] 
     
+    zMax=min(zMax,zmax_cat)
+    zmin=max(zmin,zmin_cat)
+    
     integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
     num=integrate.quad(integrand,zmin,zMax)[0]
     integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
-    norm=integrate.quad(integrand,0,20)[0]    
+    norm=integrate.quad(integrand,0,20)[0]  
     
-    #norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,zmin,20)[0]
-    #num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
-def just_vol_beta(iterator):
+def testbeta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu+s*how_many_sigma*mu)
     zMax = fsolve(func, 0.02)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
-    zmin = fsolve(func, 0.02)[0]
-    norm = integrate.quad(lambda x: (1/(1+x))*cosmo.differential_comoving_volume(x).value,0,20)[0]
-    num = integrate.quad(lambda x:(1/(1+x))*cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
-    return num/norm
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    zmin = fsolve(func, 0.02)[0] 
+    
+    tmp=allz[allz>=zmin]
+    tmp=tmp[tmp<=zMax]
+    #numerator
+    numtosum=r_z_vett(tmp, Htemp, Om0GLOB)
+    numtosum=numtosum**2
+    numtosum=numtosum*tmp
+    allh=cosmo.H(tmp).value
+    num=np.sum(numtosum/allh)
+    #denom
+    #normtosum=r_z_vett(allz, Htemp, Om0GLOB)
+    #normtosum=normtosum**2
+    #normtosum=normtosum*allz
+    #norm=np.sum(normtosum)/Htemp
+    return num#/norm
 ###########################################################################################################
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
@@ -321,7 +355,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='bounduary_test_17'
+runpath='P0_dirac_28'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -468,7 +502,7 @@ else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
     zds_max=1.75#1.42#1.02
-    zds_min=0.5#1.38#0.98
+    zds_min=0.3#1.38#0.98
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -500,13 +534,13 @@ else:
 zmax_cat=np.max(allz)
 zmin_cat=np.min(allz)
 integrand=lambda x:clight*(r_z(x, href, Om0GLOB))**2/(href)
-Tot_z_part=integrate.quad(integrand,zmin_cat,zmax_cat)[0]
+Tot_z_part=integrate.quad(integrand,0,20)[0]
 ##############################################################
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 dlsigma=0.1
-how_many_sigma=5
+how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
 s=dlsigma
@@ -536,7 +570,7 @@ for i in tqdm(range(NumDS)):
     #print(tmp.shape[0])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(vol_beta, arr)
+        beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
     beta=np.asarray(beta)
