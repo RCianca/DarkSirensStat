@@ -36,3 +36,7 @@ MyDSStat/Flag.txt
 MyDSStat/sampled_from_uniform.txt
 MyDSStat/Speed.txt
 MyDSStat/sampled_from_uniform_halved.txt
+MyDSStat/ExtractedFast.txt
+MyDSStat/fast_weights.txt
+MyDSStat/fast_weights_bin.txt
+MyDSStat/CuttedFast.txt
