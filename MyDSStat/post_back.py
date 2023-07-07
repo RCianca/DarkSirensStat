@@ -355,7 +355,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='P0_fast-test_04'
+runpath='P0_postback'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -501,8 +501,8 @@ if DS_read==1:
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.75#1.42#1.02
-    zds_min=0.3#1.38#0.98
+    zds_max=2.2#1.42#1.02
+    zds_min=0.08#1.38#0.98
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -515,7 +515,7 @@ else:
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
     cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
-    print(cutted.shape[0])
+
     sample=cutted.sample(NumDS) #This is the DS cat
 
     if save==1:
