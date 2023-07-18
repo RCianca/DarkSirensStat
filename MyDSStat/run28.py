@@ -222,43 +222,21 @@ def multibetaline(iterator):
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    #zMax=min(zMax,zmax_cat)
+    zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    #zmin=max(zmin,zmin_cat)
+    zmin=max(zmin,zmin_cat)
 
     tmp=allz[allz>=zmin]
-    tmp=tmp[tmp<=zMax]
-    #---------------------------Volume-------------------------------------------------
-    #colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
-    #phimax=np.max(sliced_for_beta['phi'])
-    #phimin=np.min(sliced_for_beta['phi'])
-    #thetamax=np.max(sliced_for_beta['theta'])
-    #thetamin=np.min(sliced_for_beta['theta'])
-    #delta_phi=phimax-phimin
-    #theta_part=np.cos(thetamin)-np.cos(thetamax)
-    #integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
-    #z_part=integrate.quad(integrand,zmin,zMax)[0]
-
-    #Volume=delta_phi*theta_part*z_part#integrand
+    tmp=tmp[tmp<=zMax]  
     gal_invol=(len(tmp))
-    
-    #func = lambda z :Dl_z(z, href, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
-    #zMax_fix = fsolve(func, 0.02)[0] 
-    #zM=min(zMax_fix,zmax_cat)
-    
-    #func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
-    #zmin_fix = fsolve(func, 0.02)[0]
-    #zm=max(zmin_fix,zmin_cat)    
-    
-    #integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
-    #Tot_z_part=integrate.quad(integrand,0,20)[0]
+
     gal_incat=len(allz[allz<=20])
     if gal_invol==0:
         gal_invol=gal_invol+1
 
-    ret=gal_invol/gal_incat
+    ret=gal_invol#/gal_incat
     return ret
 @njit
 def sum_stat_weights(array_of_z):
@@ -355,7 +333,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='P0_postback-scatter'
+runpath='P0_postback-scatter-1sigma-nogalincat'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -480,7 +458,7 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='P0_postback'
+    source_folder='P0_postback-scatter'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -559,7 +537,7 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']<=DS_theta+3.5*sigma_theta]
     tmp=tmp[tmp['theta']>=DS_theta-3.5*sigma_theta]
     true_mu=ds_dl[i]
-    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#ds_dl[i]#
+    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
     dsz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
