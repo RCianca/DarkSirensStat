@@ -142,16 +142,6 @@ def r_z(z, H0, Om):
     integral, error = integrate.quad(integrand, 0, z)
     return integral*c/H0
 
-def r_z_vett(z, H0, Om):
-    c = clight
-    integral = np.zeros_like(z)  # Array vuoto per salvare i risultati
-
-    for i, z_val in enumerate(z):
-        integrand = lambda x: 1 / E_z(x, H0, Om)
-        integral[i], error = integrate.quad(integrand, 0, z_val)
-
-    return integral * c / H0
-
 def Dl_z(z, H0, Om):
     return r_z(z, H0, Om)*(1+z)
 
@@ -166,6 +156,18 @@ def z_from_dcom(dc_val):
 
 
 #--------------------Posterior Function----------------------------
+@njit
+def truncated_part(x, mu, k):
+    #x is the dl of the gal
+    #mu is the pos of the DS
+    #lower set to zero. This should move the DS
+        #https://stats.stackexchange.com/questions/2037/estimating-mean-and-st-dev-of-a-truncated-gaussian-curve-without-spike
+    wall=dlmaxcat
+    sigma=k*true_mu
+    Phialpha = 0.5*math.erfc(-(x-wall)/(np.sqrt(2)*sigma))
+    #Phialpha = 0.5*(1+math.erf((-mu)/(np.sqrt(2)*sigma)))
+    #print('sigma is {} len is {}'.format(sigma,len(sigma)))
+    return np.where(x>0, (1/((np.sqrt(2*np.pi)*sigma)*(1-Phialpha+0.000001))) * np.exp(-(x-mu)**2/(2*sigma**2)) ,0.)
 @njit
 def likelihood_line(mu,dl,k):
     sigma=k*true_mu
@@ -194,6 +196,12 @@ def LikeofH0(iterator):
     return tmp#/denom
 
 @njit
+def beta_line(galaxies,z0,z1,zmax):
+    denom=len(galaxies[(galaxies>=z0)&(galaxies<=z1)])
+    num=len(galaxies[galaxies<=zmax])
+    ret=num/denom
+    return ret
+@njit
 def stat_weights(array_of_z):
     #alltheomega=w(array_of_z)
     temp=np.interp(array_of_z,z_bin,w_hist)
@@ -201,25 +209,24 @@ def stat_weights(array_of_z):
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    #zMax=min(zMax,zmax_cat)
+    zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    #zmin=max(zmin,zmin_cat)
+    zmin=max(zmin,zmin_cat)
 
-    mytmp=allz[allz>=zmin]
-    mytmp=mytmp[mytmp<=zMax]
-    
-    gal_invol=(len(tmp))
-    
+    tmp=allz[allz>=zmin]
+    tmp=tmp[tmp<=zMax]
+
+    gal_invol=len(tmp)
+
     gal_incat=len(allz[allz<=20])
     if gal_invol==0:
         gal_invol=gal_invol+1
 
-    ret=gal_invol/gal_incat
+    ret=gal_invol#/gal_incat
     return ret
 @njit
 def sum_stat_weights(array_of_z):
@@ -238,8 +245,11 @@ def multibetaline_stat(iterator):
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
     
-    tmp=np.sort(tmp)
+    #gal_invol=len(tmp)
     num=sum_stat_weights(tmp)
+    #denom_cat=allz[allz<=20]
+    #denom=np.sum(w(denom_cat))
+    #gal_incat=len(allz[allz<=20])
     if num==0:
         num=num+1
 
@@ -257,31 +267,39 @@ def vol_beta(iterator):
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0] 
     
-    zMax=min(zMax,zmax_cat)
-    zmin=max(zmin,zmin_cat)
-    
     integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
     num=integrate.quad(integrand,zmin,zMax)[0]
     integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
-    norm=integrate.quad(integrand,0,20)[0]  
+    norm=integrate.quad(integrand,0,20)[0]    
     
+    #norm = integrate.quad(lambda x: cosmo.differential_comoving_volume(x).value,zmin,20)[0]
+    #num = integrate.quad(lambda x:cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
     return num/norm
-
-###########################################################################################################
-#----------------------Main-------------------------------------------------------------------------------#
-###########################################################################################################
+def just_vol_beta(iterator):
+    i=iterator
+    Htemp=H0Grid[i]
+    cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*5*mu)#25514.6#(mu+s*5*mu)
+    zMax = fsolve(func, 0.02)[0] 
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*5*mu)
+    zmin = fsolve(func, 0.02)[0]
+    norm = integrate.quad(lambda x: (1/(1+x))*cosmo.differential_comoving_volume(x).value,0,20)[0]
+    num = integrate.quad(lambda x:(1/(1+x))*cosmo.differential_comoving_volume(x).value,zmin,zMax)[0]
+    return num/norm
+##################################################################################################
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
+samescatter=0
 #----------------------------------------------
 path='results'
 exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='BACKUP-secondtake-fullexp-00'
+runpath='BuildAgain-03'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -289,8 +307,8 @@ H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=15
-#z_bin=np.loadtxt('fast_weights_bin.txt')
-#w_hist=np.loadtxt('fast_weights.txt')
+#z_bin=np.loadtxt('weights_bin.txt')
+#w_hist=np.loadtxt('weights.txt')
 #w_hist=np.loadtxt('weights_halved.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
 cat_name='FullExplorer_big.txt'
@@ -298,8 +316,8 @@ cat_name='FullExplorer_big.txt'
 
 if generation==1:
 #------------------points generator------------------
-    nsamp=3000000#6500000+2156000
-    z_inf_cat=0.8#0.79
+    nsamp=1000000#6500000+2156000
+    z_inf_cat=0.05#0.79
     z_sup_cat=2.5#2
 
     dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
@@ -406,31 +424,34 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='RC_UNIF_FLAG'
+    source_folder='P0_postback'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
-    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
+    if sample.shape[1]==6:
+        colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
+    if sample.shape[1]==7:
+        colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
     sample.columns=colnames
     
-    if save==1:
-        cat_name=os.path.join(folder,runpath+'_DSs.txt')
-        #cat_name=runpath+'_DSs.txt'
-        print('Saving '+cat_name)
-        sample.to_csv(cat_name, header=None, index=None, sep=' ')
+    #if save==1:
+    #    cat_name=os.path.join(folder,runpath+'_DSs.txt')
+    #    #cat_name=runpath+'_DSs.txt'
+    #    print('Saving '+cat_name)
+    #    sample.to_csv(cat_name, header=None, index=None, sep=' ')
 
     ds_z=np.asarray(sample['z'])
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
+    if sample.shape[1]==7:
+        scattered=np.asarray(sample['scattered DL'])
     NumDS=len(ds_z)
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    #zds_max=1.75
-    #zds_min=0.3
-    zds_max=1.8#1.42#1.02
-    zds_min=1.3#1.38#0.98
+    zds_max=2.2#1.42#1.02
+    zds_min=0.08#1.38#0.98
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -446,12 +467,6 @@ else:
 
     sample=cutted.sample(NumDS) #This is the DS cat
 
-    if save==1:
-        cat_name=os.path.join(folder,runpath+'_DSs.txt')
-        #cat_name=runpath+'_DSs.txt'
-        print('Saving '+cat_name)
-        sample.to_csv(cat_name, header=None, index=None, sep=' ')
-
     ds_z=np.asarray(sample['z'])
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
@@ -461,6 +476,8 @@ else:
 #some global stuff###########################################
 zmax_cat=np.max(allz)
 zmin_cat=np.min(allz)
+integrand=lambda x:clight*(r_z(x, href, Om0GLOB))**2/(href)
+Tot_z_part=integrate.quad(integrand,zmin_cat,zmax_cat)[0]
 ##############################################################
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
@@ -469,11 +486,13 @@ dlsigma=0.1
 how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
+scattered_mu=[]
 s=dlsigma
+if samescatter==1:
+    sca=scattered
 
 #---------------------USE WHEN YOU HAVE A N(z)
 #denom_cat=allz[allz<=20]
-#denom_cat=np.sort(denom_cat)
 #denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
@@ -484,7 +503,8 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']<=DS_theta+3.5*sigma_theta]
     tmp=tmp[tmp['theta']>=DS_theta-3.5*sigma_theta]
     true_mu=ds_dl[i]
-    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#ds_dl[i]#
+    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)
+    #mu=sca[i]
     dsz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
@@ -502,7 +522,13 @@ for i in tqdm(range(NumDS)):
     fullrun.append(My_Like)
     beta=np.asarray(beta)
     allbetas.append(beta)
-
+    scattered_mu.append(mu)
+if save==1:
+    sample['scattered DL']=scattered_mu
+    cat_name=os.path.join(folder,runpath+'_DSs.txt')
+    #cat_name=runpath+'_DSs.txt'
+    print('Saving '+cat_name)
+    sample.to_csv(cat_name, header=None, index=None, sep=' ')
 #############################################################################################
 ##############################BETA#################################################################
 #with Pool(14) as p:
@@ -534,7 +560,7 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp postcalculator.py '+folder+'/run_postcalculator.py')
+os.system('cp build_again.py '+folder+'/run_build_again.py')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
