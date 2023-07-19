@@ -195,7 +195,7 @@ def multibetaline(iterator):
     tmp=tmp[tmp<=zMax]  
     gal_invol=(len(tmp))
 
-    gal_incat=len(allz[allz<=20])
+    #gal_incat=len(allz[allz<=20])
     if gal_invol==0:
         gal_invol=gal_invol+1
 
@@ -217,29 +217,14 @@ def multibetaline_stat(iterator):
     #Next: z_cone and z_gals to reduce time---se if the volume is equal :define z_cone:
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]
-    
-    #phimax=np.max(sliced_for_beta['phi'])
-    #phimin=np.min(sliced_for_beta['phi'])
-    #thetamax=np.max(sliced_for_beta['theta'])
-    #thetamin=np.min(sliced_for_beta['theta'])
-    #delta_phi=phimax-phimin
-    #theta_part=np.cos(thetamin)-np.cos(thetamax)
-    #integrand=lambda x:clight*(r_z(x, Htemp, Om0GLOB))**2/(Htemp)
-    #z_part=integrate.quad(integrand,zmin,zMax)[0]
+    #tmp_sorted=np.sort(tmp)
 
-    Volume=delta_phi*theta_part*z_part#integrand
-    #gal_invol=len(tmp)
-    num=sum_stat_weights(tmp)*Volume
-    #denom_cat=allz[allz<=20]
-    vol_denom=denom*delta_phi*theta_part*Tot_z_part
+    num=sum_stat_weights(tmp_sorted)*Volume
     #gal_incat=len(allz[allz<=20])
     if num==0:
         num=num+1
-
     ret=num/denom
     return ret
-
-
 
 def vol_beta(iterator):
     i=iterator
@@ -266,7 +251,7 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=1
+DS_read=0
 save=1
 samescatter=0
 #nweinariwofniornaiornaoern
@@ -276,7 +261,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='P0_postback-scatter-noZmax'
+runpath='Pesi-unif-cat-sig0_1'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -288,7 +273,7 @@ NCORE=15
 #w_hist=np.loadtxt('weights.txt')
 #w_hist=np.loadtxt('weights_halved.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='FullExplorer_big.txt'
+cat_name='CuttedFast.txt'
 
 
 if generation==1:
@@ -401,7 +386,7 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='P0_postback-scatter'
+    source_folder='P0_postback-scatter-noZmax'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -424,7 +409,7 @@ else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
     zds_max=2.2#1.42#1.02
-    zds_min=0.08#1.38#0.98
+    zds_min=0.9#1.38#0.98
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -459,7 +444,7 @@ zmin_cat=np.min(allz)
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.05
+dlsigma=0.1
 how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
@@ -486,12 +471,10 @@ for i in tqdm(range(NumDS)):
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
-    #sliced_for_beta=tmp
     z_gals=np.asarray(tmp['z'])
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
-    #print(tmp.shape[0])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
         beta=p.map(multibetaline, arr)
