@@ -47,25 +47,6 @@ def uniform_volume(iterations):
           }
     return proxy_row
 
-def Mises_Fisher(theta,phi,DS_theta,DS_phi,conc):
-    meanvec=hp.ang2vec(DS_theta,DS_phi)
-    meanvec=np.asarray(meanvec,dtype=np.float128)
-    norm=np.sqrt(np.dot(meanvec,meanvec))
-    meanvec=meanvec/norm
-    
-    var=hp.ang2vec(theta,phi)
-    var=np.asarray(var,dtype=np.float128)
-    norm=np.sqrt(np.dot(var,var))
-    var=var/norm
-    
-    factor=np.dot(conc*var,meanvec)
-    factor=np.float128(factor)
-    #Normalization is futile, we will devide by the sum
-    #fullnorm=conc/(2*np.pi*(np.exp(conc)-np.exp(-conc)))
-    ret=np.float128(np.exp(factor))#/fullnorm
-    #ret=factor
-    return ret
-
 def z_from_dL(dL_val):
     '''
     Returns redshift for a given luminosity distance dL (in Mpc)'''
@@ -167,18 +148,6 @@ def z_from_dcom(dc_val):
 
 #--------------------Posterior Function----------------------------
 @njit
-def truncated_part(x, mu, k):
-    #x is the dl of the gal
-    #mu is the pos of the DS
-    #lower set to zero. This should move the DS
-        #https://stats.stackexchange.com/questions/2037/estimating-mean-and-st-dev-of-a-truncated-gaussian-curve-without-spike
-    wall=dlmaxcat
-    sigma=k*true_mu
-    Phialpha = 0.5*math.erfc(-(x-wall)/(np.sqrt(2)*sigma))
-    #Phialpha = 0.5*(1+math.erf((-mu)/(np.sqrt(2)*sigma)))
-    #print('sigma is {} len is {}'.format(sigma,len(sigma)))
-    return np.where(x>0, (1/((np.sqrt(2*np.pi)*sigma)*(1-Phialpha+0.000001))) * np.exp(-(x-mu)**2/(2*sigma**2)) ,0.)
-@njit
 def likelihood_line(mu,dl,k):
     sigma=k*true_mu
     norm=1/(np.sqrt(2*np.pi)*sigma)
@@ -206,12 +175,6 @@ def LikeofH0(iterator):
     return tmp#/denom
 
 @njit
-def beta_line(galaxies,z0,z1,zmax):
-    denom=len(galaxies[(galaxies>=z0)&(galaxies<=z1)])
-    num=len(galaxies[galaxies<=zmax])
-    ret=num/denom
-    return ret
-@njit
 def stat_weights(array_of_z):
     #alltheomega=w(array_of_z)
     temp=np.interp(array_of_z,z_bin,w_hist)
@@ -222,11 +185,11 @@ def multibetaline(iterator):
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    zMax=min(zMax,zmax_cat)
+    #zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    zmin=max(zmin,zmin_cat)
+    #zmin=max(zmin,zmin_cat)
 
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]  
@@ -296,29 +259,7 @@ def vol_beta(iterator):
     norm=integrate.quad(integrand,0,20)[0]  
     
     return num/norm
-def testbeta(iterator):
-    i=iterator
-    Htemp=H0Grid[i]
-    cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu+s*how_many_sigma*mu)
-    zMax = fsolve(func, 0.02)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
-    zmin = fsolve(func, 0.02)[0] 
-    
-    tmp=allz[allz>=zmin]
-    tmp=tmp[tmp<=zMax]
-    #numerator
-    numtosum=r_z_vett(tmp, Htemp, Om0GLOB)
-    numtosum=numtosum**2
-    numtosum=numtosum*tmp
-    allh=cosmo.H(tmp).value
-    num=np.sum(numtosum/allh)
-    #denom
-    #normtosum=r_z_vett(allz, Htemp, Om0GLOB)
-    #normtosum=normtosum**2
-    #normtosum=normtosum*allz
-    #norm=np.sum(normtosum)/Htemp
-    return num#/norm
+
 ###########################################################################################################
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
@@ -327,13 +268,14 @@ generation=0
 read=1
 DS_read=1
 save=1
+samescatter=0
 #----------------------------------------------
 path='results'
 exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='P0_postback-scatter-1sigma-nogalincat'
+runpath='P0_postback-scatter-noZmax'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -512,22 +454,22 @@ else:
 #some global stuff###########################################
 zmax_cat=np.max(allz)
 zmin_cat=np.min(allz)
-integrand=lambda x:clight*(r_z(x, href, Om0GLOB))**2/(href)
-Tot_z_part=integrate.quad(integrand,0,20)[0]
 ##############################################################
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.1
+dlsigma=0.05
 how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
 scattered_mu=[]
 s=dlsigma
-
+if samescatter==1:
+    sca=scattered
 #---------------------USE WHEN YOU HAVE A N(z)
 #denom_cat=allz[allz<=20]
-#denom=np.sum(np.interp(denom_cat,z_bin,w_hist))
+#sorted_denom=np.sort(denom_cat)
+#denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -538,11 +480,12 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']>=DS_theta-3.5*sigma_theta]
     true_mu=ds_dl[i]
     mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
+    #mu=sca[i]
     dsz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
-    sliced_for_beta=tmp
+    #sliced_for_beta=tmp
     z_gals=np.asarray(tmp['z'])
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
