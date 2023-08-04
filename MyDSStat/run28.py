@@ -165,13 +165,13 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
-    mydenom=sum_stat_weights(z_gals)
+    #mydenom=sum_stat_weights(z_gals)
     #denom=np.sum(w(denom_cat))
-    return tmp/mydenom
+    return tmp
 
 @njit
 def stat_weights(array_of_z):
@@ -226,7 +226,7 @@ def multibetaline_stat(iterator):
     #gal_incat=len(allz[allz<=20])
     if num==0:
         num=num+1
-    ret=num/denom
+    ret=num#/denom
     return ret
 
 def vol_beta(iterator):
@@ -264,7 +264,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Pesi-extracted-L-waovermyden-B-tmpoverden_02'
+runpath='Mega450-FullBig_00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -276,7 +276,7 @@ z_bin=np.loadtxt('fast_weights_bin.txt')
 #w_hist=np.loadtxt('weights.txt')
 w_hist=np.loadtxt('fast_weights.txt')
 w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='ExtractedFast.txt'
+cat_name='FullExplorer_big.txt'
 
 
 if generation==1:
@@ -389,7 +389,7 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='Pesi-extracted-L-waovermyden-B-tmpoverden_01'
+    source_folder='Pesi-extracted-nodenom-02'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -409,10 +409,10 @@ if DS_read==1:
         scattered=np.asarray(sample['scattered DL'])
     NumDS=len(ds_z)
 else:
-    NumDS=150#150
+    NumDS=450#150
     #Selezionare in dcom non z: implementa anche Dirac 
     zds_max=2.2#1.42#1.02
-    zds_min=0.9#1.38#0.98
+    zds_min=0.08#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -480,7 +480,7 @@ for i in tqdm(range(NumDS)):
     new_theta_gals=np.asarray(tmp['theta'])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline_stat, arr)
+        beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
     fullrun.append(My_Like)
     beta=np.asarray(beta)
@@ -514,7 +514,7 @@ for i in range(len(fullrun_beta)):
     if i==0:
         combined.append(fullrun_beta[i]*1)
     else:
-        num=np.float128(combined[i-1]*(fullrun_beta[i]*1))
+        num=np.float128(combined[i-1]*fullrun_beta[i])
         combined.append(num)
 
 postpath=os.path.join(folder,runpath+'_totpost.txt')
