@@ -325,7 +325,7 @@ def testbeta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=1
+DS_read=0
 save=1
 #----------------------------------------------
 path='results'
@@ -593,7 +593,7 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp run28.py '+folder+'/run_run28.py')
+os.system('cp partenza.py '+folder+'/run_run28.py')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
