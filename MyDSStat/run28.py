@@ -169,9 +169,9 @@ def LikeofH0(iterator):
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
-    #mydenom=sum_stat_weights(z_gals)
+    #denom_cat=allz[allz<=20]
     #denom=np.sum(w(denom_cat))
-    return tmp
+    return tmp#/denom
 
 @njit
 def stat_weights(array_of_z):
@@ -184,17 +184,17 @@ def multibetaline(iterator):
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    #zMax=min(zMax,zmax_cat)
+    zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    #zmin=max(zmin,zmin_cat)
+    zmin=max(zmin,zmin_cat)
 
     tmp=allz[allz>=zmin]
     tmp=tmp[tmp<=zMax]  
     gal_invol=(len(tmp))
 
-    #gal_incat=len(allz[allz<=20])
+    gal_incat=len(allz[allz<=20])
     if gal_invol==0:
         gal_invol=gal_invol+1
 
@@ -264,7 +264,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Mega450-FullBig_00'
+runpath='Agosto5-FullBig_00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -272,10 +272,10 @@ H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=15
-z_bin=np.loadtxt('fast_weights_bin.txt')
+#z_bin=np.loadtxt('fast_weights_bin.txt')
 #w_hist=np.loadtxt('weights.txt')
-w_hist=np.loadtxt('fast_weights.txt')
-w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
+#w_hist=np.loadtxt('fast_weights.txt')
+#w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
 cat_name='FullExplorer_big.txt'
 
 
@@ -409,7 +409,7 @@ if DS_read==1:
         scattered=np.asarray(sample['scattered DL'])
     NumDS=len(ds_z)
 else:
-    NumDS=450#150
+    NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
     zds_max=2.2#1.42#1.02
     zds_min=0.08#1.38#0.98#0.08
@@ -456,9 +456,9 @@ s=dlsigma
 if samescatter==1:
     sca=scattered
 #---------------------USE WHEN YOU HAVE A N(z)
-denom_cat=allz[allz<=20]
-sorted_denom=np.sort(denom_cat)
-denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
+#denom_cat=allz[allz<=20]
+#sorted_denom=np.sort(denom_cat)
+#denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
