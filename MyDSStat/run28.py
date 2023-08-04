@@ -264,7 +264,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Agosto5-FullBig_02'
+runpath='Agosto5-FullBig_01'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -447,7 +447,7 @@ zmin_cat=np.min(allz)
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.005
+dlsigma=0.1
 how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
