@@ -254,7 +254,7 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
 samescatter=0
 
@@ -389,7 +389,7 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='Pesi-extracted-nodenom-02'
+    source_folder='Agosto5-FullBig_00'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)

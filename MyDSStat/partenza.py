@@ -333,7 +333,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='P0_postback-scatter-005sigma-nogalincat'
+runpath='partenza_00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
