@@ -18,6 +18,7 @@ from os import listdir
 from os.path import isfile, join
 
 from multiprocessing import Pool
+import multiprocessing
 import time
 from numba import njit
 from tqdm import tqdm
@@ -254,7 +255,7 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=1
+DS_read=0
 save=1
 samescatter=0
 
@@ -264,14 +265,14 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Agosto5-FullBig_01'
+runpath='BorderCheck_FullBig_02'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
 H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
-NCORE=15
+NCORE=multiprocessing.cpu_count()#15
 #z_bin=np.loadtxt('fast_weights_bin.txt')
 #w_hist=np.loadtxt('weights.txt')
 #w_hist=np.loadtxt('fast_weights.txt')
@@ -411,8 +412,8 @@ if DS_read==1:
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=2.2#1.42#1.02
-    zds_min=0.08#1.38#0.98#0.08
+    zds_max=1.75#1.42#1.02
+    zds_min=0.06#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
