@@ -182,20 +182,20 @@ def stat_weights(array_of_z):
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
+    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
-    zMax=min(zMax,zmax_cat)
+    #zMax=min(zMax,zmax_cat)
     
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
     zmin = fsolve(func, 0.02)[0]
-    zmin=max(zmin,zmin_cat)
+    #zmin=max(zmin,zmin_cat)
 
-    tmp=allz[allz>=zmin]
-    tmp=tmp[tmp<=zMax]  
+    tmp=allz[allz>=zmin] # host with z>z_min
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
     gal_invol=(len(tmp))
 
-    gal_incat=len(allz[allz<=20])
+    #gal_incat=len(allz)
     if gal_invol==0:
         gal_invol=gal_invol+1
 
