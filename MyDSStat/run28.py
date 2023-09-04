@@ -265,7 +265,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='BorderCheck_FullBig_02'
+runpath='Big_Cat_00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -413,7 +413,7 @@ else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
     zds_max=1.75#1.42#1.02
-    zds_min=0.06#1.38#0.98#0.08
+    zds_min=0.3#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -426,13 +426,13 @@ else:
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
     cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
-
+    NumDS=int(cutted.shape[0]/100 +1)
     sample=cutted.sample(NumDS) #This is the DS cat
 
     if save==1:
         cat_name=os.path.join(folder,runpath+'_DSs.txt')
         #cat_name=runpath+'_DSs.txt'
-        print('Saving '+cat_name)
+        print('Saving '+cat_name+'no scatter')
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
 
     ds_z=np.asarray(sample['z'])
@@ -460,6 +460,7 @@ if samescatter==1:
 #denom_cat=allz[allz<=20]
 #sorted_denom=np.sort(denom_cat)
 #denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
+print('Run without computation: just Saving the DSs')
 ###################################Likelihood##################################################
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -479,19 +480,19 @@ for i in tqdm(range(NumDS)):
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
-    with Pool(NCORE) as p:
-        My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline, arr)
-    My_Like=np.asarray(My_Like)
-    fullrun.append(My_Like)
-    beta=np.asarray(beta)
-    allbetas.append(beta)
+    #with Pool(NCORE) as p:
+    #    My_Like=p.map(LikeofH0, arr)
+    #    beta=p.map(multibetaline, arr)
+    #My_Like=np.asarray(My_Like)
+    #fullrun.append(My_Like)
+    #beta=np.asarray(beta)
+    #allbetas.append(beta)
     scattered_mu.append(mu)
 if save==1:
     sample['scattered DL']=scattered_mu
     cat_name=os.path.join(folder,runpath+'_DSs.txt')
     #cat_name=runpath+'_DSs.txt'
-    print('Saving '+cat_name)
+    print('Saving '+cat_name+'complete')
     sample.to_csv(cat_name, header=None, index=None, sep=' ')
 #############################################################################################
 ##############################BETA#################################################################
