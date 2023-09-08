@@ -183,11 +183,11 @@ def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
     #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
     zMax = fsolve(func, 0.02)[0] 
     #zMax=min(zMax,zmax_cat)
     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin# (mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
     zmin = fsolve(func, 0.02)[0]
     #zmin=max(zmin,zmin_cat)
 
@@ -265,14 +265,15 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Big_Cat_00'
+runpath='Enzo_same_beta_sca_07'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
 H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
-NCORE=multiprocessing.cpu_count()#15
+NCORE=multiprocessing.cpu_count()-1#15
+print('Using {} Cores' .format(NCORE))
 #z_bin=np.loadtxt('fast_weights_bin.txt')
 #w_hist=np.loadtxt('weights.txt')
 #w_hist=np.loadtxt('fast_weights.txt')
@@ -408,12 +409,14 @@ if DS_read==1:
     ds_theta=np.asarray(sample['theta'])
     if sample.shape[1]==7:
         scattered=np.asarray(sample['scattered DL'])
+        dlmax_sca=np.max(scattered)
+        dlmin_sca=np.min(scattered)
     NumDS=len(ds_z)
 else:
-    NumDS=150#150
+    NumDS=300#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.75#1.42#1.02
-    zds_min=0.3#1.38#0.98#0.08
+    zds_max=2.2#1.42#1.02
+    zds_min=0.08#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -426,19 +429,22 @@ else:
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
     cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
-    NumDS=int(cutted.shape[0]/100 +1)
     sample=cutted.sample(NumDS) #This is the DS cat
-
-    if save==1:
-        cat_name=os.path.join(folder,runpath+'_DSs.txt')
-        #cat_name=runpath+'_DSs.txt'
-        print('Saving '+cat_name+'no scatter')
-        sample.to_csv(cat_name, header=None, index=None, sep=' ')
 
     ds_z=np.asarray(sample['z'])
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
+    dlsigma=0.1
+    sca= np.random.normal(loc=ds_dl, scale=ds_dl*dlsigma, size=None)#scattered[i]#
+    dlmax_sca=np.max(sca)
+    dlmin_sca=np.min(sca)
+    if save==1:
+        sample['scattered DL']=sca
+        cat_name=os.path.join(folder,runpath+'_DSs.txt')
+        #cat_name=runpath+'_DSs.txt'
+        print('Saving '+cat_name+'complete')
+        sample.to_csv(cat_name, header=None, index=None, sep=' ')
 ###################################################################################
 #---------------------Start analysis--------------------------------------
 #some global stuff###########################################
@@ -448,11 +454,11 @@ zmin_cat=np.min(allz)
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-dlsigma=0.1
+
 how_many_sigma=3.5
 fullrun=[]
 allbetas=[]
-scattered_mu=[]
+
 s=dlsigma
 if samescatter==1:
     sca=scattered
@@ -460,8 +466,12 @@ if samescatter==1:
 #denom_cat=allz[allz<=20]
 #sorted_denom=np.sort(denom_cat)
 #denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
-print('Run without computation: just Saving the DSs')
+#print('Run without computation: just Saving the DSs')
+
 ###################################Likelihood##################################################
+with Pool(NCORE) as p:
+    beta=p.map(multibetaline, arr)
+beta=np.asarray(beta)
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
     tmp=MyCat[MyCat['phi']<=DS_phi+3.5*sigma_phi]
@@ -470,8 +480,8 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']<=DS_theta+3.5*sigma_theta]
     tmp=tmp[tmp['theta']>=DS_theta-3.5*sigma_theta]
     true_mu=ds_dl[i]
-    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
-    #mu=sca[i]
+    #mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
+    mu=sca[i]
     dsz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
@@ -480,20 +490,13 @@ for i in tqdm(range(NumDS)):
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
-    #with Pool(NCORE) as p:
-    #    My_Like=p.map(LikeofH0, arr)
-    #    beta=p.map(multibetaline, arr)
-    #My_Like=np.asarray(My_Like)
-    #fullrun.append(My_Like)
-    #beta=np.asarray(beta)
-    #allbetas.append(beta)
-    scattered_mu.append(mu)
-if save==1:
-    sample['scattered DL']=scattered_mu
-    cat_name=os.path.join(folder,runpath+'_DSs.txt')
-    #cat_name=runpath+'_DSs.txt'
-    print('Saving '+cat_name+'complete')
-    sample.to_csv(cat_name, header=None, index=None, sep=' ')
+    with Pool(NCORE) as p:
+        My_Like=p.map(LikeofH0, arr)
+        #beta=p.map(multibetaline, arr)
+    My_Like=np.asarray(My_Like)
+    fullrun.append(My_Like) 
+    allbetas.append(beta)
+
 #############################################################################################
 ##############################BETA#################################################################
 #with Pool(14) as p:
@@ -516,8 +519,9 @@ for i in range(len(fullrun_beta)):
     if i==0:
         combined.append(fullrun_beta[i]*1)
     else:
-        num=np.float128(combined[i-1]*fullrun_beta[i])
-        combined.append(num)
+        num=np.longdouble(combined[i-1]*fullrun_beta[i])
+        normed=np.longdouble(num/np.trapz(num,H0Grid))
+        combined.append(normed)
 
 postpath=os.path.join(folder,runpath+'_totpost.txt')
 np.savetxt(postpath,combined[-1])
