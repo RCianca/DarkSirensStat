@@ -55,6 +55,12 @@ def z_from_dL(dL_val):
     func = lambda z :cosmoflag.luminosity_distance(z).value - dL_val
     z = fsolve(func, 0.02)
     return z[0]
+
+def z_of_h_dl(h,dl):
+    func = lambda z :Dl_z(z, h, Om0GLOB) -dl
+    zmax = fsolve(func, 0.02)[0] 
+    return zmax
+
 def z_from_dcom(dc_val):
     '''
     Returns redshift for a given comoving distance dc (in Mpc)'''
@@ -158,7 +164,36 @@ def likelihood_line(mu,dl,k):
 def LikeofH0(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    #norm=integrate.quad(lambda x:  FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB).differential_comoving_volume(x).value, 0, 10 )[0]
+    #-----------Box of possible host: this pre-selection is to reduce computational time
+    #MyCat is already defined globally
+    #The DS is fixed by the for loop, so all coordinates are defined
+    #tmp=MyCat
+    #tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
+    #tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
+    #tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
+    #tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
+    
+    #z_min_box=z_of_h_dl(Htemp,mu-dlrange)
+    #z_max_box=z_of_h_dl(Htemp,mu+dlrange)
+    
+    #zds_min=z_of_h_dl(Htemp,mydlmin)
+    #zds_max=z_of_h_dl(Htemp,mydlmax)
+    
+    #z_min=max(z_min_box,zds_min)
+    #z_max=min(z_max_box_box,zds_max)
+    
+    #tmp = MyCat[
+    #(abs(MyCat['theta'] - DS_theta) <= ang_sigma*sigma_theta) &
+    #(abs(MyCat['phi'] - DS['phi'].values[0]) <= ang_sigma*sigma_phi) &
+    #(MyCat['redshift'] <= z_max) & MyCat['redshift'] >= z_min
+    #]
+    
+    #tmp=tmp[tmp['z']>=z_min]
+    #tmp=tmp[tmp['z']<=z_max]
+    #-----------------end box creation
+    #new_phi_gals=np.asarray(tmp['phi'])
+    #new_theta_gals=np.asarray(tmp['theta'])
+    #z_gals=np.asarray(tmp['z'])
     #----------computing sum
     to_sum=np.zeros(len(z_gals))
     for j in range(len(z_gals)):
@@ -190,17 +225,28 @@ def multibetaline(iterator):
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin# (mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
     zmin = fsolve(func, 0.02)[0]
     #zmin=max(zmin,zmin_cat)
+    tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
+    tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
+    tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
+    tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
 
-    tmp=allz[allz>=zmin] # host with z>z_min
-    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
-    gal_invol=(len(tmp))
+    tmp=tmp[tmp['z']>=zmin] # host with z>z_min
+    tmp=tmp[tmp['z']<=zMax]  # host with z_min<z<z_max
+    
+    #tmp = MyCat[
+    #(abs(MyCat['theta'] - DS_theta) <= ang_sigma*sigma_theta) &
+    #(abs(MyCat['phi'] - DS['phi'].values[0]) <= ang_sigma*sigma_phi) &
+    #(MyCat['redshift'] <= zMax) & MyCat['redshift'] >= zmin
+    #]
+    gal_invol=(len(tmp['z']))
 
     #gal_incat=len(allz)
     if gal_invol==0:
         gal_invol=gal_invol+1
 
     ret=gal_invol#/gal_incat
-    return ret
+    return ret    
+
 @njit
 def sum_stat_weights(array_of_z):
     #alltheomega=w(array_of_z)
@@ -210,11 +256,11 @@ def multibetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#10188.4#
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+dlrange)#10188.4#
     zMax = fsolve(func, 0.02)[0] 
     #zMax=min(zMax,zmax_cat)
     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-dlrange)
     zmin = fsolve(func, 0.02)[0]
     #zmin=max(zmin,zmin_cat)
 
@@ -255,9 +301,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
-samescatter=0
+samescatter=1
 
 #----------------------------------------------
 path='results'
@@ -265,7 +311,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Enzo_same_beta_sca_07'
+runpath='Enzo_box_17' 
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -391,7 +437,7 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='Agosto5-FullBig_00'
+    source_folder='Enzo_box_12'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -407,16 +453,26 @@ if DS_read==1:
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
+    dlsigma=0.01
+    #temporaneo
+    zds_max=1.75#1.42#1.02
+    zds_min=0.3#1.38#0.98#0.08
+    
+    mydlmax=Dl_z(zds_max,href,Om0GLOB)
+    mydcmax=mydlmax/(1+zds_max)
+    mydlmin=Dl_z(zds_min,href,Om0GLOB)
+    mydcmin=mydlmin/(1+zds_min)
+    #------------------------------
     if sample.shape[1]==7:
         scattered=np.asarray(sample['scattered DL'])
         dlmax_sca=np.max(scattered)
         dlmin_sca=np.min(scattered)
     NumDS=len(ds_z)
 else:
-    NumDS=300#150
+    NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=2.2#1.42#1.02
-    zds_min=0.08#1.38#0.98#0.08
+    zds_max=1.75#1.42#1.02
+    zds_min=0.3#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -443,7 +499,7 @@ else:
         sample['scattered DL']=sca
         cat_name=os.path.join(folder,runpath+'_DSs.txt')
         #cat_name=runpath+'_DSs.txt'
-        print('Saving '+cat_name+'complete')
+        print('Saving '+cat_name+' complete')
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
 ###################################################################################
 #---------------------Start analysis--------------------------------------
@@ -454,12 +510,12 @@ zmin_cat=np.min(allz)
 arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
-
+s=dlsigma
 how_many_sigma=3.5
+ang_sigma=3.5
 fullrun=[]
 allbetas=[]
 
-s=dlsigma
 if samescatter==1:
     sca=scattered
 #---------------------USE WHEN YOU HAVE A N(z)
@@ -469,16 +525,20 @@ if samescatter==1:
 #print('Run without computation: just Saving the DSs')
 
 ###################################Likelihood##################################################
-with Pool(NCORE) as p:
-    beta=p.map(multibetaline, arr)
-beta=np.asarray(beta)
+#with Pool(NCORE) as p:
+#    beta=p.map(multibetaline, arr)
+#beta=np.asarray(beta)
+
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
-    tmp=MyCat[MyCat['phi']<=DS_phi+3.5*sigma_phi]
-    tmp=tmp[tmp['phi']>=DS_phi-3.5*sigma_phi]
+    #tmp=MyCat
+    #print(sigma_phi,DS_phi)
+    tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
+    tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
     DS_theta=ds_theta[i]
-    tmp=tmp[tmp['theta']<=DS_theta+3.5*sigma_theta]
-    tmp=tmp[tmp['theta']>=DS_theta-3.5*sigma_theta]
+    #print(sigma_phi,DS_theta)
+    tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_phi]
+    tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_phi]
     true_mu=ds_dl[i]
     #mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
     mu=sca[i]
@@ -492,8 +552,9 @@ for i in tqdm(range(NumDS)):
     new_theta_gals=np.asarray(tmp['theta'])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        #beta=p.map(multibetaline, arr)
+        beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
+    beta=np.asarray(beta)
     fullrun.append(My_Like) 
     allbetas.append(beta)
 
