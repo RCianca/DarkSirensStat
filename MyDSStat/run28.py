@@ -164,36 +164,6 @@ def likelihood_line(mu,dl,k):
 def LikeofH0(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    #-----------Box of possible host: this pre-selection is to reduce computational time
-    #MyCat is already defined globally
-    #The DS is fixed by the for loop, so all coordinates are defined
-    #tmp=MyCat
-    #tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
-    #tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
-    #tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
-    #tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
-    
-    #z_min_box=z_of_h_dl(Htemp,mu-dlrange)
-    #z_max_box=z_of_h_dl(Htemp,mu+dlrange)
-    
-    #zds_min=z_of_h_dl(Htemp,mydlmin)
-    #zds_max=z_of_h_dl(Htemp,mydlmax)
-    
-    #z_min=max(z_min_box,zds_min)
-    #z_max=min(z_max_box_box,zds_max)
-    
-    #tmp = MyCat[
-    #(abs(MyCat['theta'] - DS_theta) <= ang_sigma*sigma_theta) &
-    #(abs(MyCat['phi'] - DS['phi'].values[0]) <= ang_sigma*sigma_phi) &
-    #(MyCat['redshift'] <= z_max) & MyCat['redshift'] >= z_min
-    #]
-    
-    #tmp=tmp[tmp['z']>=z_min]
-    #tmp=tmp[tmp['z']<=z_max]
-    #-----------------end box creation
-    #new_phi_gals=np.asarray(tmp['phi'])
-    #new_theta_gals=np.asarray(tmp['theta'])
-    #z_gals=np.asarray(tmp['z'])
     #----------computing sum
     to_sum=np.zeros(len(z_gals))
     for j in range(len(z_gals)):
@@ -201,7 +171,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
@@ -218,27 +188,22 @@ def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
     #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
     zMax = fsolve(func, 0.02)[0] 
     #zMax=min(zMax,zmax_cat)
     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin# (mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmin#(mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
     zmin = fsolve(func, 0.02)[0]
     #zmin=max(zmin,zmin_cat)
-    tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
-    tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
-    tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
-    tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
+    #tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
+    #tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
+    #tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
+    #tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
 
-    tmp=tmp[tmp['z']>=zmin] # host with z>z_min
-    tmp=tmp[tmp['z']<=zMax]  # host with z_min<z<z_max
+    tmp=allz[allz>=zmin] # host with z>z_min
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
     
-    #tmp = MyCat[
-    #(abs(MyCat['theta'] - DS_theta) <= ang_sigma*sigma_theta) &
-    #(abs(MyCat['phi'] - DS['phi'].values[0]) <= ang_sigma*sigma_phi) &
-    #(MyCat['redshift'] <= zMax) & MyCat['redshift'] >= zmin
-    #]
-    gal_invol=(len(tmp['z']))
+    gal_invol=(len(tmp))
 
     #gal_incat=len(allz)
     if gal_invol==0:
@@ -255,17 +220,22 @@ def sum_stat_weights(array_of_z):
 def multibetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+dlrange)#10188.4#
+    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
     zMax = fsolve(func, 0.02)[0] 
     #zMax=min(zMax,zmax_cat)
     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-dlrange)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin# (mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
     zmin = fsolve(func, 0.02)[0]
     #zmin=max(zmin,zmin_cat)
+    #tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
+    #tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
+    #tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
+    #tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
 
-    tmp=allz[allz>=zmin]
-    tmp=tmp[tmp<=zMax]  
+    tmp=allz[allz>=zmin] # host with z>z_min
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
+    
     tmp_sorted=np.sort(tmp)
 
     num=sum_stat_weights(tmp_sorted)
@@ -311,7 +281,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='Enzo_box_17' 
+runpath='Enzo_box_pesi_nz_02'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -320,11 +290,11 @@ H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
 print('Using {} Cores' .format(NCORE))
-#z_bin=np.loadtxt('fast_weights_bin.txt')
+z_bin=np.loadtxt('fast_weights_bin.txt')
 #w_hist=np.loadtxt('weights.txt')
-#w_hist=np.loadtxt('fast_weights.txt')
-#w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='FullExplorer_big.txt'
+w_hist=np.loadtxt('fast_weights.txt')
+w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
+cat_name='ExtractedFast.txt'#
 
 
 if generation==1:
@@ -437,7 +407,7 @@ if read==1:
 
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='Enzo_box_12'
+    source_folder='Enzo_box_pesi_unif_02'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -453,10 +423,10 @@ if DS_read==1:
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
-    dlsigma=0.01
+    dlsigma=0.1
     #temporaneo
-    zds_max=1.75#1.42#1.02
-    zds_min=0.3#1.38#0.98#0.08
+    zds_max=np.max(ds_z)#1.75#1.42#1.02#2.2
+    zds_min=np.min(ds_z)#0.3#1.38#0.98#0.08#0.9
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -471,8 +441,8 @@ if DS_read==1:
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.75#1.42#1.02
-    zds_min=0.3#1.38#0.98#0.08
+    zds_max=2.2#1.42#1.02
+    zds_min=0.9#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -519,15 +489,16 @@ allbetas=[]
 if samescatter==1:
     sca=scattered
 #---------------------USE WHEN YOU HAVE A N(z)
-#denom_cat=allz[allz<=20]
-#sorted_denom=np.sort(denom_cat)
+denom_cat=allz[allz<=20]
+sorted_denom=np.sort(denom_cat)
 #denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
 #print('Run without computation: just Saving the DSs')
 
 ###################################Likelihood##################################################
-#with Pool(NCORE) as p:
-#    beta=p.map(multibetaline, arr)
-#beta=np.asarray(beta)
+
+with Pool(NCORE) as p:
+    beta=p.map(multibetaline_stat, arr)
+beta=np.asarray(beta)
 
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -547,14 +518,15 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
     z_gals=np.asarray(tmp['z'])
+    z_gals=np.sort(z_gals)
     new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline, arr)
+        #beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
-    beta=np.asarray(beta)
+    #beta=np.asarray(beta)
     fullrun.append(My_Like) 
     allbetas.append(beta)
 
