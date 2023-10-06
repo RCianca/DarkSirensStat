@@ -74,12 +74,12 @@ def sphere_uncorr_gauss(x,y,mux,muy,sigx,sigy):
     #correlation is 0 so is a multiplication of two gaussians
     #x is theta, y is phi
     #meanvec=(mux,muy)
-    meanvec=np.asarray((np.sin(mux)*np.cos(muy),np.sin(mux)*np.sin(muy),np.cos(mux)))
+    meanvec=np.asarray((1,mux,muy))
     norm=np.sqrt(np.sum(meanvec**2))
     meanvec=meanvec/norm
     
     #var=(x,y)
-    var=np.asarray((np.sin(x)*np.cos(y),np.sin(x)*np.sin(y),np.cos(x)))
+    var=np.asarray((1,x,y))
     #norm=np.sqrt(np.dot(var,var))
     norm=np.sqrt(np.sum(var**2))
     var=var/norm
@@ -95,6 +95,30 @@ def sphere_uncorr_gauss(x,y,mux,muy,sigx,sigy):
     #ret=np.exp(-1/2*(xfactor+yfactor))
     return ret
 
+def gaussian_prob_distribution_on_sphere(phi, theta, phi0, theta0, radius, sigma):
+    # If input is a single point, convert to a list
+    if isinstance(phi, float) or isinstance(phi, int):
+        phi = np.array([phi])
+        theta = np.array([theta])
+
+    # Calculate the distance from each point to the fixed point
+    distances = np.zeros_like(phi)
+    x = radius * np.sin(phi) * np.cos(theta)
+    y = radius * np.sin(phi) * np.sin(theta)
+    z = radius * np.cos(phi)
+    dx = x - radius * np.sin(phi0) * np.cos(theta0)
+    dy = y - radius * np.sin(phi0) * np.sin(theta0)
+    dz = z - radius * np.cos(phi0)
+    distances = np.sqrt(dx*dx + dy*dy + dz*dz)
+
+    # Calculate the Gaussian probability distribution for each point
+    prob = 1.0/(sigma*np.sqrt(2*np.pi)) * np.exp(-distances*distances/(2*sigma*sigma))
+
+    # If input was a single point, return a single probability value
+    if len(prob) == 1:
+        return prob[0]
+
+    return prob
 
 @njit
 def E_z(z, H0, Om):
@@ -226,13 +250,13 @@ def vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
     cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu+s*how_many_sigma*mu)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmax
     zMax = fsolve(func, 0.02)[0] 
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmin
     zmin = fsolve(func, 0.02)[0] 
     
-    zMax=min(zMax,zmax_cat)
-    zmin=max(zmin,zmin_cat)
+    #zMax=min(zMax,zmax_cat)
+    #zmin=max(zmin,zmin_cat)
     
     integrand=lambda x:clight*(cosmo.comoving_distance(x).value)**2/(cosmo.H(x).value)
     num=integrate.quad(integrand,zmin,zMax)[0]
@@ -247,9 +271,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
-samescatter=0
+samescatter=1
 
 #----------------------------------------------
 path='results'
@@ -257,7 +281,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='New_Rob_rho02'
+runpath='Robtest_host01-retake01'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -270,7 +294,7 @@ print('Using {} Cores\n' .format(NCORE))
 #w_hist=np.loadtxt('weights.txt')
 #w_hist=np.loadtxt('fast_weights.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='FullExplorer_big.txt'# FullExplorer_big.txt
+cat_name='HostRob01.txt'#
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -299,7 +323,6 @@ if generation==1:
     sigma_theta=np.radians(sigma_deg)
     sigma_phi=np.radians(sigma_deg)
     radius_rad=np.radians(circle_deg)
-    conc=1/(sigma_phi**2)
     #----------------------------------------------------------------
     phi_min=0
     phi_max=np.pi/2
@@ -370,14 +393,13 @@ if read==1:
     Min_Box_dl=MyCat['Luminosity Distance'].min()
     Max_Box_dl=MyCat['Luminosity Distance'].max()
     #---------angular stuff------------------
-    radius_deg= np.sqrt(15/np.pi)
+    radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
     sigma_theta=np.radians(sigma_deg)
     sigma_phi=np.radians(sigma_deg)
     radius_rad=np.radians(circle_deg)
-    conc=1/(sigma_phi**2)
     #----------------------------------------------------------------
     phi_min=MyCat['phi'].min()
     phi_max=MyCat['phi'].max()
@@ -388,10 +410,10 @@ if read==1:
     print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
     print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
-dlsigma=0.1
+
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='RobTestFullBig_00'
+    source_folder='Enzo_box_pesi_unif_02'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -407,7 +429,7 @@ if DS_read==1:
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
-    
+    dlsigma=0.1
     #temporaneo
     zds_max=np.max(ds_z)#1.75#1.42#1.02#2.2
     zds_min=np.min(ds_z)#0.3#1.38#0.98#0.08#0.9
@@ -435,8 +457,8 @@ if DS_read==1:
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.35#1.42#1.02
-    zds_min=0.4#1.38#0.98#0.08
+    zds_max=2.2#1.42#1.02
+    zds_min=0.9#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -455,6 +477,7 @@ else:
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
+    dlsigma=0.1
     sca= np.random.normal(loc=ds_dl, scale=ds_dl*dlsigma, size=None)#scattered[i]#
     dlmax_sca=np.max(sca)
     dlmin_sca=np.min(sca)
@@ -490,7 +513,7 @@ sorted_denom=np.sort(denom_cat)
 ###################################Likelihood##################################################
 
 with Pool(NCORE) as p:
-    beta=p.map(multibetaline, arr)
+    beta=p.map(vol_beta, arr)
 beta=np.asarray(beta)
 
 for i in tqdm(range(NumDS)):
