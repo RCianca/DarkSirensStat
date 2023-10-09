@@ -147,7 +147,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
@@ -247,9 +247,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
-samescatter=0
+samescatter=1
 
 #----------------------------------------------
 path='results'
@@ -257,7 +257,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='New_Rob_rho02'
+runpath='New_Rob_nz01-retake'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('data will be saved in '+folder)
@@ -266,11 +266,11 @@ H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
 print('Using {} Cores\n' .format(NCORE))
-#z_bin=np.loadtxt('fast_weights_bin.txt')
-#w_hist=np.loadtxt('weights.txt')
+z_bin=np.loadtxt('Nz01_bin.txt')
+w_hist=np.loadtxt('Nz01_weights.txt')
 #w_hist=np.loadtxt('fast_weights.txt')
 #w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='FullExplorer_big.txt'# FullExplorer_big.txt
+cat_name='Nz01.txt'# FullExplorer_big.txt
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -391,7 +391,7 @@ if read==1:
 dlsigma=0.1
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='RobTestFullBig_00'
+    source_folder='New_Rob_Ref00'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -435,7 +435,7 @@ if DS_read==1:
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.35#1.42#1.02
+    zds_max=0.8#1.42#1.02
     zds_min=0.4#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
@@ -490,7 +490,7 @@ sorted_denom=np.sort(denom_cat)
 ###################################Likelihood##################################################
 
 with Pool(NCORE) as p:
-    beta=p.map(multibetaline, arr)
+    beta=p.map(multibetaline_stat, arr)
 beta=np.asarray(beta)
 
 for i in tqdm(range(NumDS)):
