@@ -97,26 +97,27 @@ def sphere_uncorr_gauss(x,y,mux,muy,sigx,sigy):
 
 
 @njit
-def E_z(z, H0, Om):
+def E_z(z, H0, Om=Om0GLOB):
     return np.sqrt(Om*(1+z)**3+(1-Om))
 
-def r_z(z, H0, Om):
+def r_z(z, H0, Om=Om0GLOB):
     c = clight
     integrand = lambda x : 1/E_z(x, H0, Om)
     integral, error = integrate.quad(integrand, 0, z)
     return integral*c/H0
 
-def r_z_vett(z, H0, Om):
+def Dl_z_vett(z, H0, Om=Om0GLOB):
     c = clight
     integral = np.zeros_like(z)  # Array vuoto per salvare i risultati
 
     for i, z_val in enumerate(z):
         integrand = lambda x: 1 / E_z(x, H0, Om)
         integral[i], error = integrate.quad(integrand, 0, z_val)
+        integral[i]=integral[i]*(1+z_val)
 
     return integral * c / H0
 
-def Dl_z(z, H0, Om):
+def Dl_z(z, H0, Om=Om0GLOB):
     return r_z(z, H0, Om)*(1+z)
 
 def z_from_dcom(dc_val):
@@ -147,8 +148,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
-        #to_sum[j]=truncated_part(dl,mu,s)*angular_prob#*stat_weights(z_gals[j])#w(z_gals[j])#*(1+z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#
         
     tmp=np.sum(to_sum)#*norm
     #denom_cat=allz[allz<=20]
@@ -160,6 +160,13 @@ def stat_weights(array_of_z):
     #alltheomega=w(array_of_z)
     temp=np.interp(array_of_z,z_bin,w_hist)
     return temp
+
+@njit
+def ds_weights(array_of_dl):
+    #alltheomega=w(array_of_z)
+    temp=np.interp(array_of_dl,dl_bins,gamma_hist)
+    return temp
+
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
@@ -187,12 +194,51 @@ def multibetaline(iterator):
 
     ret=gal_invol#/gal_incat
     return ret    
+def multibetaline_ds(iterator):
+    i=iterator
+    Htemp=H0Grid[i]
+    #print(i)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmax
+    zMax = fsolve(func, 0.02)[0]     
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmin
+    zmin = fsolve(func, 0.02)[0]
+    tmp=allz[allz>=zmin] # host with z>z_min
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
+    
+    dls=Dl_z_vett(tmp, Htemp, Om0GLOB)
+    sorted_dls=np.sort(dls)
+    #allgammas=gamma(dls)
+    ret=sum_stat_weights_pdet(sorted_dls)
+    return ret  
+@njit
+def sum_stat_weights_pdet(array_of_dl):
+    #alltheomega=w(array_of_z)
+    num=np.sum(np.interp(array_of_dl,dl_bins,gamma_hist))
+    return num
 
 @njit
 def sum_stat_weights(array_of_z):
     #alltheomega=w(array_of_z)
     num=np.sum(np.interp(array_of_z,z_bin,w_hist))
     return num
+def multibetaline_total(iterator):
+    i=iterator
+    Htemp=H0Grid[i]
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax
+    zMax = fsolve(func, 0.02)[0]     
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin
+    zmin = fsolve(func, 0.02)[0]
+
+    tmp=allz[allz>=zmin] # host with z>z_min
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
+    tmp_sorted=np.sort(tmp)
+    intermediate=stat_weights(tmp_sorted)
+    dls=Dl_z(tmp, Htemp, Om0GLOB)
+    allgammas=gamma(dls)
+    num=stat_weights(tmp_sorted)
+    total=allgammas*num
+    ret=np.sum(total)
+    return ret
 def multibetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
@@ -221,7 +267,6 @@ def multibetaline_stat(iterator):
         num=num+1
     ret=num#/denom
     return ret
-
 def vol_beta(iterator):
     i=iterator
     Htemp=H0Grid[i]
@@ -257,20 +302,25 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='New_Rob_nz01-retake'
+runpath='B-Genova-Ndl-uniform'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
-print('data will be saved in '+folder)
+print('\n data will be saved in '+folder)
 H0min=55#30
 H0max=85#140
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
 print('Using {} Cores\n' .format(NCORE))
-z_bin=np.loadtxt('Nz01_bin.txt')
-w_hist=np.loadtxt('Nz01_weights.txt')
-#w_hist=np.loadtxt('fast_weights.txt')
-#w=interpolate.CubicSpline(z_bin,w_hist,extrapolate='None')
-cat_name='Nz01.txt'# FullExplorer_big.txt
+#------------N(z)------------------------------------
+#z_bin=np.loadtxt('Nz01_bin.txt')
+#w_hist=np.loadtxt('Nz01_weights.txt')
+#-----------N(Dl)------------------------------------
+#dl_bins=np.loadtxt('gamma00_bin.txt')
+#gamma_hist=np.loadtxt('gamma00_weights.txt')
+#gammanorm=np.sum(gamma_hist)
+#gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
+#--------------------------------------------------
+cat_name='FullExplorer_big.txt'# FullExplorer_big.txt
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -370,7 +420,7 @@ if read==1:
     Min_Box_dl=MyCat['Luminosity Distance'].min()
     Max_Box_dl=MyCat['Luminosity Distance'].max()
     #---------angular stuff------------------
-    radius_deg= np.sqrt(15/np.pi)
+    radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -391,7 +441,7 @@ if read==1:
 dlsigma=0.1
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='New_Rob_Ref00'
+    source_folder='DScat-extracted'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -409,8 +459,8 @@ if DS_read==1:
     ds_theta=np.asarray(sample['theta'])
     
     #temporaneo
-    zds_max=np.max(ds_z)#1.75#1.42#1.02#2.2
-    zds_min=np.min(ds_z)#0.3#1.38#0.98#0.08#0.9
+    zds_max=1.35#np.max(ds_z)#1.75#1.42#1.02#2.2
+    zds_min=0.4#np.min(ds_z)#0.3#1.38#0.98#0.08#0.9
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
     mydcmax=mydlmax/(1+zds_max)
@@ -435,7 +485,7 @@ if DS_read==1:
 else:
     NumDS=150#150
     #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=0.8#1.42#1.02
+    zds_max=1.35#1.42#1.02
     zds_min=0.4#1.38#0.98#0.08
     
     mydlmax=Dl_z(zds_max,href,Om0GLOB)
@@ -449,6 +499,7 @@ else:
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
     cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
+    
     sample=cutted.sample(NumDS) #This is the DS cat
 
     ds_z=np.asarray(sample['z'])
@@ -488,10 +539,14 @@ sorted_denom=np.sort(denom_cat)
 #print('Run without computation: just Saving the DSs')
 
 ###################################Likelihood##################################################
+print('\nComputing Beta\n')
+with Pool(NCORE) as p, tqdm(total=len(arr)) as pbar:
+    # Utilizza 'tqdm' come iterator per monitorare l'avanzamento
+    beta = list(tqdm(p.imap(multibetaline, arr), total=len(arr)))
 
-with Pool(NCORE) as p:
-    beta=p.map(multibetaline_stat, arr)
-beta=np.asarray(beta)
+beta = np.asarray(beta)
+
+print('Beta done')
 
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
