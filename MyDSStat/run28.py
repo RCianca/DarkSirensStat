@@ -9,8 +9,6 @@ from scipy import interpolate
 from scipy.optimize import fsolve
 #from scipy.special import erfc
 
-import math
-
 from astropy.cosmology import FlatLambdaCDM
 
 import os
@@ -161,34 +159,20 @@ def stat_weights(array_of_z):
     temp=np.interp(array_of_z,z_bin,w_hist)
     return temp
 
-@njit
-def ds_weights(array_of_dl):
-    #alltheomega=w(array_of_z)
-    temp=np.interp(array_of_dl,dl_bins,gamma_hist)
-    return temp
-
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu+s*how_many_sigma*mu)#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
     zMax = fsolve(func, 0.02)[0] 
     #zMax=min(zMax,zmax_cat)
     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmin#(mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)#(mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
     zmin = fsolve(func, 0.02)[0]
-    #zmin=max(zmin,zmin_cat)
-    #tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
-    #tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
-    #tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
-    #tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
 
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
     
     gal_invol=(len(tmp))
-
-    #gal_incat=len(allz)
     if gal_invol==0:
         gal_invol=gal_invol+1
 
@@ -242,27 +226,14 @@ def multibetaline_total(iterator):
 def multibetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
-    zMax = fsolve(func, 0.02)[0] 
-    #zMax=min(zMax,zmax_cat)
-    
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin# (mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#mydlmax
+    zMax = fsolve(func, 0.02)[0]    
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
-    #zmin=max(zmin,zmin_cat)
-    #tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
-    #tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
-    #tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_theta]
-    #tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_theta]
-
     tmp=allz[allz>=zmin] # host with z>z_min
-    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
-    
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
-
     num=sum_stat_weights(tmp_sorted)
-    #mydenom=sum_stat_weights(z_gals)
-    #gal_incat=len(allz[allz<=20])
     if num==0:
         num=num+1
     ret=num#/denom
@@ -292,9 +263,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=1
+DS_read=0
 save=1
-samescatter=1
+samescatter=0
 
 #----------------------------------------------
 path='results'
@@ -302,7 +273,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='B-Genova-Ndl-uniform'
+runpath='0B-Genova-presca-uniform_450'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -312,8 +283,8 @@ H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
 print('Using {} Cores\n' .format(NCORE))
 #------------N(z)------------------------------------
-#z_bin=np.loadtxt('Nz01_bin.txt')
-#w_hist=np.loadtxt('Nz01_weights.txt')
+#z_bin=np.loadtxt('Nz00_bin.txt')
+#w_hist=np.loadtxt('Nz00_weights.txt')
 #-----------N(Dl)------------------------------------
 #dl_bins=np.loadtxt('gamma00_bin.txt')
 #gamma_hist=np.loadtxt('gamma00_weights.txt')
@@ -414,11 +385,9 @@ if read==1:
     #cat_name='FullExplorer.txt'
     print('Reading the catalogue: ' + cat_name)
     MyCat = pd.read_csv(cat_name, sep=" ", header=None)
-    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
+    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
-    Min_Box_dl=MyCat['Luminosity Distance'].min()
-    Max_Box_dl=MyCat['Luminosity Distance'].max()
     #---------angular stuff------------------
     radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
@@ -441,7 +410,7 @@ if read==1:
 dlsigma=0.1
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='DScat-extracted'
+    source_folder='0B-Genova-presca-unif_03'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -458,14 +427,12 @@ if DS_read==1:
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
     
-    #temporaneo
-    zds_max=1.35#np.max(ds_z)#1.75#1.42#1.02#2.2
-    zds_min=0.4#np.min(ds_z)#0.3#1.38#0.98#0.08#0.9
+
     
-    mydlmax=Dl_z(zds_max,href,Om0GLOB)
-    mydcmax=mydlmax/(1+zds_max)
-    mydlmin=Dl_z(zds_min,href,Om0GLOB)
-    mydcmin=mydlmin/(1+zds_min)
+    mydlmax=10_000#Dl_z(zds_max,href,Om0GLOB)
+
+    mydlmin=400#Dl_z(zds_min,href,Om0GLOB)
+
     #------------------------------
     if sample.shape[1]==7:
         scattered=np.asarray(sample['scattered DL'])
@@ -483,34 +450,37 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=150#150
-    #Selezionare in dcom non z: implementa anche Dirac 
-    zds_max=1.35#1.42#1.02
-    zds_min=0.4#1.38#0.98#0.08
+    NumDS=450#150
+
+    #zds_max=1.35#1.42#1.02
+    #zds_min=0.4#1.38#0.98#0.08
     
-    mydlmax=Dl_z(zds_max,href,Om0GLOB)
-    mydcmax=mydlmax/(1+zds_max)
-    mydlmin=Dl_z(zds_min,href,Om0GLOB)
-    mydcmin=mydlmin/(1+zds_min)
+    mydlmax=10_000#Dl_z(zds_max,href,Om0GLOB)
+
+    mydlmin=400#Dl_z(zds_min,href,Om0GLOB)
+
     #-----------------------------------------------------------------------------
-    cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
-    cutted=cutted[cutted['Comoving Distance']>=mydcmin]
+    #cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
+    #cutted=cutted[cutted['Comoving Distance']>=mydcmin]
+    #----------selection on scarred Dl
+    cutted=MyCat[MyCat['scattered DL']<=mydlmax]
+    cutted=cutted[cutted['scattered DL']>=mydlmin]
+    #---------------------------------------------
     cutted=cutted[cutted['phi']<= phi_max-10*sigma_phi]
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
     cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
-    
     sample=cutted.sample(NumDS) #This is the DS cat
 
     ds_z=np.asarray(sample['z'])
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
     ds_theta=np.asarray(sample['theta'])
-    sca= np.random.normal(loc=ds_dl, scale=ds_dl*dlsigma, size=None)#scattered[i]#
-    dlmax_sca=np.max(sca)
-    dlmin_sca=np.min(sca)
+    sca= np.asarray(sample['scattered DL'])
+    #dlmax_sca=np.max(sca)
+    #dlmin_sca=np.min(sca)
     if save==1:
-        sample['scattered DL']=sca
+        #sample['scattered DL']=sca
         cat_name=os.path.join(folder,runpath+'_DSs.txt')
         #cat_name=runpath+'_DSs.txt'
         print('Saving '+cat_name+' complete')
@@ -539,14 +509,10 @@ sorted_denom=np.sort(denom_cat)
 #print('Run without computation: just Saving the DSs')
 
 ###################################Likelihood##################################################
-print('\nComputing Beta\n')
-with Pool(NCORE) as p, tqdm(total=len(arr)) as pbar:
-    # Utilizza 'tqdm' come iterator per monitorare l'avanzamento
-    beta = list(tqdm(p.imap(multibetaline, arr), total=len(arr)))
 
-beta = np.asarray(beta)
-
-print('Beta done')
+#with Pool(NCORE) as p:
+#    beta=p.map(multibetaline, arr)
+#beta=np.asarray(beta)
 
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -559,22 +525,19 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_phi]
     tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_phi]
     true_mu=ds_dl[i]
-    #mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
     mu=sca[i]
-    dsz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
     z_gals=np.asarray(tmp['z'])
     z_gals=np.sort(z_gals)
-    new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        #beta=p.map(multibetaline, arr)
+        beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
-    #beta=np.asarray(beta)
+    beta=np.asarray(beta)
     fullrun.append(My_Like) 
     allbetas.append(beta)
 
