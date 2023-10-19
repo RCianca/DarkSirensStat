@@ -146,7 +146,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])#
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
     #denom_cat=allz[allz<=20]
@@ -178,57 +178,35 @@ def multibetaline(iterator):
 
     ret=gal_invol#/gal_incat
     return ret    
-def multibetaline_ds(iterator):
-    i=iterator
-    Htemp=H0Grid[i]
-    #print(i)
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmax
-    zMax = fsolve(func, 0.02)[0]     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmin
-    zmin = fsolve(func, 0.02)[0]
-    tmp=allz[allz>=zmin] # host with z>z_min
-    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
-    
-    dls=Dl_z_vett(tmp, Htemp, Om0GLOB)
-    sorted_dls=np.sort(dls)
-    #allgammas=gamma(dls)
-    ret=sum_stat_weights_pdet(sorted_dls)
-    return ret  
-@njit
-def sum_stat_weights_pdet(array_of_dl):
-    #alltheomega=w(array_of_z)
-    num=np.sum(np.interp(array_of_dl,dl_bins,gamma_hist))
-    return num
+
 
 @njit
 def sum_stat_weights(array_of_z):
     #alltheomega=w(array_of_z)
     num=np.sum(np.interp(array_of_z,z_bin,w_hist))
     return num
-def multibetaline_total(iterator):
-    i=iterator
-    Htemp=H0Grid[i]
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax
-    zMax = fsolve(func, 0.02)[0]     
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin
-    zmin = fsolve(func, 0.02)[0]
 
-    tmp=allz[allz>=zmin] # host with z>z_min
-    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
-    tmp_sorted=np.sort(tmp)
-    intermediate=stat_weights(tmp_sorted)
-    dls=Dl_z(tmp, Htemp, Om0GLOB)
-    allgammas=gamma(dls)
-    num=stat_weights(tmp_sorted)
-    total=allgammas*num
-    ret=np.sum(total)
-    return ret
 def multibetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#mydlmax
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu-s*how_many_sigma*mu)#mydlmin
+    zmin = fsolve(func, 0.02)[0]
+    tmp=allz[allz>=zmin] # host with z>z_min
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
+    tmp_sorted=np.sort(tmp)
+    num=sum_stat_weights(tmp_sorted)
+    if num==0:
+        num=num+1
+    ret=num#/denom
+    return ret
+def singlebetaline_stat(iterator):
+    i=iterator
+    Htemp=H0Grid[i]
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#mydlmax
+    zMax = fsolve(func, 0.02)[0]    
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin#(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
@@ -273,25 +251,25 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0B-Genova-presca-uniform_450'
+runpath='0F_h0short_unif_flag-00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
-H0min=55#30
-H0max=85#140
+H0min=66#30#55
+H0max=77#140#85
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
 print('Using {} Cores\n' .format(NCORE))
 #------------N(z)------------------------------------
-#z_bin=np.loadtxt('Nz00_bin.txt')
-#w_hist=np.loadtxt('Nz00_weights.txt')
+#z_bin=np.loadtxt('half_flag_bin.txt')
+#w_hist=np.loadtxt('half_flag_bin_weights.txt')
 #-----------N(Dl)------------------------------------
 #dl_bins=np.loadtxt('gamma00_bin.txt')
 #gamma_hist=np.loadtxt('gamma00_weights.txt')
 #gammanorm=np.sum(gamma_hist)
 #gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
 #--------------------------------------------------
-cat_name='FullExplorer_big.txt'# FullExplorer_big.txt
+cat_name='Uniform_for_half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -410,7 +388,7 @@ if read==1:
 dlsigma=0.1
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0B-Genova-presca-unif_03'
+    source_folder='0F-half_flag_01'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -429,9 +407,9 @@ if DS_read==1:
     
 
     
-    mydlmax=10_000#Dl_z(zds_max,href,Om0GLOB)
+    mydlmax=9000#Dl_z(zds_max,href,Om0GLOB)
 
-    mydlmin=400#Dl_z(zds_min,href,Om0GLOB)
+    mydlmin=5000#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -450,14 +428,9 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=450#150
-
-    #zds_max=1.35#1.42#1.02
-    #zds_min=0.4#1.38#0.98#0.08
-    
-    mydlmax=10_000#Dl_z(zds_max,href,Om0GLOB)
-
-    mydlmin=400#Dl_z(zds_min,href,Om0GLOB)
+    NumDS=150#150 
+    mydlmax=10_500#Dl_z(zds_max,href,Om0GLOB)
+    mydlmin=7_600#Dl_z(zds_min,href,Om0GLOB)
 
     #-----------------------------------------------------------------------------
     #cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
@@ -495,7 +468,7 @@ arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 s=dlsigma
-how_many_sigma=3.5
+how_many_sigma=3
 ang_sigma=3.5
 fullrun=[]
 allbetas=[]
@@ -543,13 +516,15 @@ for i in tqdm(range(NumDS)):
 
 #############################################################################################
 ##############################BETA#################################################################
-#with Pool(14) as p:
-#    beta=p.map(just_vol_beta, arr)
-#beta=np.asarray(beta)
+with Pool(14) as p:
+    singlebeta=p.map(singlebetaline, arr)
+singlebeta=np.asarray(singlebeta)
 ###################################################################################################
 ###########################Saving Results & posterior##############################################
 betapath=os.path.join(folder,runpath+'_beta.txt')
 np.savetxt(betapath,allbetas)#allbetas
+betapath=os.path.join(folder,runpath+'_singlebeta.txt')
+np.savetxt(betapath,singlebeta)#allbetas
 print('Beta Saved')
 fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
 np.savetxt(fullrunpath,fullrun)
