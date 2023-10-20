@@ -177,9 +177,9 @@ def multibetaline(iterator):
         gal_invol=gal_invol+1
 
     ret=gal_invol#/gal_incat
-    return ret  
+    return ret   
 
-def singlebetaline_stat(iterator):
+def singlebetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#mydlmax
