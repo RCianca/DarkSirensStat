@@ -271,7 +271,7 @@ runpath='0F_h0short_unif_flag-00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
-H0min=66#30#55
+H0min=63#30#55
 H0max=77#140#85
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
@@ -423,9 +423,9 @@ if DS_read==1:
     
 
     
-    mydlmax=9000#Dl_z(zds_max,href,Om0GLOB)
+    mydlmax=9500#Dl_z(zds_max,href,Om0GLOB)
 
-    mydlmin=5000#Dl_z(zds_min,href,Om0GLOB)
+    mydlmin=5100#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -444,7 +444,7 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=150#150 
+    NumDS=1#150 
     mydlmax=10_500#Dl_z(zds_max,href,Om0GLOB)
     mydlmin=7_600#Dl_z(zds_min,href,Om0GLOB)
 
