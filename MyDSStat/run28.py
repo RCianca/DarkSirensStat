@@ -182,18 +182,25 @@ def multibetaline(iterator):
 def singlebetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#mydlmax
-    zMax = fsolve(func, 0.02)[0]    
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin#(mu-s*how_many_sigma*mu)#mydlmin
+    #cosmo=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB)
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmax#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
+    zMax = fsolve(func, 0.02)[0] 
+    #zMax=min(zMax,zmax_cat)
+    
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - mydlmin#(mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
     zmin = fsolve(func, 0.02)[0]
+
     tmp=allz[allz>=zmin] # host with z>z_min
-    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
+    
     gal_invol=(len(tmp))
+
+    #gal_incat=len(allz)
     if gal_invol==0:
         gal_invol=gal_invol+1
 
     ret=gal_invol#/gal_incat
-    return ret
+    return ret    
 
 
 @njit
@@ -220,9 +227,9 @@ def multibetaline_stat(iterator):
 def singlebetaline_stat(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#(mu+s*how_many_sigma*mu)#mydlmax
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmax#
     zMax = fsolve(func, 0.02)[0]    
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin#(mu-s*how_many_sigma*mu)#mydlmin
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin
     zmin = fsolve(func, 0.02)[0]
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
@@ -267,11 +274,11 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0F_h0short_unif_flag-00'
+runpath='0F_h0short_uniform-flag-sigma01-00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
-H0min=63#30#55
+H0min=60#30#55
 H0max=77#140#85
 H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
@@ -401,7 +408,7 @@ if read==1:
     print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
     print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
-dlsigma=0.1
+dlsigma=0.01
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
     source_folder='0F-half_flag_01'
@@ -423,9 +430,9 @@ if DS_read==1:
     
 
     
-    mydlmax=9500#Dl_z(zds_max,href,Om0GLOB)
+    mydlmax=10_500#Dl_z(zds_max,href,Om0GLOB)
 
-    mydlmin=5100#Dl_z(zds_min,href,Om0GLOB)
+    mydlmin=8_000#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -444,9 +451,9 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=1#150 
-    mydlmax=10_500#Dl_z(zds_max,href,Om0GLOB)
-    mydlmin=7_600#Dl_z(zds_min,href,Om0GLOB)
+    NumDS=150#150 
+    mydlmax=10_700#Dl_z(zds_max,href,Om0GLOB)
+    mydlmin=8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #-----------------------------------------------------------------------------
     #cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
@@ -499,9 +506,9 @@ sorted_denom=np.sort(denom_cat)
 
 ###################################Likelihood##################################################
 
-#with Pool(NCORE) as p:
-#    beta=p.map(multibetaline, arr)
-#beta=np.asarray(beta)
+with Pool(NCORE) as p:
+    beta=p.map(singlebetaline, arr)
+beta=np.asarray(beta)
 
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
@@ -514,21 +521,25 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_phi]
     tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_phi]
     true_mu=ds_dl[i]
-    mu=sca[i]
+    mu= np.random.normal(loc=true_mu, scale=true_mu*s, size=None)#scattered[i]#
+    #mu=sca[i]
+    dsz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
     tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
     z_gals=np.asarray(tmp['z'])
     z_gals=np.sort(z_gals)
+    #new_dl_gals=np.asarray(tmp['Luminosity Distance'])
     new_phi_gals=np.asarray(tmp['phi'])
     new_theta_gals=np.asarray(tmp['theta'])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline, arr)
+        #beta=p.map(multibetaline, arr)
     My_Like=np.asarray(My_Like)
-    beta=np.asarray(beta)
+    #beta=np.asarray(beta)
     fullrun.append(My_Like) 
     allbetas.append(beta)
+
 
 #############################################################################################
 ##############################BETA#################################################################
