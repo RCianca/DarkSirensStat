@@ -62,11 +62,10 @@ MyDSStat/eta_weights.txt
 MyDSStat/gamma00_bin.txt
 MyDSStat/gamma00_weights.txt
 MyDSStat/gamma_weights.txt
-FullExplorer_big_presca.txt
-Uniform_for_half_flag.txt
-half_flag.txt
-half_flag_bin.txt
-half_flag_bin_weights.txt
-Uniform_Nz_half_flag.txt
-MyDSStat/run28_00.py
-
+MyDSStat/FullExplorer_big_presca.txt
+MyDSStat/Uniform_for_half_flag.txt
+MyDSStat/half_flag.txt
+MyDSStat/half_flag_bin.txt
+MyDSStat/half_flag_bin_weights.txt
+MyDSStat/Uniform_Nz_half_flag.txt
+>>>>>>> d0a048149933183f83bc7e2a841f0c6865a9acca
