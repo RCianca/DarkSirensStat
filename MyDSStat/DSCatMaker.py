@@ -209,6 +209,11 @@ def multibetaline_stat(iterator):
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
@@ -224,6 +229,11 @@ def singlebetaline_stat(iterator):
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin#(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
@@ -257,9 +267,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=1
+DS_read=0
 save=1
-samescatter=1
+samescatter=0
 
 #----------------------------------------------
 path='results'
@@ -267,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-SigmaAng20'
+runpath='0H-DSFromUnif-onlyDSAng50'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -285,7 +295,7 @@ w_hist=np.loadtxt('half_flag_bin_weights.txt')
 #gammanorm=np.sum(gamma_hist)
 #gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
 #--------------------------------------------------
-cat_name='half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
+cat_name='Uniform_for_half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -383,7 +393,7 @@ if read==1:
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(20/np.pi)
+    radius_deg= np.sqrt(50/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -406,7 +416,7 @@ mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
 mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0H-DSFromUnif-onlyDSAng50'
+    source_folder='0H-DSFromUnif-onlyDS'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -425,9 +435,9 @@ if DS_read==1:
     
 
     
-    #mydlmax=10_700#Dl_z(zds_max,href,Om0GLOB)
+    #mydlmax=10_400#10_700#Dl_z(zds_max,href,Om0GLOB)
 
-    #mydlmin=8_350#Dl_z(zds_min,href,Om0GLOB)
+    #mydlmin=8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -475,167 +485,3 @@ else:
         #cat_name=runpath+'_DSs.txt'
         print('Saving '+cat_name+' complete')
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
-###################################################################################
-#---------------------Start analysis--------------------------------------
-#some global stuff###########################################
-zmax_cat=np.max(allz)
-zmin_cat=np.min(allz)
-##############################################################
-arr=np.arange(0,len(H0Grid),dtype=int)
-beta=np.zeros(len(H0Grid))
-My_Like=np.zeros(len(H0Grid))
-s=dlsigma
-how_many_sigma=3.5
-ang_sigma=3.5
-fullrun=[]
-allbetas=[]
-
-#if samescatter==1:
-#    sca=scattered
-#---------------------USE WHEN YOU HAVE A N(z)
-denom_cat=allz[allz<=20]
-sorted_denom=np.sort(denom_cat)
-#denom=np.sum(np.interp(sorted_denom,z_bin,w_hist))
-#print('Run without computation: just Saving the DSs')
-
-###################################Likelihood##################################################
-
-#with Pool(NCORE) as p:
-#    beta=p.map(singlebetaline, arr)
-#beta=np.asarray(beta)
-
-for i in tqdm(range(NumDS)):
-    DS_phi=ds_phi[i]
-    #tmp=MyCat
-    #print(sigma_phi,DS_phi)
-    tmp=MyCat[MyCat['phi']<=DS_phi+ang_sigma*sigma_phi]
-    tmp=tmp[tmp['phi']>=DS_phi-ang_sigma*sigma_phi]
-    DS_theta=ds_theta[i]
-    #print(sigma_phi,DS_theta)
-    tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_phi]
-    tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_phi]
-    true_mu=ds_dl[i]
-    mu=sca[i]
-    zz=ds_z[i]
-    dlrange=s*mu*how_many_sigma
-    tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
-    tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
-    z_gals=np.asarray(tmp['z'])
-    z_gals=np.sort(z_gals)
-    new_phi_gals=np.asarray(tmp['phi'])
-    new_theta_gals=np.asarray(tmp['theta'])
-    with Pool(NCORE) as p:
-        My_Like=p.map(LikeofH0, arr)
-        beta=p.map(multibetaline_stat, arr)
-    My_Like=np.asarray(My_Like)
-    beta=np.asarray(beta)
-    fullrun.append(My_Like) 
-    allbetas.append(beta)
-
-#############################################################################################
-##############################BETA#################################################################
-with Pool(NCORE) as p:
-    singlebeta=p.map(singlebetaline_stat, arr)
-singlebeta=np.asarray(singlebeta)
-###################################################################################################
-###########################Saving Results & posterior##############################################
-betapath=os.path.join(folder,runpath+'_beta.txt')
-np.savetxt(betapath,allbetas)#allbetas
-betapath=os.path.join(folder,runpath+'_singlebeta.txt')
-np.savetxt(betapath,singlebeta)#allbetas
-print('Beta Saved')
-fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
-np.savetxt(fullrunpath,fullrun)
-fullrun_beta=[]#fullrun/beta#[]
-print('All likelihood Saved')
-#-------------------------------------------first plot----------------------------------------
-for i in range(NumDS):
-    fullrun_beta.append(fullrun[i]/allbetas[i])
-combined=[]
-for i in range(len(fullrun_beta)):
-    #combined=combined+post[i]
-    if i==0:
-        combined.append(fullrun_beta[i]*1)
-    else:
-        num=np.longdouble(combined[i-1]*fullrun_beta[i])
-        normed=np.longdouble(num/np.trapz(num,H0Grid))
-        combined.append(normed)
-
-postpath=os.path.join(folder,runpath+'_totpost.txt')
-np.savetxt(postpath,combined[-1])
-print('posterior saved')
-grid=os.path.join(folder,runpath+'_H0grid.txt')
-np.savetxt(grid,H0Grid)
-print('H0 grid saved')
-os.system('cp run28-00.py '+folder+'/run_run28-00.py')
-
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
-ax.tick_params(axis='both', which='major', labelsize=25)
-ax.yaxis.get_offset_text().set_fontsize(25)
-ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
-
-
-x=H0Grid
-xmin=np.min(x)
-xmax=np.max(x)
-ax.set_xlim(xmin, xmax)
-ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
-#ax.set_ylabel(r'$P(H_0)$', fontsize=20)
-ax.set_ylabel(r'$Posterior(H_0)$', fontsize=30)
-if xmin<href<xmax:
-    ax.axvline(x = href, color = 'k', linestyle='dashdot',label = 'H0=67')
-
-Mycol='navy'
-ax.plot(x,combined[-1]/np.trapz(combined[-1],x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
-ax.legend(fontsize=13, ncol=2) 
-newdist=(combined[-1])/np.trapz(combined[-1],x)
-mean=np.trapz(x*newdist,x)/np.trapz(newdist,x)
-std=np.sqrt(np.trapz(newdist*(x-mean)**2,x)/np.trapz(newdist,x))
-plt.figtext(0.75,0.6,'Mean={:0.2f}'.format(mean),fontsize=18,c=Mycol)
-plt.figtext(0.75,0.55,'Std={:0.2f}'.format(std),fontsize=18, c=Mycol)
-print('mean={},std={} std/mean={}%'.format(mean,std,100*std/mean))
-plotpath=os.path.join(folder,runpath+'_PostTot.pdf')
-plt.savefig(plotpath, format="pdf", bbox_inches="tight")
-
-#---------------------------------------------second plot--------------------------------------------------
-
-fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
-ax.tick_params(axis='both', which='major', labelsize=25)
-ax.yaxis.get_offset_text().set_fontsize(25)
-ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
-
-for i in range(NumDS):
-    fullrun_beta.append(fullrun[i]/singlebeta)
-combined=[]
-for i in range(len(fullrun_beta)):
-    #combined=combined+post[i]
-    if i==0:
-        combined.append(fullrun_beta[i]*1)
-    else:
-        num=np.longdouble(combined[i-1]*fullrun_beta[i])
-        normed=np.longdouble(num/np.trapz(num,H0Grid))
-        combined.append(normed)
-
-
-x=H0Grid
-xmin=np.min(x)
-xmax=np.max(x)
-ax.set_xlim(xmin, xmax)
-ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
-#ax.set_ylabel(r'$P(H_0)$', fontsize=20)
-ax.set_ylabel(r'$Posterior(H_0)$', fontsize=30)
-if xmin<href<xmax:
-    ax.axvline(x = href, color = 'k', linestyle='dashdot',label = 'H0=67')
-
-Mycol='purple'
-ax.plot(x,combined[-1]/np.trapz(combined[-1],x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
-ax.legend(fontsize=13, ncol=2) 
-newdist=(combined[-1])/np.trapz(combined[-1],x)
-mean=np.trapz(x*newdist,x)/np.trapz(newdist,x)
-std=np.sqrt(np.trapz(newdist*(x-mean)**2,x)/np.trapz(newdist,x))
-plt.figtext(0.75,0.6,'Mean={:0.2f}'.format(mean),fontsize=18,c=Mycol)
-plt.figtext(0.75,0.55,'Std={:0.2f}'.format(std),fontsize=18, c=Mycol)
-print('mean={},std={} std/mean={}%'.format(mean,std,100*std/mean))
-plotpath=os.path.join(folder,runpath+'_PostTot_single.pdf')
-plt.savefig(plotpath, format="pdf", bbox_inches="tight")

@@ -209,6 +209,11 @@ def multibetaline_stat(iterator):
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
@@ -224,6 +229,11 @@ def singlebetaline_stat(iterator):
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin#(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
@@ -259,7 +269,7 @@ generation=0
 read=1
 DS_read=1
 save=1
-samescatter=1
+samescatter=0
 
 #----------------------------------------------
 path='results'
@@ -267,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-SigmaAng20'
+runpath='0H-DefaultUniform-01sigmadl'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -383,7 +393,7 @@ if read==1:
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(20/np.pi)
+    radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -401,12 +411,12 @@ if read==1:
     print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
     print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
-dlsigma=0.1
+dlsigma=0.01
 mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
 mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0H-DSFromUnif-onlyDSAng50'
+    source_folder='0H-DSFromUnif-onlyDS'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -425,9 +435,9 @@ if DS_read==1:
     
 
     
-    #mydlmax=10_700#Dl_z(zds_max,href,Om0GLOB)
+    #mydlmax=10_400#10_700#Dl_z(zds_max,href,Om0GLOB)
 
-    #mydlmin=8_350#Dl_z(zds_min,href,Om0GLOB)
+    #mydlmin=8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -518,8 +528,8 @@ for i in tqdm(range(NumDS)):
     mu=sca[i]
     zz=ds_z[i]
     dlrange=s*mu*how_many_sigma
-    tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
-    tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
+    tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]#mu--test:alfonso
+    tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]#mu--test:alfonso
     z_gals=np.asarray(tmp['z'])
     z_gals=np.sort(z_gals)
     new_phi_gals=np.asarray(tmp['phi'])
@@ -567,7 +577,7 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp run28-00.py '+folder+'/run_run28-00.py')
+os.system('cp run28-06.py '+folder+'/run.py')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire

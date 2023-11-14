@@ -267,9 +267,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
-samescatter=0
+samescatter=1
 
 #----------------------------------------------
 path='results'
@@ -277,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0G-RobSigma35_00'
+runpath='0H-DefaultUniform-SigmaAng50'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -295,7 +295,7 @@ w_hist=np.loadtxt('half_flag_bin_weights.txt')
 #gammanorm=np.sum(gamma_hist)
 #gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
 #--------------------------------------------------
-cat_name='half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
+cat_name='half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag#half_flag
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -393,7 +393,7 @@ if read==1:
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(10/np.pi)
+    radius_deg= np.sqrt(50/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -412,11 +412,11 @@ if read==1:
     print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
 dlsigma=0.1
-mydlmax=10_050#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
-mydlmin=9665#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
+mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
+mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0F_flag-dsfromunif-02'
+    source_folder='0H-DSFromUnif-onlyDSAng50'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -456,7 +456,7 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=150#150 
+    NumDS=300#150#300
 
 
     #-----------------------------------------------------------------------------
@@ -495,7 +495,7 @@ arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 s=dlsigma
-how_many_sigma=3
+how_many_sigma=3.5
 ang_sigma=3.5
 fullrun=[]
 allbetas=[]
