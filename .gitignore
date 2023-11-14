@@ -26,6 +26,7 @@ DSCatalogueCreator/EVA02_detected12_oneyear.fits
 DSCatalogueCreator/wrongsnrEVA02.fits
 
 MyDSStat/results
+MyDSStat/ClusterPlotter
 MyDSStat/FullExplorer.txt
 MyDSStat/FullExplorer_big.txt
 MyDSStat/Uniform_from_flag_big.txt
