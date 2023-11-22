@@ -277,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-SigmaAng01'
+runpath='0H-DefaultUniform-SigmaAng02'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -393,7 +393,7 @@ if read==1:
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(1/np.pi)
+    radius_deg= np.sqrt(2/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg

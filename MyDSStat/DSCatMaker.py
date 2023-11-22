@@ -277,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DSFromUnif-onlyDSAng50'
+runpath='0H-DSFromUnif-onlyDS10K'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -393,7 +393,7 @@ if read==1:
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(50/np.pi)
+    radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -456,7 +456,7 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=300#150 
+    NumDS=10_000#150 
 
 
     #-----------------------------------------------------------------------------
@@ -470,6 +470,8 @@ else:
     cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
     cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
     cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
+    print('possible DSs: {}'.format(cutted.shape[0]))
+    print('N_DS/N_poss = {}'.format(NumDS/cutted.shape[0]))
     sample=cutted.sample(NumDS) #This is the DS cat
 
     ds_z=np.asarray(sample['z'])

@@ -393,7 +393,7 @@ if read==1:
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(50/np.pi)
+    radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -577,7 +577,7 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp run28-01.py '+folder+'/run_run28-01.py')
+os.system('cp run28-01.py '+folder+'/run.py')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire

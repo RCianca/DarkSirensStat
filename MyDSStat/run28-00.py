@@ -267,7 +267,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-SigmaAng20'
+runpath='0H-DefaultUniform-6K'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -406,10 +406,11 @@ mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
 mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0H-DSFromUnif-onlyDSAng50'
+    source_folder='0H-DSFromUnif-onlyDS10K'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
-    sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
+    tmp = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
+    sample=tmp.sample(6000)
     if sample.shape[1]==6:
         colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     if sample.shape[1]==7:
