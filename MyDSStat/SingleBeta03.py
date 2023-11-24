@@ -45,7 +45,6 @@ def calculate_to_sum(args):
     for j in range(len(x)):
         dl = Dl_z(z, x[j])
         tmp = 0.5 * (special.erf((dl - mydlmin) / (np.sqrt(2) * s * dl)) - special.erf((mydlmax-dl) / (np.sqrt(2) * s * dl)))
-        tmp = 0.5 * (special.erfc((dl - mydlmax) / (np.sqrt(2) * s * dl)))
         to_sum[j] = tmp*stat_weights(z)
     return to_sum
 
@@ -64,7 +63,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='BetaErf-oneedge_10'
+runpath='BetaErf10-true'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -89,11 +88,11 @@ z_sup=np.max(allz)
 z_inf=np.min(allz)
 #---------------------Beta---------------------------
 s=0.10
-mydlmax=10400#MyCat['Luminosity Distance'].max()#10_400#Dl_z(zds_max,href,Om0GLOB)
-mydlmin=MyCat['Luminosity Distance'].min()#8_950#Dl_z(zds_min,href,Om0GLOB)
+mydlmax=14211.477971570035#dlmaxcat#15840.294579141924#Dl_z(zds_max,href,Om0GLOB)
+mydlmin=7584.382576142516#dlmincat#5209.84979508345#Dl_z(zds_min,href,Om0GLOB)
 print('Starting to compute beta')
 myallz=allz
 beta = calculate_res(myallz, x, mydlmin, mydlmax, s)
-betapath=os.path.join(folder,runpath+'_betaErf15.txt')
+betapath=os.path.join(folder,runpath+'_betaErf.txt')
 np.savetxt(betapath,beta)#allbetas
 print('beta saved')
