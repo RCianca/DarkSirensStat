@@ -267,7 +267,7 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
 samescatter=0
 
@@ -277,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0G-RobSigma35_00'
+runpath='Tesi-Unif-pesi'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -413,10 +413,10 @@ if read==1:
 #################################DS control room#########################################
 dlsigma=0.1
 mydlmax=10_050#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
-mydlmin=9665#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
+mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0F_flag-dsfromunif-02'
+    source_folder='Tesi-Unif-nopesi'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)

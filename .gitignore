@@ -24,6 +24,9 @@ DSCatalogueCreator/allpsi.txt
 DSCatalogueCreator/*.png
 DSCatalogueCreator/EVA02_detected12_oneyear.fits
 DSCatalogueCreator/wrongsnrEVA02.fits
+DSCatalogueCreator/EVA_DSs.txt
+DSCatalogueCreator/half_flag.txt
+
 
 MyDSStat/results
 MyDSStat/ClusterPlotter
@@ -69,4 +72,7 @@ MyDSStat/half_flag.txt
 MyDSStat/half_flag_bin.txt
 MyDSStat/half_flag_bin_weights.txt
 MyDSStat/Uniform_Nz_half_flag.txt
+MyDSStat/Ignore
+
+GWfast/results
 >>>>>>> d0a048149933183f83bc7e2a841f0c6865a9acca

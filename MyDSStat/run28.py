@@ -146,7 +146,7 @@ def LikeofH0(iterator):
         dl = Dl_z(z_gals[j], Htemp, Om0GLOB)
         #a=0.01
         angular_prob=sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
-        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob#*stat_weights(z_gals[j])
+        to_sum[j]=likelihood_line(mu,dl,s)*angular_prob*stat_weights(z_gals[j])
         
     tmp=np.sum(to_sum)#*norm
     #denom_cat=allz[allz<=20]
@@ -264,9 +264,9 @@ def vol_beta(iterator):
 #------------------trigger---------------------
 generation=0
 read=1
-DS_read=0
+DS_read=1
 save=1
-samescatter=0
+samescatter=1
 
 #----------------------------------------------
 path='results'
@@ -274,7 +274,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0G-NewDS_35Sigma-00'
+runpath='Uniform-pesi-00'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -284,15 +284,15 @@ H0Grid=np.linspace(H0min,H0max,1000)
 NCORE=multiprocessing.cpu_count()-1#15
 print('Using {} Cores\n' .format(NCORE))
 #------------N(z)------------------------------------
-#z_bin=np.loadtxt('half_flag_bin.txt')
-#w_hist=np.loadtxt('half_flag_bin_weights.txt')
+z_bin=np.loadtxt('fast_weights_bin.txt')
+w_hist=np.loadtxt('fast_weights.txt')
 #-----------N(Dl)------------------------------------
 #dl_bins=np.loadtxt('gamma00_bin.txt')
 #gamma_hist=np.loadtxt('gamma00_weights.txt')
 #gammanorm=np.sum(gamma_hist)
 #gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
 #--------------------------------------------------
-cat_name='Uniform_for_half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
+cat_name='ExtractedFast.txt'# FullExplorer_big.txt#Uniform_for_half_flag
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -386,7 +386,7 @@ if read==1:
     #cat_name='FullExplorer.txt'
     print('Reading the catalogue: ' + cat_name)
     MyCat = pd.read_csv(cat_name, sep=" ", header=None)
-    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
+    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']#,'scattered DL']
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
@@ -411,7 +411,7 @@ if read==1:
 dlsigma=0.1
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0F-half_flag_01'
+    source_folder='Uniform'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
@@ -430,9 +430,9 @@ if DS_read==1:
     
 
     
-    mydlmax=10_400#10_700#Dl_z(zds_max,href,Om0GLOB)#
+    mydlmax=10_700#10_700#Dl_z(zds_max,href,Om0GLOB)#
 
-    mydlmin=8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
+    mydlmin=8950#8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -453,7 +453,7 @@ if DS_read==1:
 else:
     NumDS=150#150 
     mydlmax=10_700#10_400#10_700#Dl_z(zds_max,href,Om0GLOB)
-    mydlmin=8_350#8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
+    mydlmin=8950#8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #-----------------------------------------------------------------------------
     #cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
@@ -506,10 +506,6 @@ sorted_denom=np.sort(denom_cat)
 
 ###################################Likelihood##################################################
 
-with Pool(NCORE) as p:
-    beta=p.map(singlebetaline, arr)
-beta=np.asarray(beta)
-
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
     #tmp=MyCat
@@ -534,9 +530,9 @@ for i in tqdm(range(NumDS)):
     new_theta_gals=np.asarray(tmp['theta'])
     with Pool(NCORE) as p:
         My_Like=p.map(LikeofH0, arr)
-        #beta=p.map(multibetaline, arr)
+        beta=p.map(multibetaline_stat, arr)
     My_Like=np.asarray(My_Like)
-    #beta=np.asarray(beta)
+    beta=np.asarray(beta)
     fullrun.append(My_Like) 
     allbetas.append(beta)
 
