@@ -392,8 +392,8 @@ class Skymap3D(object):
         if level is None:
             level=self.level
         #Rauldebug:
-        print('Sono in GW.py linea 395')
-        return self.all_pixels[self.p_posterior>0]#self._get_credible_region_pth(level=level)]
+        #print('Sono in GW.py linea 395')
+        return self.all_pixels[self.p_posterior>self._get_credible_region_pth(level=level)]
     
     
 #    def likelihood_in_credible_region(self, r, level=0.99, verbose=False):
