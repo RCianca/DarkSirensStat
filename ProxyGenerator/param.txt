@@ -1,7 +1,0 @@
-dL
-theta
-phi
-Mc
-eta
-iota
-psi
