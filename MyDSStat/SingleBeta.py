@@ -12,7 +12,7 @@ from scipy.optimize import fsolve
 import sys
 from scipy import integrate
 from scipy import interpolate
-
+from numba import njit
 import os
 from os import listdir
 from os.path import isfile, join
@@ -22,7 +22,7 @@ Om0GLOB=0.319
 Xi0Glob =1.
 clight = 2.99792458* 10**5#km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
-
+@njit
 def E_z(z, H0, Om=Om0GLOB):
     return np.sqrt(Om*(1+z)**3+(1-Om))
 
@@ -44,7 +44,7 @@ def calculate_to_sum(args):
     to_sum = np.zeros(len(x))
     for j in range(len(x)):
         dl = Dl_z(z, x[j])
-        tmp = 0.5 * (special.erf((dl - mydlmin) / (np.sqrt(2) * s * dl)) - special.erf((mydlmax-dl) / (np.sqrt(2) * s * dl)))
+        tmp = 0.5 * (special.erf((dl - mydlmin) / (np.sqrt(2) * s * dl)) - special.erf((dl-mydlmax) / (np.sqrt(2) * s * dl)))
         #tmp = 0.5 * (special.erfc((mydlmax-dl) / (np.sqrt(2) * s * dl)))
         to_sum[j] = tmp*stat_weights(z)
     return to_sum
@@ -64,7 +64,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='BetaErf15-check'
+runpath='Raul10-bothscat'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -82,15 +82,15 @@ MyCat = pd.read_csv(cat_name, sep=" ", header=None)
 colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
 MyCat.columns=colnames
 allz=np.asarray(MyCat['z'])
-dlmaxcat=10400#MyCat['scattered DL'].max()
-dlmincat=MyCat['Luminosity Distance'].min()
+#dlmaxcat=10400#MyCat['scattered DL'].max()
+#dlmincat=MyCat['Luminosity Distance'].min()
 
 z_sup=np.max(allz)
 z_inf=np.min(allz)
 #---------------------Beta---------------------------
-s=0.15
-mydlmax=dlmaxcat#15840.294579141924#Dl_z(zds_max,href,Om0GLOB)
-mydlmin=dlmincat#5209.84979508345#Dl_z(zds_min,href,Om0GLOB)
+s=0.10
+mydlmax=10400#dlmaxcat#15840.294579141924#Dl_z(zds_max,href,Om0GLOB)
+mydlmin=8950#dlmincat#5209.84979508345#Dl_z(zds_min,href,Om0GLOB)
 print('Starting to compute beta')
 myallz=allz
 beta = calculate_res(myallz, x, mydlmin, mydlmax, s)

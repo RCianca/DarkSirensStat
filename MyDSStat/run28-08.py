@@ -126,7 +126,11 @@ def z_from_dcom(dc_val):
     z = fsolve(func, 0.02)
     return z[0]
 
-
+def z_from_dl(h,dl):
+    func = lambda z :Dl_z(z, h, Om0GLOB) -dl
+    zmax = fsolve(func, 0.02)[0] 
+    return zmax
+    
 
 #--------------------Posterior Function----------------------------
 @njit
@@ -261,6 +265,24 @@ def vol_beta(iterator):
     
     return num/norm
 
+def beta_mod(h,dlmin,dlmax,zsup,zinf):
+    cosmo=FlatLambdaCDM(H0=h,Om0=Om0GLOB)
+    zmax=z_from_dl(h,dlmax)
+    zmin=z_from_dl(h,dlmin)
+    v_sup=cosmo.comoving_volume(zsup).value
+    v_inf=cosmo.comoving_volume(zinf).value
+    denom=v_sup-v_inf
+    if zmax<=zsup:
+        v_max=cosmo.comoving_volume(zmax).value
+    else:
+        v_max=v_sup
+    if zmin>=zinf:
+        v_min=cosmo.comoving_volume(zmin).value
+    else:
+        v_min=v_inf
+    tmp=(v_max-v_min)/(v_sup-v_inf)
+    return tmp
+
 ###########################################################################################################
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
@@ -269,7 +291,7 @@ generation=0
 read=1
 DS_read=1
 save=1
-samescatter=0
+samescatter=1
 
 #----------------------------------------------
 path='results'
@@ -277,7 +299,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-15sigmadl-new'
+runpath='Final_05_2k_01'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -411,15 +433,16 @@ if read==1:
     print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
     print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
-dlsigma=0.15
+dlsigma=0.05
 mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
 mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0H-DSFromUnif-onlyDS'
+    source_folder='Final-DS05fromUniform-150k'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
-    sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
+    tmp = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
+    sample=tmp.sample(2000)
     if sample.shape[1]==6:
         colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     if sample.shape[1]==7:
@@ -544,15 +567,19 @@ for i in tqdm(range(NumDS)):
 
 #############################################################################################
 ##############################BETA#################################################################
-with Pool(NCORE) as p:
-    singlebeta=p.map(singlebetaline_stat, arr)
-singlebeta=np.asarray(singlebeta)
+#with Pool(NCORE) as p:
+#    singlebeta=p.map(singlebetaline_stat, arr)
+#singlebeta=np.asarray(singlebeta)
+
+mybeta_mod=np.zeros(len(H0Grid))
+for i in range(len(H0Grid)):
+    mybeta_mod[i]=beta_mod(H0Grid[i],mydlmin,mydlmax,zmax_cat,zmin_cat)
 ###################################################################################################
 ###########################Saving Results & posterior##############################################
 betapath=os.path.join(folder,runpath+'_beta.txt')
 np.savetxt(betapath,allbetas)#allbetas
 betapath=os.path.join(folder,runpath+'_singlebeta.txt')
-np.savetxt(betapath,singlebeta)#allbetas
+np.savetxt(betapath,mybeta_mod)#allbetas
 print('Beta Saved')
 fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
 np.savetxt(fullrunpath,fullrun)
@@ -616,7 +643,7 @@ ax.yaxis.get_offset_text().set_fontsize(25)
 ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
 
 for i in range(NumDS):
-    fullrun_beta.append(fullrun[i]/singlebeta)
+    fullrun_beta.append(fullrun[i]/mybeta_mod)
 combined=[]
 for i in range(len(fullrun_beta)):
     #combined=combined+post[i]
@@ -647,5 +674,5 @@ std=np.sqrt(np.trapz(newdist*(x-mean)**2,x)/np.trapz(newdist,x))
 plt.figtext(0.75,0.6,'Mean={:0.2f}'.format(mean),fontsize=18,c=Mycol)
 plt.figtext(0.75,0.55,'Std={:0.2f}'.format(std),fontsize=18, c=Mycol)
 print('mean={},std={} std/mean={}%'.format(mean,std,100*std/mean))
-plotpath=os.path.join(folder,runpath+'_PostTot_single.pdf')
+plotpath=os.path.join(folder,runpath+'_PostTot_mybeta_mod.pdf')
 plt.savefig(plotpath, format="pdf", bbox_inches="tight")

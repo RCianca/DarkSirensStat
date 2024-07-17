@@ -277,7 +277,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DSFromUnif-onlyDS10K'
+runpath='All-scattered-Half-Flag'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -295,7 +295,7 @@ w_hist=np.loadtxt('half_flag_bin_weights.txt')
 #gammanorm=np.sum(gamma_hist)
 #gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
 #--------------------------------------------------
-cat_name='Uniform_for_half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
+cat_name='TrueFlag_half.txt'# FullExplorer_big.txt#Uniform_for_half_flag#Uniform_for_half_flag-15scatt
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -304,116 +304,34 @@ print('DS_read is {}, if 1 reads a DS catalogue'.format(DS_read))
 print('Save is {}, if 1 saves the results'.format(save))
 print('Samescatter is {}, if 1 will use the same DS scatter\n'.format(samescatter))
 
-if generation==1:
-#------------------points generator------------------
-    nsamp=1000000#6500000+2156000
-    z_inf_cat=0.05#0.79
-    z_sup_cat=2.5#2
-
-    dcom_min=cosmoflag.comoving_distance(z_inf_cat).value
-    dcom_max=cosmoflag.comoving_distance(z_sup_cat).value
-    dl_min=cosmoflag.luminosity_distance(z_inf_cat).value
-    dl_max=cosmoflag.luminosity_distance(z_sup_cat).value
-
-
-    #---------angular stuff------------------
-    radius_deg= np.sqrt(10/np.pi)
-    sigma90=radius_deg/np.sqrt(2)
-    sigma_deg=sigma90/1.5
-    circle_deg=6*sigma_deg
-    sigma_theta=np.radians(sigma_deg)
-    sigma_phi=np.radians(sigma_deg)
-    radius_rad=np.radians(circle_deg)
-    conc=1/(sigma_phi**2)
-    #----------------------------------------------------------------
-    phi_min=0
-    phi_max=np.pi/2
-    theta_min=0
-    theta_max=np.pi/2
-
-
-    print('Cosmology: Flat Universe. H0={}, OmegaM={}'.format(href,Om0GLOB))
-    print('Parameters:\nH0_min={}, H0_max={}'.format(H0min,H0max))
-    print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(z_inf_cat,z_sup_cat,phi_min,phi_max,theta_min,theta_max))
-
-
-    u = np.random.uniform(0,1,size=nsamp) # uniform random vector of size nsamp
-    dc_gals_all     = np.cbrt((u*dcom_min**3)+((1-u)*dcom_max**3))
-    phi_gals   = np.random.uniform(phi_min,phi_max,nsamp)
-    theta_gals = np.arccos( np.random.uniform(np.cos(theta_max),np.cos(theta_min),nsamp) )
-    dc_gals=dc_gals_all[dc_gals_all>=dcom_min]
-    #num=np.arange(len(dc_gals))
-    #z_gals=np.zeros(len(dc_gals))
-    #dl_gals=np.zeros(len(dc_gals))
-# need to use pool here
-    #for i in tqdm(range(len(dc_gals))):
-    #    z=z_from_dcom(dc_gals[i])
-    #    z_gals[i]=z
-    #   dl_gals[i]=Dl_z(z,href,Om0GLOB)
-    new_phi_gals=np.random.choice(phi_gals,len(dc_gals))
-    new_theta_gals=np.random.choice(theta_gals,len(dc_gals))
-    numevent=int(0)
-    proxy_row={'Ngal':numevent,'Comoving Distance':0,'Luminosity Distance':0,
-                   'z':0,'phi':0,'theta':0
-              }
-    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
-    MyCat = pd.DataFrame(columns=colnames)
-    arr=np.arange(0,len(dc_gals),dtype=int)
-    data=[]
-    tmp=[]
-    print('Generating the catalogue using pool, please wait...')
-    with Pool(NCORE) as p:
-        tmp=p.map(uniform_volume, arr)
-    MyCat=MyCat.append(tmp, ignore_index=True)
-
-    #MyCat = pd.DataFrame(columns=colnames)
-    #MyCat['Ngal']=num
-    #MyCat['Comoving Distance']=dc_gals
-    #MyCat['Luminosity Distance']=dl_gals
-    #MyCat['z']=z_gals
-    #MyCat['phi']=new_phi_gals
-    #MyCat['theta']=new_theta_gals
-    print('Saving '+cat_name)
-    MyCat.to_csv(cat_name, header=None, index=None, sep=' ')
-    del tmp
-    del data
-    del u    
-    del dc_gals
-    del phi_gals
-    del theta_gals
-    del new_phi_gals
-    del new_theta_gals
-    del dc_gals_all
-#------------------------Reading the catalogue----------------------------------
-if read==1:
-    #cat_name='FullExplorer.txt'
-    print('Reading the catalogue: ' + cat_name)
-    MyCat = pd.read_csv(cat_name, sep=" ", header=None)
-    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
-    MyCat.columns=colnames
-    allz=np.asarray(MyCat['z'])
-    #---------angular stuff------------------
-    radius_deg= np.sqrt(10/np.pi)
-    sigma90=radius_deg/np.sqrt(2)
-    sigma_deg=sigma90/1.5
-    circle_deg=6*sigma_deg
-    sigma_theta=np.radians(sigma_deg)
-    sigma_phi=np.radians(sigma_deg)
-    radius_rad=np.radians(circle_deg)
-    conc=1/(sigma_phi**2)
-    #----------------------------------------------------------------
-    phi_min=MyCat['phi'].min()
-    phi_max=MyCat['phi'].max()
-    theta_min=MyCat['theta'].min()
-    theta_max=MyCat['theta'].max()
-    print('Cosmology: Flat Universe. H0={}, OmegaM={}'.format(href,Om0GLOB))
-    print('Parameters:\nH0_min={}, H0_max={}'.format(H0min,H0max))
-    print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
-    print('Number of galaxies={}'.format(len(allz)))
+#cat_name='FullExplorer.txt'
+print('Reading the catalogue: ' + cat_name)
+MyCat = pd.read_csv(cat_name, sep=" ", header=None)
+colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']#,'scattered DL']
+MyCat.columns=colnames
+allz=np.asarray(MyCat['z'])
+#---------angular stuff------------------
+radius_deg= np.sqrt(10/np.pi)
+sigma90=radius_deg/np.sqrt(2)
+sigma_deg=sigma90/1.5
+circle_deg=6*sigma_deg
+sigma_theta=np.radians(sigma_deg)
+sigma_phi=np.radians(sigma_deg)
+radius_rad=np.radians(circle_deg)
+conc=1/(sigma_phi**2)
+#----------------------------------------------------------------
+phi_min=MyCat['phi'].min()
+phi_max=MyCat['phi'].max()
+theta_min=MyCat['theta'].min()
+theta_max=MyCat['theta'].max()
+print('Cosmology: Flat Universe. H0={}, OmegaM={}'.format(href,Om0GLOB))
+print('Parameters:\nH0_min={}, H0_max={}'.format(H0min,H0max))
+print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
+print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
-dlsigma=0.1
-mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
-mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
+dlsigma=0.05
+mydlmax=11988#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
+mydlmin=7028#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
     source_folder='0H-DSFromUnif-onlyDS'
@@ -456,29 +374,38 @@ if DS_read==1:
         sample.to_csv(cat_name, header=None, index=None, sep=' ')
     NumDS=len(ds_z)
 else:
-    NumDS=10_000#150 
+    NumDS=MyCat.shape[0]#150 
 
 
     #-----------------------------------------------------------------------------
     #cutted=MyCat[MyCat['Comoving Distance']<=mydcmax]
     #cutted=cutted[cutted['Comoving Distance']>=mydcmin]
+    alldl=np.asarray(MyCat['Luminosity Distance'])
+    allscat=np.random.normal(loc=alldl, scale=alldl*dlsigma, size=None)
+    #MyCat=MyCat.drop(columns='scattered DL')
+    print(MyCat.columns)
+    if MyCat.shape[1]==6:
+        print('droped scatter')
+    MyCat['scattered DL']=allscat
+    if MyCat.shape[1]==7:
+        print('new scatter')
     #----------selection on scarred Dl
-    cutted=MyCat[MyCat['scattered DL']<=mydlmax]
-    cutted=cutted[cutted['scattered DL']>=mydlmin]
+    #cutted=MyCat[MyCat['scattered DL']<=mydlmax]
+    #cutted=cutted[cutted['scattered DL']>=mydlmin]
     #---------------------------------------------
-    cutted=cutted[cutted['phi']<= phi_max-10*sigma_phi]
-    cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
-    cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
-    cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
-    print('possible DSs: {}'.format(cutted.shape[0]))
-    print('N_DS/N_poss = {}'.format(NumDS/cutted.shape[0]))
-    sample=cutted.sample(NumDS) #This is the DS cat
+    #cutted=cutted[cutted['phi']<= phi_max-10*sigma_phi]
+    #cutted=cutted[cutted['phi']>= phi_min+10*sigma_phi]
+    #cutted=cutted[cutted['theta']<= theta_max-10*sigma_theta]
+    #cutted=cutted[cutted['theta']>= theta_min+10*sigma_theta]
+    #print('possible DSs: {}'.format(cutted.shape[0]))
+    #print('N_DS/N_poss = {}'.format(NumDS/cutted.shape[0]))
+    #sample=cutted.sample(NumDS) #This is the DS cat
 
-    ds_z=np.asarray(sample['z'])
-    ds_dl=np.asarray(sample['Luminosity Distance'])
-    ds_phi=np.asarray(sample['phi'])
-    ds_theta=np.asarray(sample['theta'])
-    sca= np.asarray(sample['scattered DL'])
+    #ds_z=np.asarray(sample['z'])
+    #ds_dl=np.asarray(sample['Luminosity Distance'])
+    #ds_phi=np.asarray(sample['phi'])
+    #ds_theta=np.asarray(sample['theta'])
+    #sca= np.asarray(sample['scattered DL'])
     #dlmax_sca=np.max(sca)
     #dlmin_sca=np.min(sca)
     if save==1:
@@ -486,4 +413,5 @@ else:
         cat_name=os.path.join(folder,runpath+'_DSs.txt')
         #cat_name=runpath+'_DSs.txt'
         print('Saving '+cat_name+' complete')
-        sample.to_csv(cat_name, header=None, index=None, sep=' ')
+        MyCat.to_csv(cat_name, header=None, index=None, sep=' ')
+

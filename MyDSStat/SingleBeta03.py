@@ -12,7 +12,7 @@ from scipy.optimize import fsolve
 import sys
 from scipy import integrate
 from scipy import interpolate
-
+from numba import njit
 import os
 from os import listdir
 from os.path import isfile, join
@@ -22,7 +22,7 @@ Om0GLOB=0.319
 Xi0Glob =1.
 clight = 2.99792458* 10**5#km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
-
+@njit
 def E_z(z, H0, Om=Om0GLOB):
     return np.sqrt(Om*(1+z)**3+(1-Om))
 
@@ -44,7 +44,7 @@ def calculate_to_sum(args):
     to_sum = np.zeros(len(x))
     for j in range(len(x)):
         dl = Dl_z(z, x[j])
-        tmp = 0.5 * (special.erf((dl - mydlmin) / (np.sqrt(2) * s * dl)) - special.erf((mydlmax-dl) / (np.sqrt(2) * s * dl)))
+        tmp = 0.5 * (special.erf((dl - mydlmin) / (np.sqrt(2) * s * dl)) - special.erf((dl-mydlmax) / (np.sqrt(2) * s * dl)))
         to_sum[j] = tmp*stat_weights(z)
     return to_sum
 
@@ -63,7 +63,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='BetaErf10-true'
+runpath='Raul15-bothtrue'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -81,13 +81,13 @@ MyCat = pd.read_csv(cat_name, sep=" ", header=None)
 colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
 MyCat.columns=colnames
 allz=np.asarray(MyCat['z'])
-dlmaxcat=MyCat['scattered DL'].max()
-dlmincat=MyCat['scattered DL'].min()
+#dlmaxcat=MyCat['scattered DL'].max()
+#dlmincat=MyCat['scattered DL'].min()
 
 z_sup=np.max(allz)
 z_inf=np.min(allz)
 #---------------------Beta---------------------------
-s=0.10
+s=0.15
 mydlmax=14211.477971570035#dlmaxcat#15840.294579141924#Dl_z(zds_max,href,Om0GLOB)
 mydlmin=7584.382576142516#dlmincat#5209.84979508345#Dl_z(zds_min,href,Om0GLOB)
 print('Starting to compute beta')

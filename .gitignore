@@ -68,4 +68,28 @@ MyDSStat/half_flag.txt
 MyDSStat/half_flag_bin.txt
 MyDSStat/half_flag_bin_weights.txt
 MyDSStat/Uniform_Nz_half_flag.txt
+MyDSStat/11536.fits
+MyDSStat/DSFromFlag.py
+MyDSStat/EVA02.fits
+MyDSStat/EVA02_detected12_fiveyear.fits
+MyDSStat/EVA_DSs.txt
+MyDSStat/FlagConverter.py
+MyDSStat/SNR _01.py
+MyDSStat/SNR.py
+MyDSStat/SingleBeta05.py
+MyDSStat/SingleBeta06.py
+MyDSStat/SingleBeta07.py
+MyDSStat/TrueFlag.txt
+MyDSStat/TrueFlag_half.txt
+MyDSStat/Uniform_for_half_flag-15scatt.txt
+MyDSStat/Uniform_for_half_flag-20scatt.txt
+MyDSStat/Uniform_paper.txt
+MyDSStat/beta_erf_Notebook_0.txt
+MyDSStat/beta_tot_Notebook_0.txt
+MyDSStat/fastbeta.py
+MyDSStat/reverse.py
+MyDSStat/reverse01.py
+MyDSStat/run28-09.py
+
+
 >>>>>>> d0a048149933183f83bc7e2a841f0c6865a9acca

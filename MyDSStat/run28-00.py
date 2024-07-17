@@ -125,7 +125,11 @@ def z_from_dcom(dc_val):
     func = lambda z :cosmoflag.comoving_distance(z).value - dc_val
     z = fsolve(func, 0.02)
     return z[0]
-
+    
+def z_from_dl(h,dl):
+    func = lambda z :Dl_z(z, h, Om0GLOB) -dl
+    zmax = fsolve(func, 0.02)[0] 
+    return zmax
 
 
 #--------------------Posterior Function----------------------------
@@ -209,6 +213,11 @@ def multibetaline_stat(iterator):
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
@@ -224,6 +233,11 @@ def singlebetaline_stat(iterator):
     zMax = fsolve(func, 0.02)[0]    
     func = lambda z :Dl_z(z, Htemp, Om0GLOB) -mydlmin#(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
     tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     tmp_sorted=np.sort(tmp)
@@ -251,6 +265,23 @@ def vol_beta(iterator):
     
     return num/norm
 
+def beta_mod(h,dlmin,dlmax,zsup,zinf):
+    cosmo=FlatLambdaCDM(H0=h,Om0=Om0GLOB)
+    zmax=z_from_dl(h,dlmax)
+    zmin=z_from_dl(h,dlmin)
+    v_sup=cosmo.comoving_volume(zsup).value
+    v_inf=cosmo.comoving_volume(zinf).value
+    denom=v_sup-v_inf
+    if zmax<=zsup:
+        v_max=cosmo.comoving_volume(zmax).value
+    else:
+        v_max=v_sup
+    if zmin>=zinf:
+        v_min=cosmo.comoving_volume(zmin).value
+    else:
+        v_min=v_inf
+    tmp=(v_max-v_min)/(v_sup-v_inf)
+    return tmp
 ###########################################################################################################
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
@@ -267,7 +298,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-6K'
+runpath='Final_2k_clusteringDSflag_02-CatDSNoScatter'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -285,7 +316,8 @@ w_hist=np.loadtxt('half_flag_bin_weights.txt')
 #gammanorm=np.sum(gamma_hist)
 #gamma=interpolate.interp1d(dl_bins,gamma_hist,kind='cubic',fill_value='extrapolate')
 #--------------------------------------------------
-cat_name='half_flag.txt'# FullExplorer_big.txt#Uniform_for_half_flag
+cat_name='TrueFlag_half.txt'# FullExplorer_big.txt#Uniform_for_half_flag#half_flag#TrueFlag_half
+
 
 print('Global flags you are using: ')
 print('Generation is {}, if 1 will generate a uniform host catalogue'.format(generation))
@@ -379,11 +411,11 @@ if read==1:
     #cat_name='FullExplorer.txt'
     print('Reading the catalogue: ' + cat_name)
     MyCat = pd.read_csv(cat_name, sep=" ", header=None)
-    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
+    colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']#,'scattered DL']
     MyCat.columns=colnames
     allz=np.asarray(MyCat['z'])
     #---------angular stuff------------------
-    radius_deg= np.sqrt(20/np.pi)
+    radius_deg= np.sqrt(10/np.pi)
     sigma90=radius_deg/np.sqrt(2)
     sigma_deg=sigma90/1.5
     circle_deg=6*sigma_deg
@@ -401,24 +433,29 @@ if read==1:
     print('Catalogue:\nz_min={}, z_max={},\nphi_min={}, phi_max={}, theta_min={}, theta_max={}'.format(np.min(allz),np.max(allz),phi_min,phi_max,theta_min,theta_max))
     print('Number of galaxies={}'.format(len(allz)))
 #################################DS control room#########################################
-dlsigma=0.1
-mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
-mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
+dlsigma=0.05
+mydlmax=11988#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
+mydlmin=7028#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0H-DSFromUnif-onlyDS10K'
+    source_folder='Final-2k-DSfromFlag'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     tmp = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
-    sample=tmp.sample(6000)
-    if sample.shape[1]==6:
+    #sample=tmp.sample(2000)
+    if tmp.shape[1]==6:
         colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
-    if sample.shape[1]==7:
-        colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL']
-    sample.columns=colnames
+    if tmp.shape[1]==8:
+        colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','scattered DL','SNR']
+    tmp.columns=colnames
     
-
-
+    sample=tmp[tmp['Luminosity Distance']>=mydlmin]
+    sample=tmp[tmp['Luminosity Distance']<=mydlmax]
+    if sample.shape[0]>=2000:
+        print('more than 2000, so sampling 2000')
+        sample=sample.sample(2000)
+    else:
+        print(sample.shape[0])
     ds_z=np.asarray(sample['z'])
     ds_dl=np.asarray(sample['Luminosity Distance'])
     ds_phi=np.asarray(sample['phi'])
@@ -426,12 +463,12 @@ if DS_read==1:
     
 
     
-    #mydlmax=10_700#Dl_z(zds_max,href,Om0GLOB)
+    #mydlmax=10_400#10_700#Dl_z(zds_max,href,Om0GLOB)
 
-    #mydlmin=8_350#Dl_z(zds_min,href,Om0GLOB)
+    #mydlmin=8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
-    if sample.shape[1]==7:
+    if sample.shape[1]>=7:
         scattered=np.asarray(sample['scattered DL'])
         dlmax_sca=np.max(scattered)
         dlmin_sca=np.min(scattered)
@@ -486,7 +523,7 @@ arr=np.arange(0,len(H0Grid),dtype=int)
 beta=np.zeros(len(H0Grid))
 My_Like=np.zeros(len(H0Grid))
 s=dlsigma
-how_many_sigma=3.5
+how_many_sigma=3
 ang_sigma=3.5
 fullrun=[]
 allbetas=[]
@@ -505,6 +542,7 @@ sorted_denom=np.sort(denom_cat)
 #    beta=p.map(singlebetaline, arr)
 #beta=np.asarray(beta)
 
+
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
     #tmp=MyCat
@@ -516,7 +554,7 @@ for i in tqdm(range(NumDS)):
     tmp=tmp[tmp['theta']<=DS_theta+ang_sigma*sigma_phi]
     tmp=tmp[tmp['theta']>=DS_theta-ang_sigma*sigma_phi]
     true_mu=ds_dl[i]
-    mu=sca[i]
+    mu=true_mu#sca[i]
     zz=ds_z[i]
     dlrange=s*mu*how_many_sigma
     tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
@@ -535,15 +573,19 @@ for i in tqdm(range(NumDS)):
 
 #############################################################################################
 ##############################BETA#################################################################
-with Pool(NCORE) as p:
-    singlebeta=p.map(singlebetaline_stat, arr)
-singlebeta=np.asarray(singlebeta)
+#with Pool(NCORE) as p:
+#    singlebeta=p.map(singlebetaline_stat, arr)
+#singlebeta=np.asarray(singlebeta)
+
+mybeta_mod=np.zeros(len(H0Grid))
+for i in range(len(H0Grid)):
+    mybeta_mod[i]=beta_mod(H0Grid[i],mydlmin,mydlmax,zmax_cat,zmin_cat)
 ###################################################################################################
 ###########################Saving Results & posterior##############################################
 betapath=os.path.join(folder,runpath+'_beta.txt')
 np.savetxt(betapath,allbetas)#allbetas
-betapath=os.path.join(folder,runpath+'_singlebeta.txt')
-np.savetxt(betapath,singlebeta)#allbetas
+betapath=os.path.join(folder,runpath+'mybeta_mod.txt')
+np.savetxt(betapath,mybeta_mod)#allbetas
 print('Beta Saved')
 fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
 np.savetxt(fullrunpath,fullrun)
@@ -568,7 +610,7 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp run28-00.py '+folder+'/run_run28-00.py')
+os.system('cp run28-00.py '+folder+'/run.py')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
@@ -607,7 +649,7 @@ ax.yaxis.get_offset_text().set_fontsize(25)
 ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
 
 for i in range(NumDS):
-    fullrun_beta.append(fullrun[i]/singlebeta)
+    fullrun_beta.append(fullrun[i]/mybeta_mod)
 combined=[]
 for i in range(len(fullrun_beta)):
     #combined=combined+post[i]
@@ -638,5 +680,5 @@ std=np.sqrt(np.trapz(newdist*(x-mean)**2,x)/np.trapz(newdist,x))
 plt.figtext(0.75,0.6,'Mean={:0.2f}'.format(mean),fontsize=18,c=Mycol)
 plt.figtext(0.75,0.55,'Std={:0.2f}'.format(std),fontsize=18, c=Mycol)
 print('mean={},std={} std/mean={}%'.format(mean,std,100*std/mean))
-plotpath=os.path.join(folder,runpath+'_PostTot_single.pdf')
+plotpath=os.path.join(folder,runpath+'_PostTotmybeta_mod.pdf')
 plt.savefig(plotpath, format="pdf", bbox_inches="tight")

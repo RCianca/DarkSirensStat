@@ -126,7 +126,10 @@ def z_from_dcom(dc_val):
     z = fsolve(func, 0.02)
     return z[0]
 
-
+def z_from_dl(h,dl):
+    func = lambda z :Dl_z(z, h, Om0GLOB) -dl
+    zmax = fsolve(func, 0.02)[0] 
+    return zmax
 
 #--------------------Posterior Function----------------------------
 @njit
@@ -162,15 +165,17 @@ def stat_weights(array_of_z):
 def multibetaline(iterator):
     i=iterator
     Htemp=H0Grid[i]
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu+s*how_many_sigma*mu)#(mu+s*how_many_sigma*mu)#20944.8#mydlmax#dlmax_sca
-    zMax = fsolve(func, 0.02)[0] 
-    #zMax=min(zMax,zmax_cat)
-    
-    func = lambda z :Dl_z(z, Htemp, Om0GLOB) - (mu-s*how_many_sigma*mu)#(mu-s*how_many_sigma*mu)#232.077#mydlmin#dlmin_sca
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu+s*how_many_sigma*mu)#mydlmax
+    zMax = fsolve(func, 0.02)[0]    
+    func = lambda z :Dl_z(z, Htemp, Om0GLOB) -(mu-s*how_many_sigma*mu)#mydlmin
     zmin = fsolve(func, 0.02)[0]
-
+    #first=abs(zz-zmin)
+    #second=abs(zMax-zz)
+    #bound= max(first,second)
+    #zMax=zz+bound
+    #zmin=zz-bound
     tmp=allz[allz>=zmin] # host with z>z_min
-    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max
+    tmp=tmp[tmp<=zMax]  # host with z_min<z<z_max  
     
     gal_invol=(len(tmp))
     if gal_invol==0:
@@ -261,6 +266,24 @@ def vol_beta(iterator):
     
     return num/norm
 
+def beta_mod(h,dlmin,dlmax,zinf,zsup):
+    cosmo=FlatLambdaCDM(H0=h,Om0=Om0GLOB)
+    zmax=z_from_dl(h,dlmax)
+    zmin=z_from_dl(h,dlmin)
+    v_sup=cosmo.comoving_volume(zsup).value
+    v_inf=cosmo.comoving_volume(zinf).value
+    denom=v_sup-v_inf
+    if zmax<=zsup:
+        v_max=cosmo.comoving_volume(zmax).value
+    else:
+        v_max=v_sup
+    if zmin>=zinf:
+        v_min=cosmo.comoving_volume(zmin).value
+    else:
+        v_min=v_inf
+    tmp=(v_max-v_min)/(v_sup-v_inf)
+    return tmp
+
 ###########################################################################################################
 #----------------------Main-------------------------------------------------------------------------------#
 ###########################################################################################################
@@ -277,7 +300,7 @@ exist=os.path.exists(path)
 if not exist:
     print('creating result folder')
     os.mkdir('results')
-runpath='0H-DefaultUniform-150'
+runpath='REF-Pesi'
 folder=os.path.join(path,runpath)
 os.mkdir(folder)
 print('\n data will be saved in '+folder)
@@ -416,10 +439,11 @@ mydlmax=10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
 mydlmin=8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 if DS_read==1:
     #name=os.path.join(folder,'catname')#move to te right folder
-    source_folder='0H-DSFromUnif-onlyDS150'
+    source_folder='HMS_35_00'
     data_path=os.path.join(path,source_folder)
     print('reading an external DS catalogue from '+source_folder)
     sample = pd.read_csv(data_path+'/'+source_folder+'_DSs.txt', sep=" ", header=None)
+    #sample=tmp.sample(300)
     if sample.shape[1]==6:
         colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
     if sample.shape[1]==7:
@@ -435,9 +459,9 @@ if DS_read==1:
     
 
     
-    #mydlmax=10_400#10_700#Dl_z(zds_max,href,Om0GLOB)
+    #mydlmax=10_700#Dl_z(zds_max,href,Om0GLOB)
 
-    #mydlmin=8_930#8_350#Dl_z(zds_min,href,Om0GLOB)
+    #mydlmin=8_350#Dl_z(zds_min,href,Om0GLOB)
 
     #------------------------------
     if sample.shape[1]==7:
@@ -510,10 +534,6 @@ sorted_denom=np.sort(denom_cat)
 
 ###################################Likelihood##################################################
 
-#with Pool(NCORE) as p:
-#    beta=p.map(singlebetaline, arr)
-#beta=np.asarray(beta)
-
 for i in tqdm(range(NumDS)):
     DS_phi=ds_phi[i]
     #tmp=MyCat
@@ -528,8 +548,8 @@ for i in tqdm(range(NumDS)):
     mu=sca[i]
     zz=ds_z[i]
     dlrange=s*mu*how_many_sigma
-    tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]#mu--test:alfonso
-    tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]#mu--test:alfonso
+    tmp=tmp[tmp['Luminosity Distance']<=mu+dlrange]
+    tmp=tmp[tmp['Luminosity Distance']>=mu-dlrange]
     z_gals=np.asarray(tmp['z'])
     z_gals=np.sort(z_gals)
     new_phi_gals=np.asarray(tmp['phi'])
@@ -544,15 +564,19 @@ for i in tqdm(range(NumDS)):
 
 #############################################################################################
 ##############################BETA#################################################################
-with Pool(NCORE) as p:
-    singlebeta=p.map(singlebetaline_stat, arr)
-singlebeta=np.asarray(singlebeta)
+#with Pool(NCORE) as p:
+#    singlebeta=p.map(singlebetaline_stat, arr)
+#singlebeta=np.asarray(singlebeta)
+
+mybeta_mod=np.zeros(len(H0Grid))
+for i in range(len(H0Grid)):
+    mybeta_mod[i]=beta_mod(H0Grid[i],mydlmin,mydlmax,zmax_cat,zmin_cat)
 ###################################################################################################
 ###########################Saving Results & posterior##############################################
 betapath=os.path.join(folder,runpath+'_beta.txt')
 np.savetxt(betapath,allbetas)#allbetas
-betapath=os.path.join(folder,runpath+'_singlebeta.txt')
-np.savetxt(betapath,singlebeta)#allbetas
+betapath=os.path.join(folder,runpath+'mybeta_mod.txt')
+np.savetxt(betapath,mybeta_mod)#allbetas
 print('Beta Saved')
 fullrunpath=os.path.join(folder,runpath+'_fullrun.txt')
 np.savetxt(fullrunpath,fullrun)
@@ -577,7 +601,7 @@ print('posterior saved')
 grid=os.path.join(folder,runpath+'_H0grid.txt')
 np.savetxt(grid,H0Grid)
 print('H0 grid saved')
-os.system('cp run28-04.py '+folder+'/run_executed.py')
+os.system('cp run28-04.py '+folder+'/run.py')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
@@ -616,7 +640,7 @@ ax.yaxis.get_offset_text().set_fontsize(25)
 ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
 
 for i in range(NumDS):
-    fullrun_beta.append(fullrun[i]/singlebeta)
+    fullrun_beta.append(fullrun[i]/mybeta_mod)
 combined=[]
 for i in range(len(fullrun_beta)):
     #combined=combined+post[i]
@@ -647,5 +671,5 @@ std=np.sqrt(np.trapz(newdist*(x-mean)**2,x)/np.trapz(newdist,x))
 plt.figtext(0.75,0.6,'Mean={:0.2f}'.format(mean),fontsize=18,c=Mycol)
 plt.figtext(0.75,0.55,'Std={:0.2f}'.format(std),fontsize=18, c=Mycol)
 print('mean={},std={} std/mean={}%'.format(mean,std,100*std/mean))
-plotpath=os.path.join(folder,runpath+'_PostTot_single.pdf')
+plotpath=os.path.join(folder,runpath+'_PostTotmybeta_mod.pdf')
 plt.savefig(plotpath, format="pdf", bbox_inches="tight")
