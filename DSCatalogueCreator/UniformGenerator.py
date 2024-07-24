@@ -6,7 +6,7 @@ from scipy.optimize import fsolve
 import pandas as pd
 from astropy.cosmology import FlatLambdaCDM
 import healpy as hp
-
+import pickle
 import os
 from os import listdir
 from os.path import isfile, join
@@ -123,41 +123,40 @@ dc_gals=dc_gals_all[dc_gals_all>=dcom_min]
 new_phi_gals=np.random.choice(phi_gals,len(dc_gals))
 new_theta_gals=np.random.choice(theta_gals,len(dc_gals))
 
-def uniform_volume(iterations):
-#for i in tqdm(range(flagship.shape[0])):
-#for i in range(iterations):
-    i=iterations
-    numevent=i
-    phigal=new_phi_gals[i]
-    thetagal=new_theta_gals[i]
-    dc=dc_gals[i]
-    #----------z----------------------
-    zz=z_dc(dc,href,Om0GLOB)
-    dl=Dl_z(zz,href,Om0GLOB)
-    #----------row to append---------------------
-    proxy_row={'Ngal':numevent,'Comoving Distance':dc,'Luminosity Distance':dl,
-               'z':zz,'phi':phigal,'theta':thetagal
-          }
+def uniform_volume(iteration):
+    i = iteration
+    numevent = i
+    phigal = new_phi_gals[i]
+    thetagal = new_theta_gals[i]
+    dc = dc_gals[i]
+    zz = z_dc(dc, href, Om0GLOB)
+    dl = Dl_z(zz, href, Om0GLOB)
+    proxy_row = {
+        'Ngal': numevent,
+        'Comoving Distance': dc,
+        'Luminosity Distance': dl,
+        'z': zz,
+        'phi': phigal,
+        'theta': thetagal
+    }
     return proxy_row
 
-
-numevent=int(0)
-proxy_row={'Ngal':numevent,'Comoving Distance':0,'Luminosity Distance':0,
-               'z':0,'phi':0,'theta':0
-          }
-colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta']
+colnames = ['Ngal', 'Comoving Distance', 'Luminosity Distance', 'z', 'phi', 'theta']
 uniform_scaled = pd.DataFrame(columns=colnames)
 
-from tqdm import tqdm
-arr=np.arange(0,len(dc_gals),dtype=int)
-data=[]
-tmp=[]
-num_processors = 24  # Number of processors to match the requested CPUs
+arr = np.arange(0, len(dc_gals), dtype=int)
+num_processors = 24
 
 with Pool(num_processors) as p:
     tmp = p.map(uniform_volume, arr)
 
-uniform_scaled=uniform_scaled.append(tmp, ignore_index=True)
+uniform_scaled = pd.DataFrame.from_records(tmp)
+
+print(uniform_scaled.shape)
 
 os.chdir(save_cat_path)
-uniform_scaled.to_csv(cat_name, header=None, index=None, sep=' ')
+uniform_scaled.to_csv(cat_name, header=None, index=False)
+#uniform_scaled.to_pickle("Uniform_paper.pkl") #for some reason cluster can't save this 
+#os.chdir(save_cat_path)
+#with open(cat_name, 'wb') as f:
+#    pickle.dump(uniform_scaled, f)
