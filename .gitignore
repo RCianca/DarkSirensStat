@@ -24,7 +24,9 @@ DSCatalogueCreator/allpsi.txt
 DSCatalogueCreator/*.png
 DSCatalogueCreator/EVA02_detected12_oneyear.fits
 DSCatalogueCreator/wrongsnrEVA02.fits
+DSCatalogueCreator/m1masses_paper.txt
 
+MyDSStat/DS_From_Parent_Uniform.txt
 MyDSStat/results
 MyDSStat/FullExplorer.txt
 MyDSStat/FullExplorer_big.txt
