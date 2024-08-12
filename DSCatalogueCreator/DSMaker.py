@@ -285,13 +285,18 @@ update_catalogue(result_indices, Parent_Catalogue)
 
 print(Parent_Catalogue.head(10))
 
+
+
+fig,ax = plt.subplots()
+fig.set_size_inches(18.5, 10.5)
+ax.set_xlabel('redshift')
+ax.set_ylabel('number of $GW(z)$')
 n, bins, patches = plt.hist(x=Parent_Catalogue[Parent_Catalogue['DS']==1].z, bins=50, color='teal',
                             alpha=0.7, rwidth=1,density=False)
-plt.grid(axis='y', alpha=0.75)
 
-plt.xlabel('Redshift', fontsize=label_fontsize)
-plt.ylabel('N(z)', fontsize=label_fontsize)
-plt.title('N(z)-DS', fontsize=title_fontsize)
+plt.grid(axis='y', alpha=0.75)
+plt.grid(axis='x', alpha=0.75)
+plt.title('N(z)-DS-extracted', fontsize=title_fontsize)
 plt.savefig('NumDSvsz_extracted.png')
 
 # Create DS_From_Parent DataFrame
@@ -313,7 +318,7 @@ DS_From_Parent['chiz2'] = 0
 
 #save catalogue uo to now 
 os.chdir(CAT_PATH)
-DS_From_Parent.to_csv('DS_From_Parent_Uniform.txt', header=None, index=False)
+DS_From_Parent.to_csv('DS_From_Parent_Uniform.txt', header=True, index=False)
 os.chdir(THIS_DIR)
 ############################extract masses now and assign##########################################
 
@@ -359,7 +364,7 @@ def PowerLawPlusPeak(m1, m_min, m_max, lamb, alpha, mu, sigma_m, dm):
 ###################################################################################################
 
 # Display the first few rows of the new DataFrame to verify
-print(DS_From_Parent.head())
+#print(DS_From_Parent.head())
 
 m_min = 4.59#np.float64(4.59)
 m_max=86
@@ -369,7 +374,7 @@ mu_m=33.07
 sigma_m=5.7
 dm = 4.82#np.float64(4.82)
 
-PowerLawPlusPeak_with_params = partial(PowerLawPlusPeak, m_min=5,
+PowerLawPlusPeak_with_params = partial(PowerLawPlusPeak, m_min=m_min,
                                        m_max=m_max,
                                        lamb=lamb,
                                        alpha=alpha,
@@ -378,42 +383,16 @@ PowerLawPlusPeak_with_params = partial(PowerLawPlusPeak, m_min=5,
                                        dm=dm)
 
 # Number of samples
-num_samples = DS_From_Parent.shape[0]*100
+num_samples = DS_From_Parent.shape[0]*100#change with 10
 # Sample the probability distribution
-m1_samples = return_samples(PowerLawPlusPeak_with_params, m_min, m_max, num_samples)
-np.savetxt('m1masses_paper.txt',m1_samples)
-
-# Generate theoretical distribution for plotting
-#m1_values = np.linspace(m_min+0.001, m_max, 10000)
-#p_m1_values = PowerLawPlusPeak_with_params(m1_values)
-#p_m1_values=p_m1_values/np.trapz(p_m1_values,m1_values)
-
-#fig, ax = plt.subplots(figsize=(15,10))
-#ax.tick_params(axis='both', which='major', labelsize=25)
-#ax.yaxis.get_offset_text().set_fontsize(25)
-## Plot the histogram of the sampled probabilities
-#ax.hist(m1_samples, bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_1$')
-
-## Plot the theoretical distribution
-#ax.plot(m1_values[m1_values>7], p_m1_values[m1_values>7], label='Theoretical $p(m_1)$', color='teal',linewidth=3)
-
-## Labels and title
-#ax.set_xlabel('$m_1$', fontsize=15)
-#ax.set_ylabel('$P(m_1)$', fontsize=15)
-#plt.title('Theoretical Distribution vs Sampled Histogram', fontsize=18)
-
-## Set log scale
-#ax.set_yscale('log')
-
-## Legends
-#ax.legend(loc='upper right',prop={'size': 15})
-
-## Show plot
-#plt.grid(axis='y', alpha=0.75)
-
-################################Assign m1#############################################
-DS_From_Parent['M1'] = np.random.choice(num_samples, size=DS_From_Parent.shape[0])
-
+m1_samples = np.loadtxt('m1masses_paper.txt')#return_samples(PowerLawPlusPeak_with_params, m_min, m_max, num_samples) #np.loadtxt('m1masses_paper.txt')
+#np.savetxt('m1masses_paper.txt',m1_samples)
+print('saved m1')
+DS_From_Parent['M1'] = np.random.choice(m1_samples, size=DS_From_Parent.shape[0])
+m1_values=np.linspace(m_min,m_max,1000000)
+p_m1_values=PowerLawPlusPeak_with_params(m1_values)
+norm=np.trapz(p_m1_values,m1_values)
+p_m1_values=p_m1_values/norm
 fig, ax = plt.subplots(figsize=(15,10))
 ax.tick_params(axis='both', which='major', labelsize=25)
 ax.yaxis.get_offset_text().set_fontsize(25)
@@ -429,7 +408,7 @@ ax.set_ylabel('$P(m_1)$', fontsize=15)
 plt.title('Theoretical Distribution vs Sampled Histogram', fontsize=18)
 
 # Set log scale
-ax.set_yscale('log')
+#ax.set_yscale('log')
 
 # Legends
 ax.legend(loc='upper right',prop={'size': 15})
@@ -437,13 +416,37 @@ ax.legend(loc='upper right',prop={'size': 15})
 # Show plot
 plt.grid(axis='y', alpha=0.75)
 plt.savefig('m1_extracted.png')
+
+
+#print(DS_From_Parent.head())
+print(DS_From_Parent.columns)
+
+# Define the path to save the file
+output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Uniform_Complete.txt')
+
+# Save the DataFrame in chunks
+chunksize = 1000  # Adjust the chunksize according to your memory capacity
+
+# Write the first chunk with headers
+DS_From_Parent.iloc[:chunksize].to_csv(output_file, header=True, index=False, mode='w')
+
+# Write the remaining chunks without headers
+for i in range(chunksize, len(DS_From_Parent), chunksize):
+    DS_From_Parent.iloc[i:i+chunksize].to_csv(output_file, header=False, index=False, mode='a')
+
+print(f"DataFrame saved to {output_file}")
+
+# Return to the original directory
+os.chdir(THIS_DIR)
+# Save the DataFrame to a Parquet file
+#DS_From_Parent.to_parquet(output_file)
 ##################################Assign q###########################################
-def p_q(q, m1, m_min=m_min, dm=dm, b=b):
-    return S(m1*q, m_min, dm) * q**b
+b = 1.26
+chunksize = 1000  # Adjust this according to your system's memory capacity
 
-
-#p_q_with_params = partial(p_q, m1=m1, m_min=m_min, dm=dm, b=b)
-#q_samples = return_samples(p_q_with_params, 0, 1, 1)
+# Function to calculate p_q
+def p_q(q, m1, m_min, dm, b):
+    return S(m1 * q, m_min, dm) * q ** b
 
 # Function to calculate q and M2 for a given m1
 def calculate_q_and_m2(m1, m_min, dm, b):
@@ -452,21 +455,44 @@ def calculate_q_and_m2(m1, m_min, dm, b):
     q = q_samples[0]
     M2 = m1 * q
     return q, M2
-
 # Wrapper function to unpack arguments
 def calculate_q_and_m2_wrapper(args):
     return calculate_q_and_m2(*args)
+    
+# Function to calculate chirp mass Mc
+def Mc(m1, m2):
+    num = (m1 * m2) ** (3 / 5)
+    denom = (m1 + m2) ** (1 / 5)
+    return num / denom
 
-# Prepare arguments for the pool
-args = [(m1, m_min, dm, b) for m1 in DS_From_Parent['M1']]
+# Prepare the output file path
+output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Uniform_Complete.txt')
 
-# Use multiprocessing Pool to speed up the computation
-with Pool(NCORE) as pool:
-    results = pool.map(calculate_q_and_m2_wrapper, args)
+# Process the data in chunks
+for start in range(0, len(DS_From_Parent), chunksize):
+    end = min(start + chunksize, len(DS_From_Parent))
+    chunk = DS_From_Parent.iloc[start:end].copy()
 
-# Extract q and M2 from results and assign to the DataFrame
-DS_From_Parent['q'], DS_From_Parent['M2'] = zip(*results)
-print(DS_From_Parent.head())
-os.chdir(CAT_PATH)
-DS_From_Parent.to_csv('DS_From_Parent_Uniform_Complete.txt', header=None, index=False)
+    # Prepare arguments for multiprocessing
+    args = [(m1, m_min, dm, b) for m1 in chunk['M1']]
+
+    # Use multiprocessing Pool to calculate q and M2
+    with Pool(NCORE) as pool:
+        results = pool.map(calculate_q_and_m2_wrapper, args)
+
+    # Assign q and M2 to the chunk DataFrame
+    chunk['q'], chunk['M2'] = zip(*results)
+
+    # Calculate chirp mass
+    chunk['MC'] = Mc(chunk['M1'], chunk['M2'])
+
+    # Save the chunk to the file
+    mode = 'w' if start == 0 else 'a'
+    header = True if start == 0 else False
+    chunk.to_csv(output_file, header=header, index=False, mode=mode)
+
+print(f"DataFrame saved to {output_file}")
+# Return to the original directory
 os.chdir(THIS_DIR)
+# Save the DataFrame to a Parquet file
+#DS_From_Parent.to_parquet(output_file)
