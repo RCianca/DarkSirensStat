@@ -121,8 +121,8 @@ ax.hist(DS_From_Parent['M1'], bins=100, density=True, alpha=0.6, color='orange',
 ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
 
 # Labels and title
-ax.set_xlabel('$m_1$', fontsize=15)
-ax.set_ylabel('$P(m_1)$', fontsize=15)
+ax.set_xlabel('$M_1$', fontsize=15)
+ax.set_ylabel('$P(M_1)$', fontsize=15)
 plt.title('Theoretical Distribution vs Sampled Histogram', fontsize=18)
 
 # Set log scale
@@ -140,14 +140,14 @@ fig, ax = plt.subplots(figsize=(15,10))
 ax.tick_params(axis='both', which='major', labelsize=25)
 ax.yaxis.get_offset_text().set_fontsize(25)
 # Plot the histogram of the sampled probabilities
-ax.hist(DS_From_Parent['M2'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_1$')
+ax.hist(DS_From_Parent['M2'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_2$')
 
 # Plot the theoretical distribution
 #ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
 
 # Labels and title
-ax.set_xlabel('$m_2$', fontsize=15)
-ax.set_ylabel('$P(m_2)$', fontsize=15)
+ax.set_xlabel('$M_2$', fontsize=15)
+ax.set_ylabel('$P(M_2)$', fontsize=15)
 plt.title('Sampled Histogram', fontsize=18)
 
 # Set log scale
@@ -165,14 +165,14 @@ fig, ax = plt.subplots(figsize=(15,10))
 ax.tick_params(axis='both', which='major', labelsize=25)
 ax.yaxis.get_offset_text().set_fontsize(25)
 # Plot the histogram of the sampled probabilities
-ax.hist(DS_From_Parent['MC'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_1$')
+ax.hist(DS_From_Parent['MC'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_c$')
 
 # Plot the theoretical distribution
 #ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
 
 # Labels and title
 ax.set_xlabel('$mc$', fontsize=15)
-ax.set_ylabel('$P(mc)$', fontsize=15)
+ax.set_ylabel('$P(M_c)$', fontsize=15)
 plt.title('Sampled Histogram', fontsize=18)
 
 # Set log scale
@@ -184,3 +184,22 @@ ax.legend(loc='upper right',prop={'size': 15})
 # Show plot
 plt.grid(axis='y', alpha=0.75)
 plt.savefig('mc_extracted_fromsave.png')
+
+##############################################################################################################################################
+CAT_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
+THIS_DIR=os.getcwd()
+os.chdir(CAT_PATH)
+DS_From_Parent_Initial = pd.read_csv('DS_From_Parent_Uniform.txt')
+os.chdir(THIS_DIR)
+
+print('---------------------initial shape----------------------------------- ')
+print(DS_From_Parent_Initial.columns)
+print(DS_From_Parent_Initial.shape)
+print('Mean initial M1={},M2={},MC={}'.format(np.mean(DS_From_Parent_Initial['M1']),np.mean(DS_From_Parent_Initial['M2']),np.mean(DS_From_Parent_Initial['MC'])))
+print(DS_From_Parent_Initial['M1'][:15],DS_From_Parent_Initial['M2'][:15],DS_From_Parent_Initial['MC'][:15])
+print('---------------------shape Completed----------------------------------')
+print(DS_From_Parent.columns)
+print(DS_From_Parent.shape)
+print('Mean Completed M1={},M2={},MC={}'.format(np.mean(DS_From_Parent['M1']),np.mean(DS_From_Parent['M2']),np.mean(DS_From_Parent['MC'])))
+print(DS_From_Parent['M1'][:15],DS_From_Parent['M2'][:15],DS_From_Parent['MC'][:15])
+############################################################################################################################################à
