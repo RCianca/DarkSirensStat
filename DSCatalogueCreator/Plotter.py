@@ -81,7 +81,7 @@ def PowerLawPlusPeak(m1, m_min, m_max, lamb, alpha, mu, sigma_m, dm):
 CAT_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 THIS_DIR=os.getcwd()
 os.chdir(CAT_PATH)
-DS_From_Parent = pd.read_csv('DS_From_Parent_Uniform_Complete.txt')
+DS_From_Parent = pd.read_csv('DS_From_Parent_Uniform_Complete_SNR.txt')
 os.chdir(THIS_DIR)
 
 #colnames=['Ngal','Comoving Distance','Luminosity Distance','z','phi','theta','DS','M1','M2','MC','q','cos_iota','psi','tcoal','Phicoal','chiz1','chiz2']
@@ -90,116 +90,256 @@ os.chdir(THIS_DIR)
 # Display the first few rows of the new DataFrame to verify
 print(DS_From_Parent.head())
 print(DS_From_Parent.columns)
+mass_plott=0
+qplot=0
+SNR_plot=1
+if mass_plott==1:
+    m_min = 4.59#np.float64(4.59)
+    m_max=86
+    lamb=0.1
+    alpha=2.63
+    mu_m=33.07
+    sigma_m=5.7
+    dm = 4.82#np.float64(4.82)
 
-m_min = 4.59#np.float64(4.59)
-m_max=86
-lamb=0.1
-alpha=2.63
-mu_m=33.07
-sigma_m=5.7
-dm = 4.82#np.float64(4.82)
+    PowerLawPlusPeak_with_params = partial(PowerLawPlusPeak, m_min=m_min,
+                                            m_max=m_max,
+                                            lamb=lamb,
+                                            alpha=alpha,
+                                            mu=mu_m,
+                                            sigma_m=sigma_m,
+                                            dm=dm)
 
-PowerLawPlusPeak_with_params = partial(PowerLawPlusPeak, m_min=m_min,
-                                        m_max=m_max,
-                                        lamb=lamb,
-                                        alpha=alpha,
-                                        mu=mu_m,
-                                        sigma_m=sigma_m,
-                                        dm=dm)
+    m1_values=np.linspace(m_min,m_max,1000000)
+    p_m1_values=PowerLawPlusPeak_with_params(m1_values)
+    norm=np.trapz(p_m1_values,m1_values)
+    p_m1_values=p_m1_values/norm
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['M1'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_1$')
 
-m1_values=np.linspace(m_min,m_max,1000000)
-p_m1_values=PowerLawPlusPeak_with_params(m1_values)
-norm=np.trapz(p_m1_values,m1_values)
-p_m1_values=p_m1_values/norm
-fig, ax = plt.subplots(figsize=(15,10))
-ax.tick_params(axis='both', which='major', labelsize=25)
-ax.yaxis.get_offset_text().set_fontsize(25)
-# Plot the histogram of the sampled probabilities
-ax.hist(DS_From_Parent['M1'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_1$')
+    # Plot the theoretical distribution
+    ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
 
-# Plot the theoretical distribution
-ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
+    # Labels and title
+    ax.set_xlabel('$M_1$', fontsize=15)
+    ax.set_ylabel('$P(M_1)$', fontsize=15)
+    plt.title('Theoretical Distribution vs Sampled Histogram', fontsize=18)
 
-# Labels and title
-ax.set_xlabel('$M_1$', fontsize=15)
-ax.set_ylabel('$P(M_1)$', fontsize=15)
-plt.title('Theoretical Distribution vs Sampled Histogram', fontsize=18)
+    # Set log scale
+    #ax.set_yscale('log')
 
-# Set log scale
-#ax.set_yscale('log')
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
 
-# Legends
-ax.legend(loc='upper right',prop={'size': 15})
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('m1_extracted_fromsave.png')
 
-# Show plot
-plt.grid(axis='y', alpha=0.75)
-plt.savefig('m1_extracted_fromsave.png')
+    #########################################################################ààà
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['M2'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_2$')
 
-#########################################################################ààà
-fig, ax = plt.subplots(figsize=(15,10))
-ax.tick_params(axis='both', which='major', labelsize=25)
-ax.yaxis.get_offset_text().set_fontsize(25)
-# Plot the histogram of the sampled probabilities
-ax.hist(DS_From_Parent['M2'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_2$')
+    # Plot the theoretical distribution
+    #ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
 
-# Plot the theoretical distribution
-#ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
+    # Labels and title
+    ax.set_xlabel('$M_2$', fontsize=15)
+    ax.set_ylabel('$P(M_2)$', fontsize=15)
+    plt.title('Sampled Histogram', fontsize=18)
 
-# Labels and title
-ax.set_xlabel('$M_2$', fontsize=15)
-ax.set_ylabel('$P(M_2)$', fontsize=15)
-plt.title('Sampled Histogram', fontsize=18)
+    # Set log scale
+    #ax.set_yscale('log')
 
-# Set log scale
-#ax.set_yscale('log')
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
 
-# Legends
-ax.legend(loc='upper right',prop={'size': 15})
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('m2_extracted_fromsave.png')
 
-# Show plot
-plt.grid(axis='y', alpha=0.75)
-plt.savefig('m2_extracted_fromsave.png')
+    #################################################################################àà
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['MC'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_c$')
 
-#################################################################################àà
-fig, ax = plt.subplots(figsize=(15,10))
-ax.tick_params(axis='both', which='major', labelsize=25)
-ax.yaxis.get_offset_text().set_fontsize(25)
-# Plot the histogram of the sampled probabilities
-ax.hist(DS_From_Parent['MC'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $M_c$')
+    # Plot the theoretical distribution
+    #ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
 
-# Plot the theoretical distribution
-#ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
+    # Labels and title
+    ax.set_xlabel('$mc$', fontsize=15)
+    ax.set_ylabel('$P(M_c)$', fontsize=15)
+    plt.title('Sampled Histogram', fontsize=18)
 
-# Labels and title
-ax.set_xlabel('$mc$', fontsize=15)
-ax.set_ylabel('$P(M_c)$', fontsize=15)
-plt.title('Sampled Histogram', fontsize=18)
+    # Set log scale
+    #ax.set_yscale('log')
 
-# Set log scale
-#ax.set_yscale('log')
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
 
-# Legends
-ax.legend(loc='upper right',prop={'size': 15})
-
-# Show plot
-plt.grid(axis='y', alpha=0.75)
-plt.savefig('mc_extracted_fromsave.png')
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('mc_extracted_fromsave.png')
 
 ##############################################################################################################################################
-CAT_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
-THIS_DIR=os.getcwd()
-os.chdir(CAT_PATH)
-DS_From_Parent_Initial = pd.read_csv('DS_From_Parent_Uniform.txt')
-os.chdir(THIS_DIR)
+if qplot==1:
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['q'], bins=100, density=True, alpha=0.6, color='orange', label='Sampled $q$')
 
-print('---------------------initial shape----------------------------------- ')
-print(DS_From_Parent_Initial.columns)
-print(DS_From_Parent_Initial.shape)
-print('Mean initial M1={},M2={},MC={}'.format(np.mean(DS_From_Parent_Initial['M1']),np.mean(DS_From_Parent_Initial['M2']),np.mean(DS_From_Parent_Initial['MC'])))
-print(DS_From_Parent_Initial['M1'][:15],DS_From_Parent_Initial['M2'][:15],DS_From_Parent_Initial['MC'][:15])
-print('---------------------shape Completed----------------------------------')
-print(DS_From_Parent.columns)
-print(DS_From_Parent.shape)
-print('Mean Completed M1={},M2={},MC={}'.format(np.mean(DS_From_Parent['M1']),np.mean(DS_From_Parent['M2']),np.mean(DS_From_Parent['MC'])))
-print(DS_From_Parent['M1'][:15],DS_From_Parent['M2'][:15],DS_From_Parent['MC'][:15])
-############################################################################################################################################à
+    # Plot the theoretical distribution
+    #ax.plot(m1_values, p_m1_values, label='Theoretical $p(m_1)$', color='teal',linewidth=3)
+
+    # Labels and title
+    ax.set_xlabel('$q$', fontsize=15)
+    ax.set_ylabel('$P(q)$', fontsize=15)
+    plt.title('Sampled Histogram', fontsize=18)
+
+    # Set log scale
+    #ax.set_yscale('log')
+
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
+
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('q_extracted_fromsave.png')
+
+###################################################################################################################################à
+# CAT_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
+# THIS_DIR=os.getcwd()
+# os.chdir(CAT_PATH)
+# DS_From_Parent_Initial = pd.read_csv('DS_From_Parent_Uniform.txt')
+# os.chdir(THIS_DIR)
+
+# print('---------------------initial shape----------------------------------- ')
+# print(DS_From_Parent_Initial.columns)
+# print(DS_From_Parent_Initial.shape)
+# print('Mean initial M1={},M2={},MC={}'.format(np.mean(DS_From_Parent_Initial['M1']),np.mean(DS_From_Parent_Initial['M2']),np.mean(DS_From_Parent_Initial['MC'])))
+# print(DS_From_Parent_Initial['M1'][:15],DS_From_Parent_Initial['M2'][:15],DS_From_Parent_Initial['MC'][:15])
+# print('---------------------shape Completed----------------------------------')
+# print(DS_From_Parent.columns)
+# print(DS_From_Parent.shape)
+# print('Mean Completed M1={},M2={},MC={}'.format(np.mean(DS_From_Parent['M1']),np.mean(DS_From_Parent['M2']),np.mean(DS_From_Parent['MC'])))
+# print(DS_From_Parent['M1'][:15],DS_From_Parent['M2'][:15],DS_From_Parent['MC'][:15])
+############################################################################################################################################
+if SNR_plot==1:
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['SNR'], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+
+   
+    # Labels and title
+    ax.set_xlabel('$SNR$', fontsize=15)
+    ax.set_ylabel('$P(SNR)$', fontsize=15)
+    plt.title('Distribution of Measured SNR ', fontsize=18)
+
+    # Set log scale
+    #ax.set_yscale('log')
+
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
+
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('SNR_fromsave.png')
+    ##################################################################################################################à
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['SNR'][DS_From_Parent['SNR']<=300], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+
+   
+    # Labels and title
+    ax.set_xlabel('$SNR$', fontsize=15)
+    ax.set_ylabel('$P(SNR)$', fontsize=15)
+    plt.title('Distribution of Measured SNR-zoomed', fontsize=18)
+
+    # Set log scale
+    #ax.set_yscale('log')
+
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
+
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('SNR_fromsave_zoom.png')
+    ###############################################################################################################################
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['SNR'][DS_From_Parent['SNR']<=50], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+
+   
+    # Labels and title
+    ax.set_xlabel('$SNR$', fontsize=15)
+    ax.set_ylabel('$P(SNR)$', fontsize=15)
+    plt.title('Distribution of Measured SNR-zoomed', fontsize=18)
+
+    # Set log scale
+    #ax.set_yscale('log')
+
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
+
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('SNR_fromsave_zoom-0-50.png')
+    ###############################################################################################################################
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['SNR'][(DS_From_Parent['SNR']<=100)&(DS_From_Parent['SNR']>=50)], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+
+   
+    # Labels and title
+    ax.set_xlabel('$SNR$', fontsize=15)
+    ax.set_ylabel('$P(SNR)$', fontsize=15)
+    plt.title('Distribution of Measured SNR-zoomed', fontsize=18)
+
+    # Set log scale
+    #ax.set_yscale('log')
+
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
+
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('SNR_fromsave_zoom-50-100.png')
+    ###################################################################################################################################
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    # Plot the histogram of the sampled probabilities
+    ax.hist(DS_From_Parent['SNR'][(DS_From_Parent['SNR']<=300)&(DS_From_Parent['SNR']>=100)], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+
+   
+    # Labels and title
+    ax.set_xlabel('$SNR$', fontsize=15)
+    ax.set_ylabel('$P(SNR)$', fontsize=15)
+    plt.title('Distribution of Measured SNR-zoomed', fontsize=18)
+
+    # Set log scale
+    #ax.set_yscale('log')
+
+    # Legends
+    ax.legend(loc='upper right',prop={'size': 15})
+
+    # Show plot
+    plt.grid(axis='y', alpha=0.75)
+    plt.savefig('SNR_fromsave_zoom-100-300.png')
+
