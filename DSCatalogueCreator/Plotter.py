@@ -233,11 +233,12 @@ if qplot==1:
 # print(DS_From_Parent['M1'][:15],DS_From_Parent['M2'][:15],DS_From_Parent['MC'][:15])
 ############################################################################################################################################
 if SNR_plot==1:
+    total=DS_From_Parent.shape[0]
     fig, ax = plt.subplots(figsize=(15,10))
     ax.tick_params(axis='both', which='major', labelsize=25)
     ax.yaxis.get_offset_text().set_fontsize(25)
     # Plot the histogram of the sampled probabilities
-    ax.hist(DS_From_Parent['SNR'], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+    ax.hist(DS_From_Parent['SNR']/total, bins=50, density=False, alpha=0.6, color='teal', label='$SNR-ET-T$')
 
    
     # Labels and title
@@ -259,7 +260,7 @@ if SNR_plot==1:
     ax.tick_params(axis='both', which='major', labelsize=25)
     ax.yaxis.get_offset_text().set_fontsize(25)
     # Plot the histogram of the sampled probabilities
-    ax.hist(DS_From_Parent['SNR'][DS_From_Parent['SNR']<=300], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+    ax.hist(DS_From_Parent['SNR'][DS_From_Parent['SNR']<=300]/total, bins=50, density=False, alpha=0.6, color='teal', label='$SNR-ET-T$')
 
    
     # Labels and title
@@ -281,7 +282,7 @@ if SNR_plot==1:
     ax.tick_params(axis='both', which='major', labelsize=25)
     ax.yaxis.get_offset_text().set_fontsize(25)
     # Plot the histogram of the sampled probabilities
-    ax.hist(DS_From_Parent['SNR'][DS_From_Parent['SNR']<=50], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+    ax.hist(DS_From_Parent['SNR'][DS_From_Parent['SNR']<=50]/total, bins=50, density=False, alpha=0.6, color='teal', label='$SNR-ET-T$')
 
    
     # Labels and title
@@ -303,7 +304,7 @@ if SNR_plot==1:
     ax.tick_params(axis='both', which='major', labelsize=25)
     ax.yaxis.get_offset_text().set_fontsize(25)
     # Plot the histogram of the sampled probabilities
-    ax.hist(DS_From_Parent['SNR'][(DS_From_Parent['SNR']<=100)&(DS_From_Parent['SNR']>=50)], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+    ax.hist(DS_From_Parent['SNR'][(DS_From_Parent['SNR']<=100)&(DS_From_Parent['SNR']>=50)]/total, bins=50, density=False, alpha=0.6, color='teal', label='$SNR-ET-T$')
 
    
     # Labels and title
@@ -325,7 +326,7 @@ if SNR_plot==1:
     ax.tick_params(axis='both', which='major', labelsize=25)
     ax.yaxis.get_offset_text().set_fontsize(25)
     # Plot the histogram of the sampled probabilities
-    ax.hist(DS_From_Parent['SNR'][(DS_From_Parent['SNR']<=300)&(DS_From_Parent['SNR']>=100)], bins=50, density=True, alpha=0.6, color='teal', label='$SNR-ET-T$')
+    ax.hist(DS_From_Parent['SNR'][(DS_From_Parent['SNR']<=300)&(DS_From_Parent['SNR']>=100)]/total, bins=50, density=False, alpha=0.6, color='teal', label='$SNR-ET-T$')
 
    
     # Labels and title

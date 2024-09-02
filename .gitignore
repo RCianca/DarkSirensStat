@@ -29,7 +29,9 @@ DSCatalogueCreator/m1masses_paper.txt
 
 MyDSStat/Allevents_from_Uniform_complete.h5
 MyDSStat/Allevents_from_Uniform_complete.npy
-MyDSStat/CODE2v0/
+MyDSStat/CODE2v0/Events
+MyDSStat/CODE2v0/Data
+MyDSStat/CODE2v0/Results
 MyDSStat/DS_From_Parent_Uniform_Complete-Sliced.txt
 MyDSStat/DS_From_Parent_Uniform_Complete_SNR.txt
 MyDSStat/DS_From_Parent_Uniform.txt
