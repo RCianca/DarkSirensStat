@@ -8,13 +8,23 @@ from astropy.table import Table
 
 from ligo.skymap.io import fits
 #from ligo.skymap.postprocess import find_greedy_credible_levels
-
-import gwfast.gwfastGlobals as glob
-import gwfast 
-
 import os
 import sys
-#from tqdm import tqdm
+
+# PACKAGE_PARENT = '..'
+# SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd())))
+# sys.path.append(SCRIPT_DIR)
+# import gwfast.gwfastGlobals as glob
+# import gwfast 
+# from gwfast.waveforms import IMRPhenomD
+# from gwfast.signal import GWSignal
+# from gwfast.network import DetNet
+# from gwfast import fisherTools
+# from fisherTools import CovMatr, compute_localization_region, check_covariance, fixParams
+# from gwfastUtils import GPSt_to_LMST
+
+
+from tqdm import tqdm
 
 import h5py
 from multiprocessing import Pool
@@ -60,7 +70,7 @@ def sample_multivariate_gaussian(mean, cov, num_samples):
     return np.random.multivariate_normal(mean, cov, num_samples)
 
 def process_pixel(args):
-    pix, nside, mean, cov, new_samples_per_pixel, samples, pixels = args
+    pix, nside, mean, cov, new_samples_per_pixel, samples, pixels, Allevents_DS = args
     
     # Get the fixed angles for this pixel
     theta_fixed, phi_fixed = hp.pix2ang(nside, pix)
@@ -69,8 +79,15 @@ def process_pixel(args):
     pixel_indices = np.where(pixels == pix)[0]
     samples_in_pixel = samples[pixel_indices]
 
-    # Permutation order to move luminosity distance to index 0, theta to index 1, and phi to index 2
-    perm = [2, 3, 4] + list(range(0, 2)) + list(range(5, len(mean)))
+    # Determine the positions of 'dL', 'theta', and 'phi' in the columns of Allevents_DS
+    columns = Allevents_DS.columns
+    dL_pos = columns.get_loc('dL')
+    theta_pos = columns.get_loc('theta')
+    phi_pos = columns.get_loc('phi')
+
+    # Create the permutation order with 'dL' first, 'theta' second, and 'phi' third
+    remaining_indices = list(set(range(len(columns))) - {dL_pos, theta_pos, phi_pos})
+    perm = [dL_pos, theta_pos, phi_pos] + remaining_indices
 
     # Apply the permutation to the mean and covariance matrix
     mean_permuted = np.array(mean)[perm]
@@ -80,7 +97,7 @@ def process_pixel(args):
     alpha = np.zeros(len(mean_permuted) - 1)
     alpha[0] = theta_fixed
     alpha[1] = phi_fixed
-    alpha[2:] = samples_in_pixel[:, [0, 1, 5, 6]].mean(axis=0)  # Use the mean of the other parameters in this pixel
+    alpha[2:] = samples_in_pixel[:, remaining_indices].mean(axis=0)  # Use the mean of the other parameters in this pixel
     
     # Create a new mean vector excluding the luminosity distance mean (mean_permuted[0])
     mean_new = mean_permuted[1:]
@@ -120,35 +137,77 @@ SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/C
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
 
 
-
-Allevents_DS=gwfast.gwfastUtils.load_population(COV_SAVE_PATH+'SNR_more_than_50_100_fixed.h5')
-keys=list(Allevents_DS.keys())
+Allevents_DS=pd.read_csv(COV_SAVE_PATH+'SNR_more_than_50_100.csv', index_col=0)
+print(Allevents_DS.head(3))
+keys=list(Allevents_DS.columns)
 print(keys)
 print('this is the order of the paramers. A permutation will be implemented.\nThe permutation will preserve the semi positivity')
 # construct the mean vector now only for one DS
-selectted=4
-merge_param=np.array(list(newAllevents.values()))
-mean=merge_param[:,selected]
-cov=np.load(COV_SAVE_PATH+'Cov_SNR_more_than_50_100_fixed.npy',allow_pickle=True)
+selected=4
+mean=np.array(Allevents_DS.iloc[selected])
+#mean=merge_param[:,selected]
+cov=np.load(COV_SAVE_PATH+'Cov_SNR_more_than_50_100.npy',allow_pickle=True)
 #now just for one covariance matrix
 cov=np.float64(cov[:,:,selected])#4 select only that specific matrix
+print(mean)
+print(len(mean),np.shape(cov))
 
 ######################### CORE part ##################################à
 
-# Number of samples
-num_samples=100**5#5 is the num of dimension, 100 is the desired target of points
-#num_samples = 100_000_000
+# Define the number of samples and dimensions
+dimensions =  len(mean)
+num_samples = 100**4 #dimensions  # Total number of samples (desired target)
+batch_size = 1000000
+num_batches = num_samples // batch_size
+
+# Directory to save batches
+output_dir = COV_SAVE_PATH+"samples_batches/"
+os.makedirs(output_dir, exist_ok=True)
 
 # Sample from the multivariate Gaussian distribution
-samples = sample_multivariate_gaussian(mean, cov, num_samples)
+#samples = sample_multivariate_gaussian(mean, cov, num_samples)
+
+for i in range(num_batches):
+    print(f"Generating batch {i + 1} of {num_batches}")
+    
+    # Generate a batch of samples
+    samples = sample_multivariate_gaussian(mean, cov, batch_size)
+    
+    # Save the batch to disk (you can use CSV or NumPy's .npy format)
+    np.save(os.path.join(output_dir, f"samples_batch_{i + 1}.npy"), samples)
+    
+    # Clear memory after saving
+    del samples
+
+# If there's any remainder (not a full batch), generate and save it
+remaining_samples = num_samples % batch_size
+if remaining_samples > 0:
+    print(f"Generating remaining {remaining_samples} samples")
+    samples = sample_multivariate_gaussian(mean, cov, remaining_samples)
+    np.save(os.path.join(output_dir, f"samples_batch_remaining.npy"), samples)
+    del samples
+
+print("All batches generated and saved.")
+
+all_batches = [f for f in os.listdir(output_dir) if f.endswith(".npy")]
+
+# Load all samples 
+samples = []
+
+for batch_file in all_batches:
+    batch_samples = np.load(os.path.join(output_dir, batch_file))
+    samples.append(batch_samples)
+
+# Concatenate all samples if needed
+samples = np.concatenate(samples, axis=0)
 
 # Extract variables
 #luminosity_distance = samples[:, 2]
 angles = samples[:, 3:5]
 
 # Ensure angles are within valid ranges
-angles[:, 0] = np.mod(angles[:, 0], np.pi)  # theta in range [0, π]
-angles[:, 1] = np.mod(angles[:, 1], 2 * np.pi)  # phi in range [0, 2π]
+angles[:, 0] = np.mod(angles[:, 0], np.pi)  # theta in range [0, pi]
+angles[:, 1] = np.mod(angles[:, 1], 2 * np.pi)  # phi in range [0, 2pi]
 
 # Number of pixels in the sky map
 nside = 64
@@ -167,6 +226,7 @@ np.add.at(sky_map, pixels, 1)
 sky_map = sky_map / np.sum(sky_map)
 
 # Get the array of good pixels where sky_map > 0
+print('computing credible regions')
 pix99=get_credible_region_pixels(all_pixels,sky_map)
 pix90=get_credible_region_pixels(all_pixels,sky_map,level=0.9)
 # Initialize arrays to store the mean and std of luminosity distance
@@ -176,18 +236,19 @@ all_std = np.zeros(hp.nside2npix(nside))
 # Initialize dictionary to store new luminosity distance arrays for each pixel
 luminosity_distance_samples = {}
 
-new_samples_per_pixel = num_samples #35_000_000
+new_samples_per_pixel = 10**6#num_samples #35_000_000
 
 # Prepare arguments for multiprocessing
-args = [(pix, nside, mean, cov, new_samples_per_pixel, samples, pixels) for pix in pix99]
+args = [(pix, nside, mean, cov, new_samples_per_pixel, samples, pixels,Allevents_DS) for pix in pix99]
 
 # Specify the number of processors to use
-num_processors = 14
-
+num_processors = 24
+print('computing the conditional probability for dL')
 # Using multiprocessing Pool to parallelize the process
 with Pool(processes=num_processors) as pool:
     # Using tqdm to add a progress bar
-    results = list(tqdm(pool.imap(process_pixel, args), total=len(pix99)))
+    #results = list(tqdm(pool.imap(process_pixel, args), total=len(pix99)))
+    results = list(pool.imap(process_pixel, args))
 
 # Collect the results
 for pix, mu, std, new_luminosity_distance in results:
@@ -197,6 +258,7 @@ for pix, mu, std, new_luminosity_distance in results:
         luminosity_distance_samples[pix] = new_luminosity_distance
 
 mod_postnorm=np.ones(npix)
+print('lenght of mean is {} and std is {}'.format(np.shape(luminosity_distance_samples),np.shape(all_std)))
 fname='GWtest00.fits'
 dat=Table([sky_map,all_mu,all_std,mod_postnorm],
       names=('PROB','DISTMU','DISTSIGMA','DISTNORM'))

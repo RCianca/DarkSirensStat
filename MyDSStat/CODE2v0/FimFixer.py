@@ -54,7 +54,7 @@ Allevents_DS=gwfast.gwfastUtils.load_population(COV_SAVE_PATH+'SNR_more_than_50_
 totFET = myET.FisherMatr(Allevents_DS)
 
 keys=list(Allevents_DS.keys())
-tofix_ParNums = [e for e in tofix_ParNums if e not in ('dL', 'phi','theta','Mc','eta')]
+tofix_ParNums = [e for e in keys if e not in ('dL', 'phi','theta','Mc','eta')]
 fixedFIM, newPars=fixParams(totFET,IMRPhenomD().ParNums,tofix_ParNums)
 
 totCov_ET, inversion_err_ET = CovMatr(fixedFIM)
@@ -64,6 +64,9 @@ gwfast.gwfastUtils.save_data(COV_SAVE_PATH+'SNR_more_than_50_100_fixed.h5', newA
 
 np.save(COV_SAVE_PATH+'Cov_SNR_more_than_50_100_fixed',totCov_ET)
 os.chdir(COV_SAVE_PATH)
-#parname='param.txt'
-#np.savetxt(parname,keys,fmt='%s')
-#np.savetxt('mean_fixed.txt',mymu)
+
+df_Allevents_DS = pd.DataFrame.from_dict(Allevents_DS, orient='columns')
+df_newAllevents = pd.DataFrame.from_dict(newAllevents, orient='columns')
+
+df_Allevents_DS.to_csv('SNR_more_than_50_100.csv')
+df_newAllevents.to_csv('SNR_more_than_50_100_fixed.csv')
