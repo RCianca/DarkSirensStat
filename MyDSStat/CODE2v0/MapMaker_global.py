@@ -155,7 +155,7 @@ def initialize_globals(catfile,covfile):
     if not os.path.exists(output_dir) or not os.listdir(output_dir):
         print("Generating new samples...")
         num_samples = 100**4
-        batch_size = 1000000
+        batch_size = 1_000_000
         num_batches = num_samples // batch_size
 
         os.makedirs(output_dir, exist_ok=True)
