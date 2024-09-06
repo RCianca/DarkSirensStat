@@ -88,7 +88,7 @@ if __name__=='__main__':
     print('DS name {}'.format(DSs.event_name))
     #print('Area of DS is {} deg^2'.format(DSs.area()))
     pix99=DSs.get_credible_region_pixels(level=0.99)
-    allmu=DSs.mu*1000
+    allmu=DSs.mu*1000#servono in Mpc 
     allsigma=DSs.sigma*1000
     nside=DSs.nside
     #print(pix99)

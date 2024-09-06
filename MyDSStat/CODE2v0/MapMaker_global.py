@@ -163,11 +163,13 @@ def initialize_globals(catfile,covfile):
         for i in range(num_batches):
             samples = sample_multivariate_gaussian(mean, cov, batch_size)
             np.save(os.path.join(output_dir, f"samples_batch_{i + 1}.npy"), samples)
+            del samples
 
         remaining_samples = num_samples % batch_size
         if remaining_samples > 0:
             samples = sample_multivariate_gaussian(mean, cov, remaining_samples)
             np.save(os.path.join(output_dir, "samples_batch_remaining.npy"), samples)
+            del samples
 
     print("Loading samples from batches...")
     all_batches = [f for f in os.listdir(output_dir) if f.endswith(".npy")]
