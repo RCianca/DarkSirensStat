@@ -68,7 +68,7 @@ def process_pixel(args):
     
     #global mean, cov, samples, Allevents_DS
 
-    pix, nside,new_samples_per_pixel,  pixels = args
+    pix, nside,new_samples_per_pixel = args
     
     # Get the fixed angles for this pixel
     theta_fixed, phi_fixed = hp.pix2ang(nside, pix)
@@ -204,7 +204,7 @@ sky_map = np.zeros(hp.nside2npix(nside))
 npix=hp.nside2npix(nside)
 all_pixels=np.arange(npix)
 # Convert angles to pixel indices
-pixels = hp.ang2pix(nside, angles[:, 0], angles[:, 1])
+#pixels = hp.ang2pix(nside, angles[:, 0], angles[:, 1])
 
 # Increment the pixel values
 np.add.at(sky_map, pixels, 1)
@@ -223,15 +223,16 @@ all_std = np.zeros(hp.nside2npix(nside))
 # Initialize dictionary to store new luminosity distance arrays for each pixel
 luminosity_distance_samples = {}
 
-new_samples_per_pixel = 10**6#num_samples #35_000_000
+new_samples_per_pixel = 10**4#num_samples #35_000_000
 
 # Prepare arguments for multiprocessing
-args = [(pix, nside, new_samples_per_pixel, pixels) for pix in pix99]
+
 
 # Specify the number of processors to use
 num_processors = 24
 print('computing the conditional probability for dL')
 # Using multiprocessing Pool to parallelize the process
+args = [(pix, nside, new_samples_per_pixel) for pix in pix99]
 with Pool(processes=num_processors) as pool:
     # Using tqdm to add a progress bar
     #results = list(tqdm(pool.imap(process_pixel, args), total=len(pix99)))
