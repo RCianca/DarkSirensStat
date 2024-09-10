@@ -155,7 +155,7 @@ def process_pixel(args):
     mu = np.mean(new_samples)
     std = np.std(new_samples)
     
-    return pix, mu, std, new_samples
+    return pix, mu, std#, new_samples
 
 ####################################################################################################################################
 def initialize_globals(catfile, covfile):
@@ -183,8 +183,8 @@ def initialize_globals(catfile, covfile):
     output_dir = COV_SAVE_PATH + "samples_batches/"
     if not os.path.exists(output_dir) or not os.listdir(output_dir):
         print("Generating new samples...")
-        num_samples = 10**4  # Total number of samples to generate
-        batch_size = 10**3  # Batch size for saving samples
+        num_samples = 10**2  # Total number of samples to generate
+        batch_size = 10**2  # Batch size for saving samples
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -243,7 +243,7 @@ all_std = np.zeros(hp.nside2npix(nside))
 # Initialize dictionary to store new luminosity distance arrays for each pixel
 luminosity_distance_samples = {}
 
-new_samples_per_pixel = 10**3#num_samples #35_000_000
+new_samples_per_pixel = 10**2#num_samples #35_000_000
 
 # Prepare arguments for multiprocessing
 
@@ -259,14 +259,14 @@ with Pool(processes=num_processors) as pool:
     results = list(pool.imap(process_pixel, args))
 
 # Collect the results
-for pix, mu, std, new_luminosity_distance in results:
+for pix, mu, std in results:
     if mu is not None and std is not None:
         all_mu[pix] = mu
         all_std[pix] = std
-        luminosity_distance_samples[pix] = new_luminosity_distance
+        #luminosity_distance_samples[pix] = new_luminosity_distance
 
 mod_postnorm=np.ones(npix)
-print('lenght of mean is {} and std is {}'.format(np.shape(luminosity_distance_samples),np.shape(all_std)))
+print('lenght of mean is {} and std is {}'.format(np.shape(all_mu),np.shape(all_std)))
 fname='GWtest00.fits'
 dat=Table([sky_map,all_mu,all_std,mod_postnorm],
       names=('PROB','DISTMU','DISTSIGMA','DISTNORM'))
