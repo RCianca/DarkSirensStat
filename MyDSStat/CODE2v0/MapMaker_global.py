@@ -64,6 +64,35 @@ def get_credible_region_pixels(all_pixels, p_posterior, level=0.99):
 def sample_multivariate_gaussian(mean, cov, num_samples):
     return np.random.multivariate_normal(mean, cov, num_samples)
 
+# Try Cholesky decomposition
+def sample_multivariate_gaussian_cholesky(mean, cov, num_samples):
+    # Perform Cholesky decomposition of the covariance matrix once
+    L = np.linalg.cholesky(cov)
+
+    # Generate standard normal samples, sample will be shaped like (num_sample,mean)
+    z = np.random.randn(num_samples, len(mean))
+
+    # Transform the samples using the Cholesky factor
+    samples = mean + z @ L.T
+    return samples
+
+def save_multivariate_gaussian_batches(mean, cov, num_samples, batch_size, output_dir):
+    num_batches = num_samples // batch_size
+
+    # Generate samples in batches
+    for i in range(num_batches):
+        samples = sample_multivariate_gaussian_cholesky(mean, cov, batch_size)
+        np.save(os.path.join(output_dir, f"samples_batch_{i + 1}.npy"), samples)
+        del samples
+
+    # Handle remaining samples if num_samples is not a multiple of batch_size
+    remaining_samples = num_samples % batch_size
+    if remaining_samples > 0:
+        samples = sample_multivariate_gaussian_cholesky(mean, cov, remaining_samples)
+        np.save(os.path.join(output_dir, "samples_batch_remaining.npy"), samples)
+        del samples
+
+
 def process_pixel(args):
     
     #global mean, cov, samples, Allevents_DS
@@ -129,7 +158,7 @@ def process_pixel(args):
     return pix, mu, std, new_samples
 
 ####################################################################################################################################
-def initialize_globals(catfile,covfile):
+def initialize_globals(catfile, covfile):
     global mean, cov, samples, Allevents_DS, pixels
 
     folder = 'Uniform/TestRun00/'
@@ -138,38 +167,29 @@ def initialize_globals(catfile,covfile):
     # Load the data into global variables
     Allevents_DS = pd.read_csv(COV_SAVE_PATH + catfile, index_col=0)
     print(Allevents_DS.head(3))
-    keys=list(Allevents_DS.columns)
+    keys = list(Allevents_DS.columns)
     print(keys)
-    print('this is the order of the paramers. A permutation will be implemented.\nThe permutation will preserve the semi positivity')
+    print('This is the order of the parameters. A permutation will be implemented.\nThe permutation will preserve the semi-positivity.')
 
-    selected=4
+    selected = 4
     mean = np.array(Allevents_DS.iloc[selected])
     cov = np.load(COV_SAVE_PATH + covfile, allow_pickle=True)
     cov = np.float64(cov[:, :, selected])
 
     print(mean)
-    print(len(mean),np.shape(cov))
+    print(len(mean), np.shape(cov))
 
     # Generate or load samples
     output_dir = COV_SAVE_PATH + "samples_batches/"
     if not os.path.exists(output_dir) or not os.listdir(output_dir):
         print("Generating new samples...")
-        num_samples = 100**4
-        batch_size = 1_000_000
-        num_batches = num_samples // batch_size
+        num_samples = 10**4  # Total number of samples to generate
+        batch_size = 10**3  # Batch size for saving samples
 
         os.makedirs(output_dir, exist_ok=True)
 
-        for i in range(num_batches):
-            samples = sample_multivariate_gaussian(mean, cov, batch_size)
-            np.save(os.path.join(output_dir, f"samples_batch_{i + 1}.npy"), samples)
-            del samples
-
-        remaining_samples = num_samples % batch_size
-        if remaining_samples > 0:
-            samples = sample_multivariate_gaussian(mean, cov, remaining_samples)
-            np.save(os.path.join(output_dir, "samples_batch_remaining.npy"), samples)
-            del samples
+        # Use the optimized function to save the samples in batches
+        save_multivariate_gaussian_batches(mean, cov, num_samples, batch_size, output_dir)
 
     print("Loading samples from batches...")
     all_batches = [f for f in os.listdir(output_dir) if f.endswith(".npy")]
@@ -223,7 +243,7 @@ all_std = np.zeros(hp.nside2npix(nside))
 # Initialize dictionary to store new luminosity distance arrays for each pixel
 luminosity_distance_samples = {}
 
-new_samples_per_pixel = 10**4#num_samples #35_000_000
+new_samples_per_pixel = 10**3#num_samples #35_000_000
 
 # Prepare arguments for multiprocessing
 
