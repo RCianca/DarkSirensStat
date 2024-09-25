@@ -54,6 +54,7 @@ Allevents_DS=gwfast.gwfastUtils.load_population(COV_SAVE_PATH+'SNR_more_than_50_
 totFET = myET.FisherMatr(Allevents_DS)
 
 keys=list(Allevents_DS.keys())
+print(keys)
 tofix_ParNums = [e for e in keys if e not in ('dL', 'phi','theta','Mc','eta')]
 fixedFIM, newPars=fixParams(totFET,IMRPhenomD().ParNums,tofix_ParNums)
 

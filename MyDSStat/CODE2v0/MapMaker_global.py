@@ -81,14 +81,14 @@ def save_multivariate_gaussian_batches(mean, cov, num_samples, batch_size, outpu
 
     # Generate samples in batches
     for i in range(num_batches):
-        samples = sample_multivariate_gaussian_cholesky(mean, cov, batch_size)
+        samples = sample_multivariate_gaussian(mean, cov, batch_size)
         np.save(os.path.join(output_dir, f"samples_batch_{i + 1}.npy"), samples)
         del samples
 
     # Handle remaining samples if num_samples is not a multiple of batch_size
     remaining_samples = num_samples % batch_size
     if remaining_samples > 0:
-        samples = sample_multivariate_gaussian_cholesky(mean, cov, remaining_samples)
+        samples = sample_multivariate_gaussian(mean, cov, remaining_samples)
         np.save(os.path.join(output_dir, "samples_batch_remaining.npy"), samples)
         del samples
 
@@ -160,9 +160,10 @@ def process_pixel(args):
 ####################################################################################################################################
 def initialize_globals(catfile, covfile):
     global mean, cov, samples, Allevents_DS, pixels
-
+    global COV_SAVE_PATH
     folder = 'Uniform/TestRun00/'
     COV_SAVE_PATH = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/' + folder
+
 
     # Load the data into global variables
     Allevents_DS = pd.read_csv(COV_SAVE_PATH + catfile, index_col=0)
@@ -183,8 +184,8 @@ def initialize_globals(catfile, covfile):
     output_dir = COV_SAVE_PATH + "samples_batches/"
     if not os.path.exists(output_dir) or not os.listdir(output_dir):
         print("Generating new samples...")
-        num_samples = 10**2  # Total number of samples to generate
-        batch_size = 10**2  # Batch size for saving samples
+        num_samples = 10**6  # Total number of samples to generate
+        batch_size = 10**5  # Batch size for saving samples
 
         os.makedirs(output_dir, exist_ok=True)
 

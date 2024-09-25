@@ -357,13 +357,15 @@ if SNR_plot==1:
     # Show plot
     plt.grid(axis='y', alpha=0.75)
     plt.savefig('SNR_fromsave_zoom-100-300.png')
+###################################################################################################################################################
+
 
 if sky_plot == 1:
     folder = 'Uniform/TestRun00/'
     GW_data_path = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/' + folder
     fname = 'GWtest00.fits'
     print(fname)
-    Data, metadata = fits.read_sky_map(GW_data_path + fname, nest=True, distances=True)
+    Data, metadata = fits.read_sky_map(GW_data_path + fname, nest=False, distances=True)
     
     sky_map = Data[0]
     mu = Data[1]
@@ -371,42 +373,10 @@ if sky_plot == 1:
     posteriorNorm = Data[3]
 
     # Plot the sky map
-    hp.mollview(sky_map, title="Sky Map", coord=['C'], unit='rad')
+    hp.mollview(sky_map, title="Sky Map", coord=['C'], unit='Prob')
     hp.graticule()
 
     # Save the sky map as a PNG file
     plt.savefig(GW_data_path + "Sky_Map.png", dpi=300)
     plt.close()
     
-    # # Calculate the weighted mean for theta and phi
-    # nside = hp.get_nside(sky_map)
-    # npix = hp.nside2npix(nside)
-    
-    # # Get the theta and phi for each pixel
-    # theta, phi = hp.pix2ang(nside, np.arange(npix))
-    
-    # # Compute the weighted mean
-    # mean_theta = np.sum(theta * sky_map) / np.sum(sky_map)
-    # mean_phi = np.sum(phi * sky_map) / np.sum(sky_map)
-
-    # # Plot the zoomed-in version of the sky map around the mean theta and phi
-    # zoom_width = 60  # degrees
-    # mean_theta_deg = np.degrees(mean_theta)
-    # mean_phi_deg = np.degrees(mean_phi)
-    # latra_start = 90 - mean_theta_deg - zoom_width / 2
-    # latra_end = 90 - mean_theta_deg + zoom_width / 2
-    # lonra_start = mean_phi_deg - zoom_width / 2
-    # lonra_end = mean_phi_deg + zoom_width / 2
-
-    # # Ensure latitude range is within [-90, 90] degrees
-    # latra_start = max(-90, latra_start)
-    # latra_end = min(90, latra_end)
-
-    # hp.cartview(sky_map, coord=['C'], lonra=[lonra_start, lonra_end],
-    #             latra=[latra_start, latra_end],
-    #             title="Zoomed Sky Map")
-    # hp.graticule()
-    
-    # # Save the zoomed sky map as a PNG file
-    # plt.savefig(GW_data_path + "Sky_Map_zoom.png", dpi=300)
-    # plt.close()

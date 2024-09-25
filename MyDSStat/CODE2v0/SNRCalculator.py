@@ -48,9 +48,15 @@ SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 
 os.chdir(CAT_FOLDER)
 DS_Cat= pd.read_csv('DS_From_Parent_Uniform_Complete.txt')
+dlmean=np.mean(DS_Cat['Luminosity Distance'])
+print('dl media in Mpc')
+print(dlmean)
+dlmean=np.mean(np.array(DS_Cat['Luminosity Distance']/1000.0 ))#np.array(current_chunk['Luminosity Distance']/1000.0 )
+print('dl media in Gpc')
+print(dlmean)
 os.chdir(SCRIPT_FOLDER)
 
-ParNums = IMRPhenomD().ParNums
+ParNums = IMRPhenomHM().ParNums
 print(ParNums)
 
 # allm1=np.asarray(DS_Cat['M1'])
@@ -77,7 +83,7 @@ mySignalsET = {}
 
 for d in ETdet.keys():
     #print(d)
-    mySignalsET[d] = GWSignal((IMRPhenomD()),
+    mySignalsET[d] = GWSignal((IMRPhenomHM()),
                 psd_path= ETdet[d]['psd_path'],
                 detector_shape = ETdet[d]['shape'],
                 det_lat= ETdet[d]['lat'],
@@ -90,7 +96,7 @@ for d in ETdet.keys():
 
 myET = DetNet(mySignalsET)
 
-chunksize = 1000  # Adjust this according to your system's memory capacity
+chunksize = 1000  
 total_length = len(DS_Cat)
 
 # Prepare the output file path
@@ -102,28 +108,28 @@ for start in range(0, total_length, chunksize):
     
     # Slice the data for the current chunk
     current_chunk = DS_Cat.iloc[start:end].copy()
-
+    print(current_chunk.head(3))
     # Convert necessary columns to numpy arrays
     mc_array = np.array(current_chunk['MC'] * (1 + current_chunk['z']))
-    dl_array = np.array(current_chunk['Luminosity Distance']) / 1000  # Convert to Gpc
+    dl_array = np.array(current_chunk['Luminosity Distance'])/1000.0  # Convert to Gpc
     theta_array = np.array(current_chunk['theta'])
     phi_array = np.array(current_chunk['phi'])
     iota_array = np.arccos(np.array(current_chunk['cos_iota']))  # Convert cos(iota) to iota
     psi_array = np.array(current_chunk['psi']) / 2  # Apply the division to psi
-    eta_array = np.array(current_chunk['q'] / (1 + current_chunk['q']) ** 2)
+    eta_array = np.array(current_chunk['q'] / (1 + current_chunk['q'])**2 )
 
     # Create the Allevents dictionary for the current chunk with numpy arrays
     Allevents = {
         'Mc': mc_array,
+        'eta': eta_array,
         'dL': dl_array,
         'theta': theta_array,
         'phi': phi_array,
         'iota': iota_array,
         'psi': psi_array,
         'tcoal': 1 * tcoal * np.ones(len(current_chunk)),  # GMST is LMST computed at long = 0°
-        'eta': eta_array,
-        'Phicoal': np.zeros(len(current_chunk)),
-        'chi1z': np.zeros(len(current_chunk)),
+        'Phicoal': np.full(len(current_chunk), 0.0003),
+        'chi1z': np.full(len(current_chunk), 0.00002),
         'chi2z': np.full(len(current_chunk), 0.00001)
     }
 
