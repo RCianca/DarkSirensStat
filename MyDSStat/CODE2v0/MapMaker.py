@@ -104,13 +104,13 @@ def process_pixel(args):
         pix = int(pix)  # Explicitly cast to Python int
     
     # Get the fixed angles for this pixel
-    theta_fixed, phi_fixed = hp.pix2ang(nside, pix)
+    #theta_fixed, phi_fixed = hp.pix2ang(nside, pix)
     
     # Extract samples of all parameters for this pixel
     pixel_indices = np.where(pixels == pix)[0]
     samples_in_pixel = samples[pixel_indices]
 
-    mu = np.mean(samples_in_pixel[:,0])
+    mu = samples_in_pixel[:, 0].mean(axis=0)
     std = np.std(samples_in_pixel[:,0])
     
     return pix, mu, std
@@ -212,7 +212,7 @@ if __name__=='__main__':
 
     #---Select only pixels in which sky_map is greater than 0 (unique_pixels) this can be refined by selection X% of the 2D probability
 
-    unique_pixels=sky_map[sky_map>0]
+    unique_pixels=np.unique(pixels)#sky_map[sky_map>0]#
     #pix99=get_credible_region_pixels(all_pixels,sky_map)
     #pix90=get_credible_region_pixels(all_pixels,sky_map,level=0.9)
 

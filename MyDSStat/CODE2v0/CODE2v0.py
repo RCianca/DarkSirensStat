@@ -100,36 +100,41 @@ def LikeofH0_pixel(mu_DS,sigma,z_hosts,Htemp):
 
 
 
+
 #########################################################################################
 
 if __name__=='__main__':
 
     #######################GW-Events#####################################################
+    print('Loading GW data')
     fname='GWtest00.fits'# importare la lista da un config
     working_dir=os.getcwd()
     MapPath=working_dir+'/Events/Uniform/TestRun00/'
-    DSs=GWskymap(MapPath+fname)
+    level=0.3
+    DSs=GWskymap(MapPath+fname,level=level)
     print('test GWskymap class\nPrinting some info')
     print('DS name {}'.format(DSs.event_name))
-    print('Area of DS is {} deg^2 at 99%'.format(DSs.area()))
-    pix_selected=DSs.get_credible_region_pixels(level=0.90)
+    print('Area of DS is {} deg^2 at 90%'.format(DSs.area()))
+    pix_selected=DSs.get_credible_region_pixels(level=level)
+    nside=int(DSs.nside)
+    print('nside is {}'.format(nside))
+    skyprob=DSs.p_posterior
     allmu=DSs.mu*1000#servono in Mpc 
     allsigma=DSs.sigma*1000
-    nside=DSs.nside
-    skyprob=DSs.p_posterior
-    #print(pix_selected)
-    #print(allmu[pix_selected],allsigma[pix_selected])
+    print(allmu)
+    print(allsigma)
+    if np.isnan(allmu).any():
+        print('There are NaN in allmu')
+    if np.isnan(allsigma).any():
+        print('There are NaN in allsigma')
+    mumean=(np.sum(allmu*skyprob))/np.sum(skyprob)
+    print('mu_pesato= {} Mpc'.format(mumean))
     thetas,phis=hp.pix2ang(nside,pix_selected)
     print('DS data:')
     print('pix selected ={}'.format(len(pix_selected)))
     print('len dL={}'.format(len(allmu[pix_selected])))
-    #print('theta={}'.format(thetas))
-    #print('phi={}'.format(phis))
-    #print('Std={}'.format(allsigma[pix_selected]))
-    #z_DSs=z_from_dL(allmu[pix_selected])
-    #print('Assuming flagship cosmology...')
-    #print('Ds redshift={}'.format(z_DSs))
     #########################Galaxy-Catalogue#############################################
+    print('Reading Galaxy Catalogue')
     #reading the catalogue and selecting the pixel
     to_read='Uniform_paper.txt'
     hostcat=GalCat(to_read,nside).read_catalogue()
@@ -138,20 +143,8 @@ if __name__=='__main__':
     hostcat['Pixel']=mypixels
     mask = hostcat['Pixel'].isin(pix_selected)
     hostcat_filtered=hostcat[mask]
-    # assign z_hosts
-    #z_hosts=np.array([z_DSs-z_DSs*0.1,z_DSs,z_DSs+z_DSs*0.03])
-    z_hosts=np.asarray(hostcat_filtered['z'])
-    print('hostcat shape {}'.format(len(z_hosts)))
-    #z_hosts=z_hosts[0:10]
-    #print('Mock Hosts at redshift')
-    #print(z_hosts)
-    #######################Cross-Correlation#############################################
-    #expected_h=np.zeros(len(z_hosts))
-    #for i in range(len(z_hosts)):
-    #    expected_h[i]=h_of_z_dl(z_hosts[i],allmu[pix_selected])
-    #print('expected peak at H0')
-    #print(expected_h)
-
+    #print('hostcat shape {}'.format(len(z_hosts)))
+    ###Cross-Correlation#############################################
     Event_dict = {
         'Event': [],
         'Likelihood': np.array([]),
@@ -161,7 +154,7 @@ if __name__=='__main__':
 
     H0min=40#30#55
     H0max=100#140#85
-    H0Grid=np.linspace(H0min,H0max,2000)
+    H0Grid=np.linspace(H0min,H0max,1000)
 
     
     total_post=np.zeros(len(H0Grid))# this will be the total for all the events
@@ -173,6 +166,8 @@ if __name__=='__main__':
     for i, pix in enumerate(pix_selected):
         pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
         z_hosts = np.asarray(pixel_galaxies['z'])
+        #z_hosts=z_hosts[-10:-1]
+        #print(z_hosts)
         if len(z_hosts) == 0:
             continue  # Skip this pixel if no galaxies are present
         pixel_post=np.zeros(len(H0Grid))
@@ -180,8 +175,9 @@ if __name__=='__main__':
         for j, h in enumerate(H0Grid):
             pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h)*angular_prob
     
-        # Sum the pixel posterior into the total posterior
-        single_post = single_post + pixel_post
+            # Sum the pixel posterior into the total posterior
+            single_post = single_post + pixel_post
+            ###Still need beta!
 
     #TO DO: Pensare ad un modo efficiente di salvare le cose, un dizionario dovrebbe andare. Chiavi:nome evento, posterior evento likelihood evento, beta evento
     #       Il plotter poi leggerà il dizionario e il codice deve salvare il dizionario, abbiamo visto che torna utile salvarsi ogni evento
@@ -208,7 +204,7 @@ if __name__=='__main__':
     ax.plot(x,single_post/np.trapz(single_post,x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
     ax.legend(fontsize=13, ncol=2) 
 
-    plotpath=os.path.join(MapPath+'test_onepix.pdf')
+    plotpath=os.path.join(MapPath+'GWtest00_lesspix.pdf')
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
 
 

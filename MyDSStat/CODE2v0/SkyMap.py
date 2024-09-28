@@ -12,7 +12,7 @@ class GWskymap:
         self.event_name=event_name
         self.read_event(event_name)
         if level==None:
-            self.level=0.99
+            self.level=0.90
         else:
             self.level=level
         
