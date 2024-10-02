@@ -41,8 +41,9 @@ def z_from_dL(dL_val):
     z = fsolve(func, 0.02)
     return z[0]
 
+@njit
 def E_z(z, H0, Om=Om0GLOB):
-    return np.sqrt(Om*(1+z)**3+(1-Om))
+    return np.sqrt(Om * (1 + z) ** 3 + (1 - Om))
 
 def r_z(z, H0, Om=Om0GLOB):
     c = clight
@@ -78,22 +79,28 @@ def h_of_z_dl(z,dl):
     return heq
 
 
-def likelihood_line(mu_DS,dl,sigma):
-    norm=1/(np.sqrt(2*np.pi)*sigma)
-    body=np.exp(-((dl-mu_DS)**2)/(2*sigma**2))
-    ret=norm*body
-    return ret
-def LikeofH0_pixel(mu_DS,sigma,z_hosts,Htemp):
-    #----------computing sum
-    to_sum=np.zeros(len(z_hosts))
-    for j in range(len(z_hosts)):
-        dl = Dl_z(z_hosts[j], Htemp, Om0GLOB)
-        to_sum[j]=likelihood_line(mu_DS,dl,sigma)
-    
-    tmp=np.sum(to_sum)
-    return tmp
+
+def likelihood_line(mu_DS, dl, sigma):
+    norm = 1 / (np.sqrt(2 * np.pi) * sigma)
+    body = np.exp(-((dl - mu_DS) ** 2) / (2 * sigma ** 2))
+    return norm * body
 
 
+def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
+    to_sum = np.zeros(len(z_hosts))
+    for v in range(len(z_hosts)):
+        dl = Dl_z(z_hosts[v], Htemp, Om0GLOB)
+        to_sum[v] = likelihood_line(mu_DS, dl, sigma)
+    return np.sum(to_sum)
+
+# Parallelized function to compute the pixel likelihood
+def compute_pixel_likelihood(args):
+    pix, allmu, allsigma, z_hosts, H0Grid, skyprob = args
+    pixel_post = np.zeros(len(H0Grid))
+    angular_prob = skyprob[pix]
+    for j, h in enumerate(H0Grid):
+        pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h) * angular_prob
+    return pixel_post
 
 
 #########################################################################################
@@ -154,25 +161,44 @@ if __name__=='__main__':
     
     total_post=np.zeros(len(H0Grid))# this will be the total for all the events
     single_post=np.zeros(len(H0Grid))
-    #pixel_post=np.zeros(len(H0Grid))
-    #for n, name in enumerate(fname)#loop sugli eventi, da fare dopo che si decide la struttura dei dati
-    Event_dict['Event'].append('GWtest00')
-    #for k, name in enumerate(eventlist):
-    #print('shape pix_selected {}'.format(np.shape(pix_selected)))
-    for i, pix in enumerate(pix_selected):
+    
+    #------Versione con for---------
+
+    # #######for n, name in enumerate(fname)#loop sugli eventi, da fare dopo che si decide la struttura dei dati
+    # ########Event_dict['Event'].append('GWtest00')
+    # #######for k, name in enumerate(eventlist):
+    # for i, pix in enumerate(pix_selected):
+    #     pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
+    #     z_hosts = np.asarray(pixel_galaxies['z'])
+    #     if len(z_hosts) == 0:
+    #         continue  # Skip this pixel if no galaxies are present
+    #     pixel_post=np.zeros(len(H0Grid))
+    #     angular_prob = skyprob[pix]#now is the same for each gal in the pix, can be computed apart and multiply
+    #     for j, h in enumerate(H0Grid):
+    #         pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h)*angular_prob
+    
+    #         # Sum the pixel posterior into the total posterior
+    #         single_post = single_post + pixel_post
+    #         ###Still need beta!
+
+
+    #-----Versione con Pool--------
+    # Collect pixel arguments for parallel processing
+    pixel_args = []
+    for pix in pix_selected:
         pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
         z_hosts = np.asarray(pixel_galaxies['z'])
-        #z_hosts=z_hosts[-10:-1]
-        if len(z_hosts) == 0:
-            continue  # Skip this pixel if no galaxies are present
-        pixel_post=np.zeros(len(H0Grid))
-        angular_prob = skyprob[pix]#now is the same for each gal in the pix, can be computed apart and multiply
-        for j, h in enumerate(H0Grid):
-            pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h)*angular_prob
-    
-            # Sum the pixel posterior into the total posterior
-            single_post = single_post + pixel_post
-            ###Still need beta!
+        if len(z_hosts) > 0:
+            pixel_args.append((pix, allmu, allsigma, z_hosts, H0Grid, skyprob))
+
+    # Use Pool to parallelize computation
+    with Pool(multiprocessing.cpu_count()) as pool:
+        results = list(pool.imap(compute_pixel_likelihood, pixel_args))
+    print('shape pix_selected {}  shape H0Grid {}'.format(np.shape(pix_selected),np.shape(H0Grid)))
+    print('result shape {}'.format(np.shape(results)))
+    # Sum the results for each pixel
+    for pixel_post in results:
+        single_post += pixel_post
 
     #TO DO: Pensare ad un modo efficiente di salvare le cose, un dizionario dovrebbe andare. Chiavi:nome evento, posterior evento likelihood evento, beta evento
     #       Il plotter poi leggerà il dizionario e il codice deve salvare il dizionario, abbiamo visto che torna utile salvarsi ogni evento
@@ -199,7 +225,7 @@ if __name__=='__main__':
     ax.plot(x,single_post/np.trapz(single_post,x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
     ax.legend(fontsize=13, ncol=2) 
 
-    plotpath=os.path.join(MapPath+'GWtest00_lesspix.pdf')
+    plotpath=os.path.join(MapPath+'GWtest00_lesspix-pool.pdf')
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
 
 

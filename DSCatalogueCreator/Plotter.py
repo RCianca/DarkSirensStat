@@ -89,6 +89,7 @@ mass_plott=0
 qplot=0
 SNR_plot=0
 sky_plot=1
+betaplot=0
 
 
 
@@ -379,4 +380,79 @@ if sky_plot == 1:
     # Save the sky map as a PNG file
     plt.savefig(GW_data_path + "Sky_Map.png", dpi=300)
     plt.close()
+
+##################################################################################################################################
+if betaplot == 1:
+    folder = 'Uniform/TestRun00/'
+    GW_data_path = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/' + folder
+
+    betaUnif = np.load(GW_data_path+'betaUnif.npy')
+    betaUnif_pix = np.load(GW_data_path+'betaUnif_pix.npy')
+    betaUnif_pix_dl=np.load(GW_data_path+'betaUnif_pix_dl.npy')
+
+    H0min=40#30#55
+    H0max=100#140#85
+    H0Grid=np.linspace(H0min,H0max,1000)
     
+
+
+    fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
+
+    x=H0Grid
+    xmin=np.min(x)
+    xmax=np.max(x)
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
+    #ax.set_ylabel(r'$P(H_0)$', fontsize=20)
+    ax.set_ylabel(r'$\beta (H_0)$', fontsize=30)
+
+    Mycol='teal'
+    ax.plot(x,betaUnif/np.trapz(betaUnif,x),label='betaUnif',color=Mycol,linewidth=4,linestyle='solid')
+    ax.legend(fontsize=13, ncol=2) 
+
+    plotpath=os.path.join(GW_data_path,'betaUnif.pdf')
+    plt.savefig(plotpath, format="pdf", bbox_inches="tight")
+
+
+    fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
+
+    x=H0Grid
+    xmin=np.min(x)
+    xmax=np.max(x)
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
+    #ax.set_ylabel(r'$P(H_0)$', fontsize=20)
+    ax.set_ylabel(r'$\beta (H_0)$', fontsize=30)
+
+    Mycol='teal'
+    ax.plot(x,betaUnif_pix/np.trapz(betaUnif_pix,x),label='betaUnif_pix',color=Mycol,linewidth=4,linestyle='solid')
+    ax.legend(fontsize=13, ncol=2) 
+
+    plotpath=os.path.join(GW_data_path,'betaUnif_pix.pdf')
+    plt.savefig(plotpath, format="pdf", bbox_inches="tight")
+
+    fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
+
+    x=H0Grid
+    xmin=np.min(x)
+    xmax=np.max(x)
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
+    #ax.set_ylabel(r'$P(H_0)$', fontsize=20)
+    ax.set_ylabel(r'$\beta (H_0)$', fontsize=30)
+
+    Mycol='teal'
+    ax.plot(x,betaUnif_pix_dl/np.trapz(betaUnif_pix_dl,x),label='betaUnif_pix_dl',color=Mycol,linewidth=4,linestyle='solid')
+    ax.legend(fontsize=13, ncol=2) 
+
+    plotpath=os.path.join(GW_data_path,'betaUnif_pix_dl.pdf')
+    plt.savefig(plotpath, format="pdf", bbox_inches="tight")

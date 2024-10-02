@@ -87,11 +87,16 @@ def LikeofH0_pixel(mu_DS,sigma,z_hosts,Htemp):
     #----------computing sum
     to_sum=np.zeros(len(z_hosts))
     for j in range(len(z_hosts)):
+        #dl=FlatLambdaCDM(H0=Htemp, Om0=Om0GLOB).luminosity_distance(z_gals[j]).value
         dl = Dl_z(z_hosts[j], Htemp, Om0GLOB)
-        to_sum[j]=likelihood_line(mu_DS,dl,sigma)
+        #a=0.01
+        #angular_prob=1#sphere_uncorr_gauss(new_phi_gals[j],new_theta_gals[j],DS_phi,DS_theta,sigma_phi,sigma_theta)
+        to_sum[j]=likelihood_line(mu_DS,dl,sigma)#*angular_prob#*stat_weights(z_gals[j])
     
-    tmp=np.sum(to_sum)
-    return tmp
+    tmp=np.sum(to_sum)#*norm
+    #denom_cat=allz[allz<=20]
+    #denom=np.sum(w(denom_cat))
+    return tmp#/denom
 
 
 
@@ -158,11 +163,11 @@ if __name__=='__main__':
     #for n, name in enumerate(fname)#loop sugli eventi, da fare dopo che si decide la struttura dei dati
     Event_dict['Event'].append('GWtest00')
     #for k, name in enumerate(eventlist):
-    #print('shape pix_selected {}'.format(np.shape(pix_selected)))
     for i, pix in enumerate(pix_selected):
         pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
         z_hosts = np.asarray(pixel_galaxies['z'])
         #z_hosts=z_hosts[-10:-1]
+        #print(z_hosts)
         if len(z_hosts) == 0:
             continue  # Skip this pixel if no galaxies are present
         pixel_post=np.zeros(len(H0Grid))
