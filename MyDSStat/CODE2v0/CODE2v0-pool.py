@@ -95,11 +95,15 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
 
 # Parallelized function to compute the pixel likelihood
 def compute_pixel_likelihood(args):
-    pix, allmu, allsigma, z_hosts, H0Grid, skyprob = args
+    pix, mu_pix, sigma_pix, z_hosts, H0Grid, angular_prob = args
     pixel_post = np.zeros(len(H0Grid))
-    angular_prob = skyprob[pix]
+    # Print debug info to compare with sequential version
+    #print(f'Processing pixel: {pix}')
+    
+    # Loop over H0Grid and compute the likelihood for each value of H0
     for j, h in enumerate(H0Grid):
-        pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h) * angular_prob
+        pixel_post[j] = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
+    
     return pixel_post
 
 
@@ -189,21 +193,35 @@ if __name__=='__main__':
         pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
         z_hosts = np.asarray(pixel_galaxies['z'])
         if len(z_hosts) > 0:
-            pixel_args.append((pix, allmu, allsigma, z_hosts, H0Grid, skyprob))
+            # Pass only the pixel-specific values (allmu[pix], allsigma[pix], skyprob[pix])
+            pixel_args.append((pix, allmu[pix], allsigma[pix], z_hosts, H0Grid, skyprob[pix]))
 
     # Use Pool to parallelize computation
-    with Pool(multiprocessing.cpu_count()) as pool:
-        results = list(pool.imap(compute_pixel_likelihood, pixel_args))
+    cpu=multiprocessing.cpu_count()
+    print('using {} cpu'.format(cpu))
+    with Pool(cpu) as pool:
+        results = list(tqdm(pool.imap(compute_pixel_likelihood, pixel_args), total=len(pixel_args)))
+
+
+
     print('shape pix_selected {}  shape H0Grid {}'.format(np.shape(pix_selected),np.shape(H0Grid)))
     print('result shape {}'.format(np.shape(results)))
-    # Sum the results for each pixel
-    for pixel_post in results:
+
+    #print(f"First pixel_post in results: {results[0]}")
+
+    for i, pixel_post in enumerate(results):
+        #print(f"Parallel pixel_post for pixel {i}: {pixel_post}")
         single_post += pixel_post
+        #print(f"Parallel single_post after pixel {i}: {single_post}")
 
     #TO DO: Pensare ad un modo efficiente di salvare le cose, un dizionario dovrebbe andare. Chiavi:nome evento, posterior evento likelihood evento, beta evento
     #       Il plotter poi leggerà il dizionario e il codice deve salvare il dizionario, abbiamo visto che torna utile salvarsi ogni evento
-
-    np.save(MapPath+'DSs_dictionary.npy', Event_dict) 
+    #Event_dict['Likelihood']=single_post
+    np.save(MapPath+'event_data.npy',single_post)
+    #df = pd.DataFrame({key: value for key, value in Event_dict.items() if isinstance(value, np.ndarray)})
+    # Save the DataFrame as an HDF5 file
+    #df.to_hdf(MapPath+'event_data.h5', key='Event_data', mode='w')
+    #print('Event_dict saved to event_data.h5 in pandas format')
 
     fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
     ax.tick_params(axis='both', which='major', labelsize=25)

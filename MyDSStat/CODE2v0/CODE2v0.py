@@ -86,9 +86,9 @@ def likelihood_line(mu_DS,dl,sigma):
 def LikeofH0_pixel(mu_DS,sigma,z_hosts,Htemp):
     #----------computing sum
     to_sum=np.zeros(len(z_hosts))
-    for j in range(len(z_hosts)):
-        dl = Dl_z(z_hosts[j], Htemp, Om0GLOB)
-        to_sum[j]=likelihood_line(mu_DS,dl,sigma)
+    for y in range(len(z_hosts)):
+        dl = Dl_z(z_hosts[y], Htemp, Om0GLOB)
+        to_sum[y]=likelihood_line(mu_DS,dl,sigma)
     
     tmp=np.sum(to_sum)
     return tmp
@@ -162,16 +162,19 @@ if __name__=='__main__':
     for i, pix in enumerate(pix_selected):
         pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
         z_hosts = np.asarray(pixel_galaxies['z'])
+        print('pix {}'.format(pix))
+        print('hosts\n {}'.format(z_hosts))
         #z_hosts=z_hosts[-10:-1]
         if len(z_hosts) == 0:
             continue  # Skip this pixel if no galaxies are present
         pixel_post=np.zeros(len(H0Grid))
         angular_prob = skyprob[pix]#now is the same for each gal in the pix, can be computed apart and multiply
         for j, h in enumerate(H0Grid):
+            #print(f'pix={pix}, mu_pix={allmu[pix]}, sigma_pix={allsigma[pix]}, angular_prob={angular_prob}')
             pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h)*angular_prob
     
             # Sum the pixel posterior into the total posterior
-            single_post = single_post + pixel_post
+        single_post = single_post + pixel_post
             ###Still need beta!
 
     #TO DO: Pensare ad un modo efficiente di salvare le cose, un dizionario dovrebbe andare. Chiavi:nome evento, posterior evento likelihood evento, beta evento

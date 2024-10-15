@@ -88,8 +88,9 @@ def PowerLawPlusPeak(m1, m_min, m_max, lamb, alpha, mu, sigma_m, dm):
 mass_plott=0
 qplot=0
 SNR_plot=0
-sky_plot=1
+sky_plot=0
 betaplot=0
+post_plot=1
 
 
 
@@ -455,4 +456,43 @@ if betaplot == 1:
     ax.legend(fontsize=13, ncol=2) 
 
     plotpath=os.path.join(GW_data_path,'betaUnif_pix_dl.pdf')
+    plt.savefig(plotpath, format="pdf", bbox_inches="tight")
+    #####################################################################################################################àà
+if post_plot==1:
+    folder = 'Uniform/TestRun00/'
+    GW_data_path = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/' + folder
+    #os.chdir(GW_data_path)
+
+    #df = pd.read_hdf('event_data.h5', key='Event_data')
+
+    # Access the 'Likelihood' column (since it was saved as part of the DataFrame)
+    likelihood = np.load(GW_data_path+'event_data.npy')
+
+    betaUnif = np.load(GW_data_path+'betaUnif.npy')
+    #betaUnif_pix = np.load(GW_data_path+'betaUnif_pix.npy')
+    #betaUnif_pix_dl=np.load(GW_data_path+'betaUnif_pix_dl.npy')
+
+    H0min=40#30#55
+    H0max=100#140#85
+    H0Grid=np.linspace(H0min,H0max,1000)
+
+    post=likelihood/betaUnif
+
+    fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
+
+    x=H0Grid
+    xmin=np.min(x)
+    xmax=np.max(x)
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
+    ax.set_ylabel(r'$P (H_0)$', fontsize=30)
+
+    Mycol='teal'
+    ax.plot(x,post/np.trapz(post,x),label='Posterior GW00',color=Mycol,linewidth=4,linestyle='solid')
+    ax.legend(fontsize=13, ncol=2) 
+
+    plotpath=os.path.join(GW_data_path,'PosteriorGW00.pdf')
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")

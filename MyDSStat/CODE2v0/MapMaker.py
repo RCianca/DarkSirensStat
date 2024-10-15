@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 import h5py
 from multiprocessing import Pool
+import multiprocessing
 import pickle
 from numba import jit
 
@@ -115,6 +116,12 @@ def process_pixel(args):
     
     return pix, mu, std
 
+def parallel_process_pixels(unique_pixels):
+    with Pool(multiprocessing.cpu_count()) as pool:
+        # Use map to distribute the unique pixels to each worker
+        results = pool.map(process_pixel, unique_pixels)
+    return results
+
 ####################################################################################################################################
 if __name__=='__main__':
 
@@ -122,6 +129,8 @@ if __name__=='__main__':
     CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
     SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
     COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
+
+    print('using {} CPU' .format(multiprocessing.cpu_count()))
 
     #-----------------------ORDERING OF THE VARIABLES--------------------------------------
     Cov_file='Cov_SNR_more_than_100_200.npy'
@@ -144,114 +153,182 @@ if __name__=='__main__':
     print('Performing permutation...\n Permuted keys are:')
     print(keys)
     #---------------------------------------------------------------------------------------
-
-    # construct the mean vector now only for one DS
-    selected = 52
-    mean = np.array(Allevents_DS.iloc[selected])
     allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
-    cov = np.float64(allcov[:, :, selected])
 
-    #--------------------------CORE---------------------------------------------------------
+    for i in range(0,100):
+        print(f"Generating map {i:02d}")
 
-    args=mean,cov,parameters_list
-    perm_mean,perm_cov,perm_keys=permutation(args)
+        # Select a different row for each map (you can modify this selection logic if needed)
+        selected = i
 
-    print('Performed new permutation. Now order is\n{}'.format(perm_keys))
+        # Construct mean vector and covariance matrix for the selected event
+        mean = np.array(Allevents_DS.iloc[selected])
+        cov = np.float64(allcov[:, :, selected])
 
-    try:
-        np.linalg.cholesky(cov)
-        print('Cov Matrix is Cholesky approved')
-    except:
-        print('Cov nont positive semi-defined')
+        try:
+            np.linalg.cholesky(cov)
+            print('Cov Matrix is Cholesky approved')
+        except:
+            print('Cov nont positive semi-defined')
 
+        # Permutation and Cholesky decomposition
+        args = mean, cov, parameters_list
+        perm_mean, perm_cov, perm_keys = permutation(args)
+        L = np.linalg.cholesky(perm_cov)
+        z = np.random.randn(10**8, len(perm_mean))
+        samples = perm_mean + z @ L.T
+        theta = samples[:, 1]
+        phi = samples[:, 2]
+        theta_hp = np.mod(theta, np.pi)
+        phi_hp = np.mod(phi, 2 * np.pi)
 
-    variances = np.diag(perm_cov)
-    sigmas=np.sqrt(variances)
-    #print(perm_keys)
-    #print([f'{val:.4f}' for val in perm_mean])
-    #print([f'{sigma:.4f}' for sigma in sigmas])
-    print(' Theta Variance={:0.3f},sigma Theta={:0.3f}'.format(variances[1],sigmas[1]))
-    print(' Phi Variance={:0.3f},sigma Phi={:0.3f}'.format(variances[2],sigmas[2]))
+        # Healpix map generation
+        nside = 128
+        sky_map = np.zeros(hp.nside2npix(nside))
+        #pixels = hp.ang2pix(nside, theta, phi,nest=True)
+        pixels = hp.ang2pix(nside, theta_hp, phi_hp)
+        np.add.at(sky_map, pixels, 1)
+        sky_map = sky_map / np.sum(sky_map)
 
-    #-------------sampling using Cholesky
+        # Compute the area of the 90% credible region
+        all_pixels = np.arange(hp.nside2npix(nside))
+        gw_area = compute_area(nside, all_pixels, sky_map, level=0.9)
+        all_mu = np.zeros(hp.nside2npix(nside))
+        all_std = np.zeros(hp.nside2npix(nside))
 
-    num_samples = 10**8
-    #samples = np.random.multivariate_normal(perm_mean, perm_cov, num_samples)
-    #print(np.shape(samples))
+        print('Number of unique pixels {}'.format(len(np.unique(pixels))))
+        gw_area=compute_area(nside,all_pixels,sky_map,level=0.9)
+        allsky=hp.nside2npix(nside)*hp.nside2pixarea(nside,degrees=True)
+        print('Area GW 90%={} deg^2'.format(gw_area))
+        print('Percentage of sky={}%'.format(100*gw_area/allsky))
+        os.chdir(COV_SAVE_PATH)
 
-    # Cholesky
-    L = np.linalg.cholesky(perm_cov)
-    z = np.random.randn(num_samples, len(perm_mean))  # num_samples x num_dimensions
-    samples = perm_mean + z @ L.T  
-    theta = samples[:, 1]
-    phi = samples[:, 2]
-    print('Input mean values')
-    print('theta={}, phi={}'.format(perm_mean[1],perm_mean[2]))
-    print('Sampled mean values')
-    print('theta={}, phi={}'.format(np.mean(theta),np.mean(phi)))
-    print('Sampled std values')
-    print('theta={}, phi={}'.format(np.std(theta),np.std(phi)))
+        plt.figure(figsize=(12, 8))
+        hp.mollview(sky_map, title=f'GWtest{i:02d}-skyprob', nest=False, hold=True)
+        plt.savefig(f'GWtest{i:02d}.pdf')      
 
-    nside = 128
-    npix=hp.nside2npix(nside)
-    all_pixels=np.arange(npix)
+        # Process the unique pixels
+        unique_pixels = np.unique(pixels)
+        results = parallel_process_pixels(unique_pixels)
 
-    sky_map = np.zeros(hp.nside2npix(nside))
-    pixels = hp.ang2pix(nside, theta, phi,nest=False)
-    #pixels = hp.ang2pix(nside, theta_hp, phi_hp)
-    # Increment the pixel values
-    np.add.at(sky_map, pixels, 1)
-    sky_map = sky_map / np.sum(sky_map)
-
-    print('nside={}'.format(nside))
-    print('Number of unique pixels {}'.format(len(np.unique(pixels))))
-    gw_area=compute_area(nside,all_pixels,sky_map,level=0.9)
-    allsky=hp.nside2npix(nside)*hp.nside2pixarea(nside,degrees=True)
-    print('Area GW 90%={} deg^2'.format(gw_area))
-    print('Percentage of sky={}%'.format(100*gw_area/allsky))
-
-    #---Select only pixels in which sky_map is greater than 0 (unique_pixels) this can be refined by selection X% of the 2D probability
-
-    unique_pixels=np.unique(pixels)#sky_map[sky_map>0]#
-    #pix99=get_credible_region_pixels(all_pixels,sky_map)
-    #pix90=get_credible_region_pixels(all_pixels,sky_map,level=0.9)
-
-    # Initialize arrays to store the mean and std of luminosity distance
-    all_mu = np.zeros(hp.nside2npix(nside))
-    all_std = np.zeros(hp.nside2npix(nside))
-
-    # Initialize dictionary to store new luminosity distance arrays for each pixel
-    luminosity_distance_samples = {}
-
-    #--------------dL in each pixel---------------------------------------------------------------------
-
-    
-
-    # Specify the number of processors to use
-    num_processors = 24
-    print('computing the conditional probability for dL')
-    #args = [(pix) for pix in unique_pixels]
-    #with Pool(processes=num_processors) as pool:
-    #    results = list(pool.imap(process_pixel, args))
-
-    #from concurrent.futures import ProcessPoolExecutor
-
-    #with ProcessPoolExecutor(max_workers=num_processors) as executor:
-    #    results = list(executor.map(process_pixel, unique_pixels))
-
-    results = [process_pixel(pix) for pix in unique_pixels]
-
-    # Collect the results
-    for pix, mu, std in results:
-        if mu is not None and std is not None:
+        # Collect the results for mean and standard deviation of luminosity distance
+        for pix, mu, std in results:
             all_mu[pix] = mu
             all_std[pix] = std
 
-    mod_postnorm=np.ones(npix)
-    print('saving skymap...')
-    fname='GWtest00.fits'
-    dat=Table([sky_map,all_mu,all_std,mod_postnorm],
-          names=('PROB','DISTMU','DISTSIGMA','DISTNORM'))
-    os.chdir(COV_SAVE_PATH)
-    fits.write_sky_map(fname,dat, nest=False)
-    print('map {} saved in {}'.format(fname,COV_SAVE_PATH))
+        mod_postnorm = np.ones(hp.nside2npix(nside))
+
+        # Save the map with an incremental name
+        fname = f'GWtest{i:02d}.fits'
+        dat = Table([sky_map, all_mu, all_std, mod_postnorm],
+                    names=('PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM'))
+        os.chdir(COV_SAVE_PATH)
+        fits.write_sky_map(fname, dat, nest=False)
+        print(f'Map {fname} saved')
+
+
+
+
+
+
+
+    ################### Old Code, keep for reference#############################################
+
+    # # construct the mean vector now only for one DS
+    # selected = 52
+    # mean = np.array(Allevents_DS.iloc[selected])
+    # allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
+    # cov = np.float64(allcov[:, :, selected])
+
+    # #--------------------------CORE---------------------------------------------------------
+
+    # args=mean,cov,parameters_list
+    # perm_mean,perm_cov,perm_keys=permutation(args)
+
+    # print('Performed new permutation. Now order is\n{}'.format(perm_keys))
+
+    # try:
+    #     np.linalg.cholesky(cov)
+    #     print('Cov Matrix is Cholesky approved')
+    # except:
+    #     print('Cov nont positive semi-defined')
+
+
+    # variances = np.diag(perm_cov)
+    # sigmas=np.sqrt(variances)
+    # #print(perm_keys)
+    # #print([f'{val:.4f}' for val in perm_mean])
+    # #print([f'{sigma:.4f}' for sigma in sigmas])
+    # print(' Theta Variance={:0.3f},sigma Theta={:0.3f}'.format(variances[1],sigmas[1]))
+    # print(' Phi Variance={:0.3f},sigma Phi={:0.3f}'.format(variances[2],sigmas[2]))
+
+    # #-------------sampling using Cholesky
+
+    # num_samples = 10**8
+    # #samples = np.random.multivariate_normal(perm_mean, perm_cov, num_samples)
+    # #print(np.shape(samples))
+
+    # # Cholesky
+    # L = np.linalg.cholesky(perm_cov)
+    # z = np.random.randn(num_samples, len(perm_mean))  # num_samples x num_dimensions
+    # samples = perm_mean + z @ L.T  
+    # theta = samples[:, 1]
+    # phi = samples[:, 2]
+    # print('Input mean values')
+    # print('theta={}, phi={}'.format(perm_mean[1],perm_mean[2]))
+    # print('Sampled mean values')
+    # print('theta={}, phi={}'.format(np.mean(theta),np.mean(phi)))
+    # print('Sampled std values')
+    # print('theta={}, phi={}'.format(np.std(theta),np.std(phi)))
+
+    # nside = 128
+    # npix=hp.nside2npix(nside)
+    # all_pixels=np.arange(npix)
+
+    # sky_map = np.zeros(hp.nside2npix(nside))
+    # #pixels = hp.ang2pix(nside, theta, phi,nest=True)
+    # pixels = hp.ang2pix(nside, theta_hp, phi_hp)
+    # # Increment the pixel values
+    # np.add.at(sky_map, pixels, 1)
+    # sky_map = sky_map / np.sum(sky_map)
+
+    # print('nside={}'.format(nside))
+    # print('Number of unique pixels {}'.format(len(np.unique(pixels))))
+    # gw_area=compute_area(nside,all_pixels,sky_map,level=0.9)
+    # allsky=hp.nside2npix(nside)*hp.nside2pixarea(nside,degrees=True)
+    # print('Area GW 90%={} deg^2'.format(gw_area))
+    # print('Percentage of sky={}%'.format(100*gw_area/allsky))
+
+    # #---Select only pixels in which sky_map is greater than 0 (unique_pixels) this can be refined by selection X% of the 2D probability
+
+    # unique_pixels=np.unique(pixels)#sky_map[sky_map>0]#
+    # #pix99=get_credible_region_pixels(all_pixels,sky_map)
+    # #pix90=get_credible_region_pixels(all_pixels,sky_map,level=0.9)
+
+    # # Initialize arrays to store the mean and std of luminosity distance
+    # all_mu = np.zeros(hp.nside2npix(nside))
+    # all_std = np.zeros(hp.nside2npix(nside))
+
+    # # Initialize dictionary to store new luminosity distance arrays for each pixel
+    # luminosity_distance_samples = {}
+
+    # #--------------dL in each pixel---------------------------------------------------------------------
+
+    # print('computing the conditional probability for dL')
+ 
+    # #results = [process_pixel(pix) for pix in unique_pixels]
+    # results = parallel_process_pixels(unique_pixels)
+    # # Collect the results
+    # for pix, mu, std in results:
+    #     if mu is not None and std is not None:
+    #         all_mu[pix] = mu
+    #         all_std[pix] = std
+
+    # mod_postnorm=np.ones(npix)
+    # print('saving skymap...')
+    # fname='GWtest00.fits'
+    # dat=Table([sky_map,all_mu,all_std,mod_postnorm],
+    #       names=('PROB','DISTMU','DISTSIGMA','DISTNORM'))
+    # os.chdir(COV_SAVE_PATH)
+    # fits.write_sky_map(fname,dat, nest=False)
+    # print('map {} saved in {}'.format(fname,COV_SAVE_PATH))
