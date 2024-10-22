@@ -25,6 +25,7 @@ import sys
 #---------------------script import------------------------------------------
 from SkyMap import GWskymap
 from GalaxyCat import GalCat
+from Global import *
 #-----------------------Costants-----------------------------------------
 href=67 #69
 Om0GLOB=0.319
@@ -33,53 +34,8 @@ clight = 2.99792458* 10**5#km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
 #------------------------------------------------------------------------
 #------------------Functions---------------------------------------------
-def z_from_dL(dL_val):
-    '''
-    Returns redshift for a given luminosity distance dL (in Mpc)'''
-    
-    func = lambda z :cosmoflag.luminosity_distance(z).value - dL_val
-    z = fsolve(func, 0.02)
-    return z[0]
 
 @njit
-def E_z(z, H0, Om=Om0GLOB):
-    return np.sqrt(Om * (1 + z) ** 3 + (1 - Om))
-
-def r_z(z, H0, Om=Om0GLOB):
-    c = clight
-    integrand = lambda x : 1/E_z(x, H0, Om)
-    integral, error = integrate.quad(integrand, 0, z)
-    return integral*c/H0
-
-def Dl_z_vett(z, H0, Om=Om0GLOB):
-    c = clight
-    integral = np.zeros_like(z)  # Array vuoto per salvare i risultati
-
-    for i, z_val in enumerate(z):
-        integrand = lambda x: 1 / E_z(x, H0, Om)
-        integral[i], error = integrate.quad(integrand, 0, z_val)
-        integral[i]=integral[i]*(1+z_val)
-
-    return integral * c / H0
-
-def Dl_z(z, H0, Om=Om0GLOB):
-    return r_z(z, H0, Om)*(1+z)
-
-def z_from_dcom(dc_val):
-    '''
-    Returns redshift for a given comoving distance dc (in Mpc)'''
-    
-    func = lambda z :cosmoflag.comoving_distance(z).value - dc_val
-    z = fsolve(func, 0.02)
-    return z[0]
-
-def h_of_z_dl(z,dl):
-    func = lambda h :Dl_z(z, h, Om0GLOB) -dl
-    heq = fsolve(func, 30)[0] 
-    return heq
-
-
-
 def likelihood_line(mu_DS, dl, sigma):
     norm = 1 / (np.sqrt(2 * np.pi) * sigma)
     body = np.exp(-((dl - mu_DS) ** 2) / (2 * sigma ** 2))
@@ -166,28 +122,6 @@ if __name__=='__main__':
     total_post=np.zeros(len(H0Grid))# this will be the total for all the events
     single_post=np.zeros(len(H0Grid))
     
-    #------Versione con for---------
-
-    # #######for n, name in enumerate(fname)#loop sugli eventi, da fare dopo che si decide la struttura dei dati
-    # ########Event_dict['Event'].append('GWtest00')
-    # #######for k, name in enumerate(eventlist):
-    # for i, pix in enumerate(pix_selected):
-    #     pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
-    #     z_hosts = np.asarray(pixel_galaxies['z'])
-    #     if len(z_hosts) == 0:
-    #         continue  # Skip this pixel if no galaxies are present
-    #     pixel_post=np.zeros(len(H0Grid))
-    #     angular_prob = skyprob[pix]#now is the same for each gal in the pix, can be computed apart and multiply
-    #     for j, h in enumerate(H0Grid):
-    #         pixel_post[j] = LikeofH0_pixel(allmu[pix], allsigma[pix], z_hosts, h)*angular_prob
-    
-    #         # Sum the pixel posterior into the total posterior
-    #         single_post = single_post + pixel_post
-    #         ###Still need beta!
-
-
-    #-----Versione con Pool--------
-    # Collect pixel arguments for parallel processing
     pixel_args = []
     for pix in pix_selected:
         pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
@@ -243,7 +177,7 @@ if __name__=='__main__':
     ax.plot(x,single_post/np.trapz(single_post,x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
     ax.legend(fontsize=13, ncol=2) 
 
-    plotpath=os.path.join(MapPath+'GWtest00_lesspix-pool.pdf')
+    plotpath=os.path.join(MapPath+'GWtest00_pool.pdf')
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
 
 

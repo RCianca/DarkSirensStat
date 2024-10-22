@@ -24,35 +24,11 @@ import multiprocessing
 import pickle
 from numba import jit
 
+from Global import *
 
 #################################################################################
 
-def compute_area(nside,all_pixels,p_posterior,level=0.99):
 
-    
-    ''' Area of level% credible region, in square degrees.
-        If level is not specified, uses current selection '''
-    pixarea=hp.nside2pixarea(nside)
-    return get_credible_region_pixels(all_pixels,p_posterior,level=level).size*pixarea*(180/np.pi)**2
-
-
-def _get_credible_region_pth(p_posterior,level=0.99):
-    '''
-    Finds value minskypdf of rho_i that bouds the x% credible region , with x=level
-    Then to select pixels in that region: self.all_pixels[self.p_posterior>minskypdf]
-    '''
-    prob_sorted = np.sort(p_posterior)[::-1]
-    prob_sorted_cum = np.cumsum(prob_sorted)
-    # find index of array which bounds the self.area confidence interval
-    idx = np.searchsorted(prob_sorted_cum, level)
-    minskypdf = prob_sorted[idx] #*skymap.npix
-
-    #self.p[self.p]  >= minskypdf       
-    return minskypdf
-
-def get_credible_region_pixels(all_pixels, p_posterior, level=0.99):
-
-    return all_pixels[p_posterior>_get_credible_region_pth(p_posterior,level=level)]
 
 def sample_multivariate_gaussian(mean, cov, num_samples):
     return np.random.multivariate_normal(mean, cov, num_samples)
