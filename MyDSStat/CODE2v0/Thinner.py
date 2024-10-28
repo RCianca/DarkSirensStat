@@ -56,6 +56,7 @@ if __name__=='__main__':
     CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
     SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
     COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
+    output_path='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 
     print('using {} CPU' .format(multiprocessing.cpu_count()))
 
@@ -63,16 +64,39 @@ if __name__=='__main__':
     print('Reading Galaxy Catalogue')
     #reading the catalogue and selecting the pixel
     to_read='Uniform_paper.txt'
-    hostcat=GalCat(to_read,nside).read_catalogue()
-    print(hostcat.columns)
+    nside=128
+    hostcat=GalCat(to_read).read_catalogue()
     Population='SNR_more_than_100_200.h5'
     tosave=load_population(COV_SAVE_PATH+Population)
     Allevents_DS = pd.DataFrame.from_dict(tosave, orient='columns')
+    print(list(Allevents_DS.columns))
     selected=52
-    Allevents_DS=Allevents_DS.iloc[selected]
-    print(Allevents_DS.columns)
+    DS_dl=Allevents_DS.iloc[selected]['dL']*1000
+    DS_theta=Allevents_DS.iloc[selected]['theta']
+    DS_phi=Allevents_DS.iloc[selected]['phi']
+    print(DS_dl,DS_theta,DS_phi)
     #---------------------------------------------------------------------------------------
-    DS_host=hostcat[hostcat['z']==Allevents_DS['z']]
-    DS_host=DS_host[DS_host['theta']==Allevents_DS['theta']]
-    DS_host=DS_host[DS_host['phi']==Allevents_DS['phi']]
-    print(DS_host.shape)
+    DS_host=hostcat[hostcat['Luminosity Distance']==DS_dl]
+    #print(DS_host.shape)
+    #print(DS_host.head(2))
+    DS_host=DS_host[DS_host['theta']==DS_theta]
+    #print(DS_host.shape)
+    #print(DS_host.head(2))
+    DS_host=DS_host[DS_host['phi']==DS_phi]
+    #print(DS_host.shape)
+    #print(DS_host.head(2))
+    if DS_host.shape[0]==1:
+        print('unique host found')
+        i=hostcat[((hostcat['Luminosity Distance'] == DS_dl) &( hostcat.theta == DS_theta) & (hostcat.phi == DS_phi))].index
+        temp_df = hostcat.loc[i]
+        print(DS_dl,DS_theta,DS_phi)
+        hostcat = hostcat.drop(i)
+        hostcat_sampled = hostcat.sample(n=500, replace=False, random_state=42)
+        hostcat_sampled = hostcat_sampled._append(temp_df, ignore_index=True)
+        print('Tail of the sampled catalog:')
+        print(hostcat_sampled.tail(3))
+        print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
+        hostcat_sampled.to_csv(output_path+'Uniform_paper_sampled.txt', index=False)
+        print(f'Sampled catalog saved to {output_path}')
+    else:
+        print('No unique host found or multiple hosts found.')

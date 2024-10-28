@@ -27,14 +27,18 @@ cosmoflag = FlatLambdaCDM(H0=H0GLOB, Om0=Om0GLOB)
 
 class GalCat:
     """docstring for ClassName"""
-    def __init__(self,catname, nside):
+    def __init__(self,catname, nside=None):
         self.catname = catname
         self.catname_noext=catname.split('.')[0]
         self.catpath=os.path.join(os.getcwd(),'Catalogues/GalaxyCatalogue/Uniform',catname)
         self.maskpath=os.path.join(os.getcwd(),'Catalogues/GalaxyCatalogue/Uniform')
         self.maskname=self.catname_noext+str(nside)+'.npy'
-        self.nside=nside
-        self.prevpath='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/Uniform_paper.txt'
+        if nside is None:
+            self.nside=128
+        else:
+            self.nside=nside
+        #self.prevpath='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/Uniform_paper.txt'
+        self.prevpath='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/Uniform_paper_sampled.txt'
 
 
     def read_catalogue(self):
