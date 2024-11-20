@@ -23,6 +23,9 @@ from numba import njit
 from tqdm import tqdm
 import sys
 
+from GalaxyCat import GalCat
+from SkyMap import GWskymap
+
 href=67 #69
 Om0GLOB=0.319
 Xi0Glob =1.
@@ -117,34 +120,39 @@ def singlebetaline(h):
     func = lambda z: Dl_z(z, Htemp, Om0GLOB) - mydlmin
     zmin = fsolve(func, 0.02)[0]
     
-    tmp = shared_allz[(shared_allz >= zmin) & (shared_allz <= zMax)]
+    tmp = allz[allz >= zmin]  # host with z >= z_min
+    tmp = tmp[tmp <= zMax]     # host with z_min <= z <= z_max
     
     gal_invol = len(tmp)
     if gal_invol == 0:
         gal_invol += 1  # To avoid division by zero or empty sets
-    
-    return gal_invol
 
-def compute_betaUnif_parallel(H0Grid, allz):
-    # Create shared memory for allz
-    shared_allz_ = Array('d', allz, lock=False)  # 'd' is for double precision
-    args = [(h,) for h in H0Grid]
+    ret = gal_invol/len(allz)  # This would be divided by gal_incat, not defined here, but update as needed
+    return ret
+
+# def compute_betaUnif_parallel(H0Grid, allz):
+#     # Create shared memory for allz
+#     shared_allz_ = Array('d', allz, lock=False)  # 'd' is for double precision
+#     args = [(h,) for h in H0Grid]
     
-    with Pool(multiprocessing.cpu_count(), initializer=init_worker, initargs=(shared_allz_,)) as pool:
-        betaUnif = list(pool.starmap(singlebetaline, args))
+#     with Pool(multiprocessing.cpu_count(), initializer=init_worker, initargs=(shared_allz_,)) as pool:
+#         betaUnif = list(pool.starmap(singlebetaline, args))
     
+#     return np.array(betaUnif)
+
+def compute_betaUnif_parallel(H0Grid):
+    with Pool(multiprocessing.cpu_count()) as pool:
+        betaUnif = list(tqdm(pool.imap(singlebetaline, H0Grid),total=len(H0Grid)))
     return np.array(betaUnif)
 
 if __name__=='__main__':
-    from GalaxyCat import GalCat
-    from SkyMap import GWskymap
 
 
     print('Loading GW data')
-    fname='GWtest00.fits'# importare la lista da un config
+    fname='oldGWtest00.fits'# importare la lista da un config
     working_dir=os.getcwd()
     MapPath=working_dir+'/Events/Uniform/TestRun00/'
-    level=0.3
+    level=0.9
     DSs=GWskymap(MapPath+fname,level=level)
     print('test GWskymap class\nPrinting some info')
     print('DS name {}'.format(DSs.event_name))
@@ -162,7 +170,9 @@ if __name__=='__main__':
     if np.isnan(allsigma).any():
         print('There are NaN in allsigma')
     mumean=(np.sum(allmu*skyprob))/np.sum(skyprob)
+    sigmamean=(np.sum(allsigma*skyprob))/np.sum(skyprob)
     print('mu_pesato= {} Mpc'.format(mumean))
+    print('sigma_pesato= {} Mpc'.format(sigmamean))
     thetas,phis=hp.pix2ang(nside,pix_selected)
     print('DS data:')
     print('pix selected ={}'.format(len(pix_selected)))
@@ -188,14 +198,17 @@ if __name__=='__main__':
     H0min=40#30#55
     H0max=100#140#85
     H0Grid=np.linspace(H0min,H0max,1000)
-    mydlmax=Dl_z(np.max(allz),href,Om0GLOB)#10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
-    mydlmin=Dl_z(np.min(allz),href,Om0GLOB)#8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
+    #mydlmax=Dl_z(np.max(allz),H0min,Om0GLOB)#10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
+    #mydlmin=Dl_z(np.min(allz),H0max,Om0GLOB)#8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
+
+    mydlmax=mumean+5*sigmamean#10400#10_061.7#10_400#Dl_z(zds_max,href,Om0GLOB)
+    mydlmin=mumean-5*sigmamean#8950#9664.6#8_930#Dl_z(zds_min,href,Om0GLOB)
 
     allz = np.array(allz)  # Ensure allz is a NumPy array
-    betaUnif = compute_betaUnif_parallel(H0Grid, allz)
+    betaUnif = compute_betaUnif_parallel(H0Grid)#, allz)
     allz=allz_filtered
     allz = np.array(allz)  # Ensure allz is a NumPy array
-    betaUnif_filtered = compute_betaUnif_parallel(H0Grid, allz)
+    betaUnif_filtered = compute_betaUnif_parallel(H0Grid)#, allz)
 
     #betaUnif=UniformBeta(hostcat_filtered,pix_selected,H0Grid)
     #betaUnif_pix=UniformBeta_pixel(hostcat_filtered,pix_selected,nside,H0Grid)

@@ -71,6 +71,43 @@ def permutation(args):
     keys_permuted=list_perm(keys,perm)
     return mean_permuted,cov_permuted,keys_permuted
 
+def dl_inpix(pix,samples_in_pixel):
+# Create the alpha vector with the fixed values and mean of other parameters
+    #columns = Allevents_DS.columns # global variable
+    dL_pos = columns.get_loc('dL')
+    theta_pos = columns.get_loc('theta')
+    phi_pos = columns.get_loc('phi')
+
+    # Create the permutation order with 'dL' first, 'theta' second, and 'phi' third
+    remaining_indices = list(set(range(len(columns))) - {dL_pos, theta_pos, phi_pos})
+
+    theta_fixed, phi_fixed = hp.pix2ang(nside,pix)
+    alpha = np.zeros(len(perm_mean) - 1)
+    alpha[0] = theta_fixed
+    alpha[1] = phi_fixed
+    alpha[2:] = samples_in_pixel[:, remaining_indices].mean(axis=0)  # Use the mean of the other parameters in this pixel
+    mean_new = perm_mean[1:]
+    # Partition the permuted covariance matrix
+    Sigma_xx = perm_cov[1:, 1:]
+    Sigma_xy = perm_cov[1:, 0]
+    Sigma_yx = perm_cov[0, 1:]
+    Sigma_yy = perm_cov[0, 0]
+    mu_cond = perm_mean[0] + Sigma_yx @ np.linalg.inv(Sigma_xx) @ (alpha - mean_new)
+    Sigma_cond = Sigma_yy - Sigma_yx @ np.linalg.inv(Sigma_xx) @ Sigma_xy
+    
+    # Handle negative Sigma_cond
+    if Sigma_cond < 0:
+        print(f"Warning: Negative Sigma_cond ({Sigma_cond}) encountered for pixel {pix}.")
+        Sigma_cond = np.abs(Sigma_cond)  # Take the absolute value
+        Sigma_cond = max(Sigma_cond, 1e-10)  # Ensure it is at least a small positive value
+    
+    # Sample from the conditional Gaussian distribution
+    new_samples = np.random.normal(mu_cond, np.sqrt(Sigma_cond), 100_000)
+    mu = np.mean(new_samples)
+    std = np.std(new_samples)
+    
+    return mu, std#, new_samples
+
 
 def process_pixel(args):
     pix = args
@@ -87,8 +124,9 @@ def process_pixel(args):
     pixel_indices = np.where(pixels == pix)[0]
     samples_in_pixel = samples[pixel_indices]
 
-    mu = samples_in_pixel[:, 0].mean(axis=0)
-    std = np.std(samples_in_pixel[:,0])
+    #mu = samples_in_pixel[:, 0].mean(axis=0)
+    #std = np.std(samples_in_pixel[:,0])
+    mu,std = dl_inpix(pix,samples_in_pixel)
     
     return pix, mu, std
 
@@ -126,17 +164,17 @@ if __name__=='__main__':
     args=Allevents_DS_fromfile,parameters_list
     Allevents_DS=cat2parameter(args)
     keys = list(Allevents_DS.columns)
-    print('Performing permutation...\n Permuted keys are:')
+    #print('Performing permutation...\n Permuted keys are:')
     print(keys)
     #---------------------------------------------------------------------------------------
     allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
 
-    for i in range(0,100):
+    for i in range(7,8):
         print(f"Generating map {i:02d}")
 
         # Select a different row for each map (you can modify this selection logic if needed)
         selected = i
-
+        columns=Allevents_DS.columns
         # Construct mean vector and covariance matrix for the selected event
         mean = np.array(Allevents_DS.iloc[selected])
         cov = np.float64(allcov[:, :, selected])
@@ -151,7 +189,7 @@ if __name__=='__main__':
         args = mean, cov, parameters_list
         perm_mean, perm_cov, perm_keys = permutation(args)
         L = np.linalg.cholesky(perm_cov)
-        z = np.random.randn(10**9, len(perm_mean))# maybe 10**9 is better
+        z = np.random.randn(10**8, len(perm_mean))# maybe 10**9 is better
         samples = perm_mean + z @ L.T
         theta = samples[:, 1]
         phi = samples[:, 2]
@@ -180,7 +218,7 @@ if __name__=='__main__':
         os.chdir(COV_SAVE_PATH)
 
         plt.figure(figsize=(12, 8))
-        hp.mollview(sky_map, title=f'GWtest{i:02d}-skyprob', nest=False, hold=True)
+        hp.mollview(sky_map, title=f'GWtest{i:02d}-skyprob_variant', nest=False, hold=True)
         plt.savefig(f'GWtest{i:02d}.pdf')
         plt.close()      
 
@@ -196,7 +234,7 @@ if __name__=='__main__':
         mod_postnorm = np.ones(hp.nside2npix(nside))
 
         # Save the map with an incremental name
-        fname = f'GWtest{i:02d}.fits'
+        fname = f'GWtest{i:02d}_variant.fits'
         dat = Table([sky_map, all_mu, all_std, mod_postnorm],
                     names=('PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM'))
         os.chdir(COV_SAVE_PATH)

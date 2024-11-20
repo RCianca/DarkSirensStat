@@ -32,29 +32,29 @@ class GalCat:
         self.catname_noext=catname.split('.')[0]
         self.catpath=os.path.join(os.getcwd(),'Catalogues/GalaxyCatalogue/Uniform',catname)
         self.maskpath=os.path.join(os.getcwd(),'Catalogues/GalaxyCatalogue/Uniform')
-        self.maskname=self.catname_noext+str(nside)+'.npy'
+        self.maskname=self.catname_noext+'_'+str(nside)+'.npy'
         if nside is None:
             self.nside=128
         else:
             self.nside=nside
         #self.prevpath='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/Uniform_paper.txt'
-        self.prevpath='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/Uniform_paper_sampled.txt'
+        #self.prevpath='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/Uniform_paper_sampled.txt'
 
 
     def read_catalogue(self):
         print("Reading host catalogue {}".format(self.catname))
-        hostcat=pd.read_csv(self.prevpath)#will be catpath
+        hostcat=pd.read_csv(self.catpath)#will be catpath
         colnames = ['Ngal', 'Comoving Distance', 'Luminosity Distance', 'z', 'phi', 'theta']
         hostcat.columns=colnames
         return hostcat
     def pixelizer(self):
         if not os.path.exists(os.path.join(self.maskpath,self.maskname)):
             print("Generating pixel mask for host catalogue {}".format(self.catname))
-            hostcat=pd.read_csv(self.prevpath)#will be catpath
+            hostcat=pd.read_csv(self.catpath)#will be catpath
             colnames = ['Ngal', 'Comoving Distance', 'Luminosity Distance', 'z', 'phi', 'theta']
             hostcat.columns=colnames
             print('showing head of {}'.format(self.catname))
-            print(hostcat.head(5))
+            print(hostcat.head(3))
             Alltheta=hostcat['theta']
             Allphi=hostcat['phi']
             Allpixels=hp.ang2pix(self.nside,Alltheta,Allphi)
@@ -63,7 +63,7 @@ class GalCat:
             print('Pixel mask saved as {} in folder {}'.format(self.maskname,self.maskpath))
 
         else:
-            print('Loading pixel mask for host catalogue {}'.format(self.prevpath))
+            print('Loading pixel mask for host catalogue {}'.format(self.catname))
             Allpixels=np.load(os.path.join(self.maskpath,self.maskname))
         return Allpixels
 
@@ -72,4 +72,4 @@ if __name__=='__main__':
     #work in progress
     to_read='Uniform_paper.txt'
     #mycat=GalCat(to_read,64)
-    mypixels=GalCat(to_read,64).pixelizer()
+    mypixels=GalCat(to_read,128).pixelizer()

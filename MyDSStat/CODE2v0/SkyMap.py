@@ -11,8 +11,8 @@ class GWskymap:
     def __init__(self,event_name,level=None):
         self.event_name=event_name
         self.read_event(event_name)
-        if level==None:
-            self.level=0.90
+        if level is None:
+            self.level=0.9
         else:
             self.level=level
         
