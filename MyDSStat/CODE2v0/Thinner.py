@@ -56,7 +56,7 @@ if __name__=='__main__':
     CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
     SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
     COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
-    output_path='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Catalogues/GalaxyCatalogue/Uniform'
+    output_path='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Catalogues/GalaxyCatalogue/Uniform/'
 
     print('using {} CPU' .format(multiprocessing.cpu_count()))
 
@@ -74,6 +74,7 @@ if __name__=='__main__':
     DS_dl=Allevents_DS.iloc[selected]['dL']*1000
     DS_theta=Allevents_DS.iloc[selected]['theta']
     DS_phi=Allevents_DS.iloc[selected]['phi']
+    print('DS info')
     print(DS_dl,DS_theta,DS_phi)
     #---------------------------------------------------------------------------------------
     DS_host=hostcat[hostcat['Luminosity Distance']==DS_dl]
@@ -91,12 +92,12 @@ if __name__=='__main__':
         temp_df = hostcat.loc[i]
         print(DS_dl,DS_theta,DS_phi)
         hostcat = hostcat.drop(i)
-        hostcat_sampled = hostcat.sample(frac=0.5, replace=False, random_state=42)
+        hostcat_sampled = hostcat.sample(10, replace=False, random_state=42)
         hostcat_sampled = hostcat_sampled._append(temp_df, ignore_index=True)
         print('Tail of the sampled catalog:')
         print(hostcat_sampled.tail(3))
         print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
-        hostcat_sampled.to_csv(output_path+'Uniform_paper_sampled_frac_50.txt', index=False)
+        hostcat_sampled.to_csv(output_path+'Uniform_paper_sampled_almostone.txt', index=False)
         print(f'Sampled catalog saved to {output_path}')
     else:
         print('No unique host found or multiple hosts found.')

@@ -51,6 +51,7 @@ def cat2parameter(args):
     
     return catalogue_permuted
 
+
 def permutation(args):
     mean,cov,keys=args
     
@@ -64,14 +65,15 @@ def permutation(args):
     psi_pos=keys.index('psi')
     remaining_indices = list(set(range(len(keys))) - {dL_pos, theta_pos,phi_pos
                                                     ,tcoal_pos,psi_pos,iota_pos,eta_pos,phicoal_pos})
-    perm = [dL_pos, theta_pos,phi_pos,tcoal_pos,psi_pos,iota_pos,eta_pos,phicoal_pos] + remaining_indices
+    perm = [dL_pos,tcoal_pos,psi_pos,iota_pos,eta_pos,phicoal_pos] + remaining_indices +[theta_pos,phi_pos]
     #mean_permuted = np.array(mean)[perm]
     mean_permuted = np.array(mean)[perm]
     cov_permuted = cov[np.ix_(perm, perm)]
     keys_permuted=list_perm(keys,perm)
     return mean_permuted,cov_permuted,keys_permuted
 
-def dl_inpix(pix,samples_in_pixel):
+
+def cond_inpix(pix,samples_in_pixel):
 # Create the alpha vector with the fixed values and mean of other parameters
     #columns = Allevents_DS.columns # global variable
     dL_pos = columns.get_loc('dL')
@@ -79,56 +81,39 @@ def dl_inpix(pix,samples_in_pixel):
     phi_pos = columns.get_loc('phi')
 
     # Create the permutation order with 'dL' first, 'theta' second, and 'phi' third
-    remaining_indices = list(set(range(len(columns))) - {dL_pos, theta_pos, phi_pos})
+    #remaining_indices = list(set(range(len(columns))) - {dL_pos, theta_pos, phi_pos})
 
     theta_fixed, phi_fixed = hp.pix2ang(nside,pix)
-    alpha = np.zeros(len(perm_mean) - 1)
+    alpha = np.zeros(2)
     alpha[0] = theta_fixed
     alpha[1] = phi_fixed
-    alpha[2:] = samples_in_pixel[:, remaining_indices].mean(axis=0)  # Use the mean of the other parameters in this pixel
-    mean_new = perm_mean[1:]
+    #alpha[2:] = samples_in_pixel[:, remaining_indices].mean(axis=0)  # Use the mean of the other parameters in this pixel
+    mean_new = perm_mean[-2:]
     # Partition the permuted covariance matrix
-    Sigma_xx = perm_cov[1:, 1:]
-    Sigma_xy = perm_cov[1:, 0]
-    Sigma_yx = perm_cov[0, 1:]
-    Sigma_yy = perm_cov[0, 0]
-    mu_cond = perm_mean[0] + Sigma_yx @ np.linalg.inv(Sigma_xx) @ (alpha - mean_new)
+    Sigma_xx = perm_cov[-2:, -2:]
+    Sigma_xy = perm_cov[-2:, 0:-2]
+    Sigma_yx = perm_cov[0:-2, -2:]
+    Sigma_yy = perm_cov[0:-2, 0:-2]
+    mu_cond = perm_mean[0:-2] + Sigma_yx @ np.linalg.inv(Sigma_xx) @ (alpha - mean_new)
     Sigma_cond = Sigma_yy - Sigma_yx @ np.linalg.inv(Sigma_xx) @ Sigma_xy
     
-    # Handle negative Sigma_cond
-    if Sigma_cond < 0:
-        print(f"Warning: Negative Sigma_cond ({Sigma_cond}) encountered for pixel {pix}.")
-        Sigma_cond = np.abs(Sigma_cond)  # Take the absolute value
-        Sigma_cond = max(Sigma_cond, 1e-10)  # Ensure it is at least a small positive value
-    
-    # Sample from the conditional Gaussian distribution
-    new_samples = np.random.normal(mu_cond, np.sqrt(Sigma_cond), 100_000)
-    mu = np.mean(new_samples)
-    std = np.std(new_samples)
-    
-    return mu, std#, new_samples
-
+    mu = mu_cond[0]#mu_cond[0]#np.mean(new_samples)
+    std = np.sqrt(Sigma_cond[0,0])
+    return mu,std#, new_samples
 
 def process_pixel(args):
     pix = args
     pix=int(pix)
     if not isinstance(pix, int):
         raise TypeError(f"Expected integer for pixel, but got {type(pix)}")
-        
         pix = int(pix)  # Explicitly cast to Python int
-    
-    # Get the fixed angles for this pixel
-    #theta_fixed, phi_fixed = hp.pix2ang(nside, pix)
-    
-    # Extract samples of all parameters for this pixel
     pixel_indices = np.where(pixels == pix)[0]
     samples_in_pixel = samples[pixel_indices]
 
-    #mu = samples_in_pixel[:, 0].mean(axis=0)
-    #std = np.std(samples_in_pixel[:,0])
-    mu,std = dl_inpix(pix,samples_in_pixel)
+    mu,std = cond_inpix(pix,samples_in_pixel)
+    distance_sampled = samples_in_pixel[:,0]
     
-    return pix, mu, std
+    return pix, mu, std ,distance_sampled
 
 def parallel_process_pixels(unique_pixels):
     with Pool(multiprocessing.cpu_count()) as pool:
@@ -169,7 +154,7 @@ if __name__=='__main__':
     #---------------------------------------------------------------------------------------
     allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
 
-    for i in range(7,8):
+    for i in range(52,53):
         print(f"Generating map {i:02d}")
 
         # Select a different row for each map (you can modify this selection logic if needed)
@@ -188,11 +173,14 @@ if __name__=='__main__':
         # Permutation and Cholesky decomposition
         args = mean, cov, parameters_list
         perm_mean, perm_cov, perm_keys = permutation(args)
+        #diag_cov=perm_cov.diagonal()#remove after test
+        #perm_cov=np.diag(diag_cov)#remove after test
         L = np.linalg.cholesky(perm_cov)
-        z = np.random.randn(10**8, len(perm_mean))# maybe 10**9 is better
+        z = np.random.randn(10**8, len(perm_mean))
         samples = perm_mean + z @ L.T
-        theta = samples[:, 1]
-        phi = samples[:, 2]
+        theta = samples[:, -2]
+        phi = samples[:, -1]
+        direct_dl=samples[:,0]
         theta_hp = np.mod(theta, np.pi)
         phi_hp = np.mod(phi, 2 * np.pi)
 
@@ -207,11 +195,9 @@ if __name__=='__main__':
         # Compute the area of the 90% credible region
         all_pixels = np.arange(hp.nside2npix(nside))
         gw_area = compute_area(nside, all_pixels, sky_map, level=0.9)
-        all_mu = np.zeros(hp.nside2npix(nside))
-        all_std = np.zeros(hp.nside2npix(nside))
+
 
         print('Number of unique pixels {}'.format(len(np.unique(pixels))))
-        gw_area=compute_area(nside,all_pixels,sky_map,level=0.9)
         allsky=hp.nside2npix(nside)*hp.nside2pixarea(nside,degrees=True)
         print('Area GW 90%={} deg^2'.format(gw_area))
         print('Percentage of sky={}%'.format(100*gw_area/allsky))
@@ -222,19 +208,20 @@ if __name__=='__main__':
         plt.savefig(f'GWtest{i:02d}.pdf')
         plt.close()      
 
-        # Process the unique pixels
+        all_mu = np.zeros(hp.nside2npix(nside))
+        all_std = np.zeros(hp.nside2npix(nside))
         unique_pixels = np.unique(pixels)
+        luminosity_distance_samples = {}
         results = parallel_process_pixels(unique_pixels)
-
-        # Collect the results for mean and standard deviation of luminosity distance
-        for pix, mu, std in results:
+        for pix, mu, std,distance_sampled in results:
             all_mu[pix] = mu
             all_std[pix] = std
+            luminosity_distance_samples[pix] = distance_sampled
 
         mod_postnorm = np.ones(hp.nside2npix(nside))
 
         # Save the map with an incremental name
-        fname = f'GWtest{i:02d}_variant.fits'
+        fname = f'GWtest{i:02d}_variant_nodiag.fits'
         dat = Table([sky_map, all_mu, all_std, mod_postnorm],
                     names=('PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM'))
         os.chdir(COV_SAVE_PATH)
@@ -347,3 +334,60 @@ if __name__=='__main__':
     # os.chdir(COV_SAVE_PATH)
     # fits.write_sky_map(fname,dat, nest=False)
     # print('map {} saved in {}'.format(fname,COV_SAVE_PATH))
+
+    # def permutation(args):
+    # mean,cov,keys=args
+    
+    # dL_pos = keys.index('dL')
+    # theta_pos = keys.index('theta')
+    # phi_pos = keys.index('phi')
+    # iota_pos=keys.index('iota')
+    # eta_pos=keys.index('eta')
+    # phicoal_pos=keys.index('Phicoal')
+    # tcoal_pos=keys.index('tcoal')
+    # psi_pos=keys.index('psi')
+    # remaining_indices = list(set(range(len(keys))) - {dL_pos, theta_pos,phi_pos
+    #                                                 ,tcoal_pos,psi_pos,iota_pos,eta_pos,phicoal_pos})
+    # perm = [dL_pos, theta_pos,phi_pos,tcoal_pos,psi_pos,iota_pos,eta_pos,phicoal_pos] + remaining_indices
+    # #mean_permuted = np.array(mean)[perm]
+    # mean_permuted = np.array(mean)[perm]
+    # cov_permuted = cov[np.ix_(perm, perm)]
+    # keys_permuted=list_perm(keys,perm)
+    # return mean_permuted,cov_permuted,keys_permuted
+
+#     def dl_inpix(pix,samples_in_pixel):
+# # Create the alpha vector with the fixed values and mean of other parameters
+#     #columns = Allevents_DS.columns # global variable
+#     dL_pos = columns.get_loc('dL')
+#     theta_pos = columns.get_loc('theta')
+#     phi_pos = columns.get_loc('phi')
+
+#     # Create the permutation order with 'dL' first, 'theta' second, and 'phi' third
+#     remaining_indices = list(set(range(len(columns))) - {dL_pos, theta_pos, phi_pos})
+
+#     theta_fixed, phi_fixed = hp.pix2ang(nside,pix)
+#     alpha = np.zeros(len(perm_mean) - 1)
+#     alpha[0] = theta_fixed
+#     alpha[1] = phi_fixed
+#     alpha[2:] = samples_in_pixel[:, remaining_indices].mean(axis=0)  # Use the mean of the other parameters in this pixel
+#     mean_new = perm_mean[1:]
+#     # Partition the permuted covariance matrix
+#     Sigma_xx = perm_cov[1:, 1:]
+#     Sigma_xy = perm_cov[1:, 0]
+#     Sigma_yx = perm_cov[0, 1:]
+#     Sigma_yy = perm_cov[0, 0]
+#     mu_cond = perm_mean[0] + Sigma_yx @ np.linalg.inv(Sigma_xx) @ (alpha - mean_new)
+#     Sigma_cond = Sigma_yy - Sigma_yx @ np.linalg.inv(Sigma_xx) @ Sigma_xy
+    
+#     # Handle negative Sigma_cond
+#     if Sigma_cond < 0:
+#         print(f"Warning: Negative Sigma_cond ({Sigma_cond}) encountered for pixel {pix}.")
+#         Sigma_cond = np.abs(Sigma_cond)  # Take the absolute value
+#         Sigma_cond = max(Sigma_cond, 1e-10)  # Ensure it is at least a small positive value
+    
+#     # Sample from the conditional Gaussian distribution
+#     new_samples = np.random.normal(mu_cond, np.sqrt(Sigma_cond), 100_000)
+#     mu = np.mean(new_samples)
+#     std = np.std(new_samples)
+    
+#     return mu, std#, new_samples

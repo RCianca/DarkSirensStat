@@ -303,7 +303,7 @@ if __name__=='__main__':
     COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
     #######################GW-Events#####################################################
     print('Loading GW data')
-    fname='oldGWtest00.fits'# importare la lista da un config
+    fname='GWtest52_DiagCov.fits'# importare la lista da un config
     #working_dir=os.getcwd()
     level=0.9
     DSs=GWskymap(COV_SAVE_PATH+fname,level=level)
@@ -332,7 +332,7 @@ if __name__=='__main__':
     #########################Galaxy-Catalogue#############################################
     print('Reading Galaxy Catalogue')
     #reading the catalogue and selecting the pixel
-    to_read='Uniform_paper_sampled_frac_50.txt'
+    to_read='Uniform_paper_sampled_frac_10.txt'
     hostcat=GalCat(to_read,nside).read_catalogue()
     print('Reading catalogue completed')
     mypixels=GalCat(to_read,nside).pixelizer()
@@ -356,6 +356,8 @@ if __name__=='__main__':
     args = mean, cov, parameters_list
     perm_mean, perm_cov, perm_keys = permutation(args)
     print(perm_keys)
+    diag_cov=perm_cov.diagonal()#remove after test
+    perm_cov=np.diag(diag_cov)#remove after test
     inv_perm_cov=np.linalg.inv(perm_cov)
     simple_mean=perm_mean
     simple_mean[3:]=0
@@ -400,7 +402,7 @@ if __name__=='__main__':
             My_Like=p.map(LikeofH0, arr)
 
 #############################################################################################
-    np.save(COV_SAVE_PATH+'event_data_version1_sampled_frac_50.npy',My_Like)
+    np.save(COV_SAVE_PATH+'Diag_cov_test/'+'event_data_version1_sampled_frac10_DiagCov.npy',My_Like)
 
     fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
     ax.tick_params(axis='both', which='major', labelsize=25)
@@ -422,5 +424,5 @@ if __name__=='__main__':
     ax.plot(x,My_Like/np.trapz(My_Like,x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
     ax.legend(fontsize=13, ncol=2) 
 
-    plotpath=os.path.join(COV_SAVE_PATH+'GWtest00_pool_oldversion_sampled_frac_50.pdf')
+    plotpath=os.path.join(COV_SAVE_PATH+'Diag_cov_test/'+'GWtest52_pool_oldversion_sampled_frac10_DiagCov.pdf')
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")

@@ -69,7 +69,7 @@ if __name__=='__main__':
 
     #######################GW-Events#####################################################
     print('Loading GW data')
-    fname='oldGWtest00.fits'# importare la lista da un config
+    fname='GWtest52_variant_nodiag.fits'# importare la lista da un config
     working_dir=os.getcwd()
     MapPath=working_dir+'/Events/Uniform/TestRun00/'
     level=0.9
@@ -81,10 +81,10 @@ if __name__=='__main__':
     nside=int(DSs.nside)
     print('nside is {}'.format(nside))
     skyprob=DSs.p_posterior
-    allmu=DSs.mu*1000#servono in Mpc 
+    #allmu=DSs.mu*1000#servono in Mpc 
     allsigma=DSs.sigma*1000
-    print(allmu)
-    print(allsigma)
+    #print(allmu)
+    #print(allsigma)
     if np.isnan(allmu).any():
         print('There are NaN in allmu')
     if np.isnan(allsigma).any():
@@ -92,6 +92,8 @@ if __name__=='__main__':
     mumean=(np.sum(allmu*skyprob))/np.sum(skyprob)
     allmu=np.ones(len(DSs.mu))*mumean################################ poi togli
     print('mu_pesato= {} Mpc'.format(mumean))
+    sigmamean=(np.sum(allsigma*skyprob))/np.sum(skyprob)
+    print('sigma_pesato= {} Mpc'.format(sigmamean))
     thetas,phis=hp.pix2ang(nside,pix_selected)
     print('DS data:')
     print('pix selected ={}'.format(len(pix_selected)))
@@ -100,7 +102,7 @@ if __name__=='__main__':
     print('Reading Galaxy Catalogue')
     #reading the catalogue and selecting the pixel
     #to_read='Uniform_paper.txt'
-    to_read='Uniform_paper_sampled_frac_50.txt'
+    to_read='Uniform_paper_sampled_almostone.txt'
     hostcat=GalCat(to_read,nside).read_catalogue()
     print('Reading catalogue completed')
     mypixels=GalCat(to_read,nside).pixelizer()
@@ -153,7 +155,7 @@ if __name__=='__main__':
     #TO DO: Pensare ad un modo efficiente di salvare le cose, un dizionario dovrebbe andare. Chiavi:nome evento, posterior evento likelihood evento, beta evento
     #       Il plotter poi leggerà il dizionario e il codice deve salvare il dizionario, abbiamo visto che torna utile salvarsi ogni evento
     #Event_dict['Likelihood']=single_post
-    np.save(MapPath+'event_data_sampled_frac_50.npy',single_post)
+    np.save(MapPath+'Diag_cov_test/'+'event_data_sampled_almostone_NoDiag_mumean.npy',single_post)
     #df = pd.DataFrame({key: value for key, value in Event_dict.items() if isinstance(value, np.ndarray)})
     # Save the DataFrame as an HDF5 file
     #df.to_hdf(MapPath+'event_data.h5', key='Event_data', mode='w')
@@ -179,7 +181,7 @@ if __name__=='__main__':
     ax.plot(x,single_post/np.trapz(single_post,x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
     ax.legend(fontsize=13, ncol=2) 
 
-    plotpath=os.path.join(MapPath+'GWtest00_pool_sampled_frac_50.pdf')
+    plotpath=os.path.join(MapPath+'Diag_cov_test/'+'GWtest00_pool_sampled_almostone_NoDiag_mumean.pdf')
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
 
 
