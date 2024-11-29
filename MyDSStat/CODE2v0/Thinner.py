@@ -70,7 +70,7 @@ if __name__=='__main__':
     tosave=load_population(COV_SAVE_PATH+Population)
     Allevents_DS = pd.DataFrame.from_dict(tosave, orient='columns')
     print(list(Allevents_DS.columns))
-    selected=52
+    selected=7
     DS_dl=Allevents_DS.iloc[selected]['dL']*1000
     DS_theta=Allevents_DS.iloc[selected]['theta']
     DS_phi=Allevents_DS.iloc[selected]['phi']
@@ -97,7 +97,7 @@ if __name__=='__main__':
         print('Tail of the sampled catalog:')
         print(hostcat_sampled.tail(3))
         print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
-        hostcat_sampled.to_csv(output_path+'Uniform_paper_sampled_almostone.txt', index=False)
+        hostcat_sampled.to_csv(output_path+'Uniform_paper_sampled_almostone_GW07.txt', index=False)
         print(f'Sampled catalog saved to {output_path}')
     else:
         print('No unique host found or multiple hosts found.')

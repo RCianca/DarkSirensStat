@@ -1,0 +1,194 @@
+import numpy as np
+import pandas as pd
+import healpy as hp
+
+import matplotlib.pyplot as plt
+import matplotlib.pylab as pl
+
+from scipy import integrate
+from scipy import interpolate
+from scipy.optimize import fsolve
+#from scipy.special import erfc
+from profilehooks import profile 
+
+from astropy.cosmology import FlatLambdaCDM
+
+import os
+from os import listdir
+from os.path import isfile, join
+
+from multiprocessing import Pool
+import multiprocessing
+import time
+from numba import njit
+from tqdm import tqdm
+import sys
+#---------------------script import------------------------------------------
+from SkyMap import GWskymap
+from GalaxyCat import GalCat
+from Global import *
+#-----------------------Costants-----------------------------------------
+href=67 #69
+Om0GLOB=0.319
+Xi0Glob =1.
+clight = 2.99792458* 10**5#km/s
+cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
+#------------------------------------------------------------------------
+#------------------Functions---------------------------------------------
+
+@njit
+def likelihood_line(mu_DS, dl, sigma):
+    norm = 1 / (np.sqrt(2 * np.pi) * sigma)
+    body = np.exp(-((dl - mu_DS) ** 2) / (2 * sigma ** 2))
+    return norm * body
+
+
+def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
+    to_sum = np.zeros(len(z_hosts))
+    for v in range(len(z_hosts)):
+        dl = Dl_z(z_hosts[v], Htemp, Om0GLOB)
+        to_sum[v] = likelihood_line(mu_DS, dl, sigma)
+    return np.sum(to_sum)
+
+# Parallelized function to compute the pixel likelihood
+def compute_pixel_likelihood(args):
+    pix, mu_pix, sigma_pix, z_hosts, H0Grid, angular_prob = args
+    pixel_post = np.zeros(len(H0Grid))
+    # Print debug info to compare with sequential version
+    #print(f'Processing pixel: {pix}')
+    
+    # Loop over H0Grid and compute the likelihood for each value of H0
+    for j, h in enumerate(H0Grid):
+        pixel_post[j] = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
+    
+    return pixel_post
+
+
+#########################################################################################
+
+if __name__=='__main__':
+    working_dir=os.getcwd()
+    path='Results'
+    exist=os.path.exists(path)
+    if not exist:
+        print('creating Result folder')
+        os.mkdir('Results')
+    runpath='FirstBatch'
+    folder=os.path.join(path,runpath)
+    os.mkdir(folder)
+    print('\n data will be saved in '+folder)
+
+    H0min=40#30#55
+    H0max=100#140#85
+    H0Grid=np.linspace(H0min,H0max,1000)
+    cols_names=['Event','likelihood']
+    DF_results=pd.DataFrame(columns=cols_names)
+    total_post=np.ones(len(H0Grid))# this will be the total for all the events
+
+    print('Reading Galaxy Catalogue')
+    to_read='Uniform_paper.txt'
+    nside=128
+    hostcat=GalCat(to_read,nside).read_catalogue()
+    print('Reading catalogue completed')
+
+    print('Loading GW data')
+    fname=[
+        'GWtest01.fits','GWtest02.fits','GWtest03.fits','GWtest04.fits','GWtest05.fits','GWtest06.fits',
+        'GWtest07.fits','GWtest08.fits','GWtest09.fits','GWtest10.fits'
+        ]
+
+
+
+    MapPath=working_dir+'/Events/Uniform/TestRun00/'
+    level=0.9
+    for name in fname:
+        DSs=GWskymap(MapPath+name,level=level)
+        print('DS name {}'.format(DSs.event_name))
+        print('Area of DS is {} deg^2 at 90%'.format(DSs.area()))
+        pix_selected=DSs.get_credible_region_pixels(level=level)
+        nside=int(DSs.nside)
+        skyprob=DSs.p_posterior
+        allmu=DSs.mu*1000#servono in Mpc 
+        allsigma=DSs.sigma*1000
+        if np.isnan(allmu).any():
+            print('There are NaN in allmu')
+        if np.isnan(allsigma).any():
+            print('There are NaN in allsigma')
+        mumean=(np.sum(allmu*skyprob))/np.sum(skyprob)
+        
+        print('mu_pesato= {} Mpc'.format(mumean))
+        sigmamean=(np.sum(allsigma*skyprob))/np.sum(skyprob)
+        print('sigma_pesato= {} Mpc'.format(sigmamean))
+        thetas,phis=hp.pix2ang(nside,pix_selected)
+        print('DS data:')
+        print('pix selected ={}'.format(len(pix_selected)))
+        print('len dL={}'.format(len(allmu[pix_selected])))
+    #########################Galaxy-Catalogue#############################################
+
+        mypixels=GalCat(to_read,nside).pixelizer()
+        hostcat['Pixel']=mypixels
+        mask = hostcat['Pixel'].isin(pix_selected)
+        hostcat_filtered=hostcat[mask]
+        #print('hostcat shape {}'.format(len(z_hosts)))
+        ###Cross-Correlation#############################################    
+    
+        single_post=np.zeros(len(H0Grid))
+        
+        pixel_args = []
+        for pix in pix_selected:
+            pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
+            z_hosts = np.asarray(pixel_galaxies['z'])
+            if len(z_hosts) > 0:
+                # Pass only the pixel-specific values (allmu[pix], allsigma[pix], skyprob[pix])
+                pixel_args.append((pix, allmu[pix], allsigma[pix], z_hosts, H0Grid, skyprob[pix]))
+
+        # Use Pool to parallelize computation
+        cpu=multiprocessing.cpu_count()
+        print('using {} cpu'.format(cpu))
+        with Pool(cpu) as pool:
+            results = list(tqdm(pool.imap(compute_pixel_likelihood, pixel_args), total=len(pixel_args)))
+
+        print('shape pix_selected {}  shape H0Grid {}'.format(np.shape(pix_selected),np.shape(H0Grid)))
+        print('result shape {}'.format(np.shape(results)))
+
+        for i, pixel_post in enumerate(results):
+            #print(f"Parallel pixel_post for pixel {i}: {pixel_post}")
+            single_post += pixel_post
+        total_post += single_post
+        # Append the event name and likelihood to DF_results
+        DF_results = pd.concat(
+            [DF_results, pd.DataFrame({'Event': [DSs.event_name], 'Likelihood': [single_post.tolist()]})],
+            ignore_index=True
+        )
+
+    DF_results.to_csv(folder + '/GW01_10.csv', index=False)
+
+        ####################Plot###########################################################
+    fig, ax = plt.subplots(1, figsize=(15,10)) #crea un tupla che poi è più semplice da gestire
+    ax.tick_params(axis='both', which='major', labelsize=25)
+    ax.yaxis.get_offset_text().set_fontsize(25)
+    ax.grid(linestyle='dotted', linewidth='0.6')#griglia in sfondo
+
+
+    x=H0Grid
+    xmin=np.min(x)
+    xmax=np.max(x)
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'$H_0(Km/s/Mpc)$', fontsize=30)
+    #ax.set_ylabel(r'$P(H_0)$', fontsize=20)
+    ax.set_ylabel(r'$Posterior(H_0)$', fontsize=30)
+    if xmin<href<xmax:
+        ax.axvline(x = href, color = 'k', linestyle='dashdot',label = 'H0=67')
+
+    Mycol='teal'
+    ax.plot(x,total_post/np.trapz(total_post,x),label='Total_posterior',color=Mycol,linewidth=4,linestyle='solid')
+    ax.legend(fontsize=13, ncol=2) 
+
+    plotpath=os.path.join(folder+'/MultyTest.pdf')
+    plt.savefig(plotpath, format="pdf", bbox_inches="tight")
+    plt.close()
+
+
+
+
+    
