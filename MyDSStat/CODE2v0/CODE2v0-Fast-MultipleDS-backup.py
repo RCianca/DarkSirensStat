@@ -26,11 +26,14 @@ import sys
 #---------------------script import------------------------------------------
 from SkyMap import GWskymap
 from GalaxyCat import GalCat
-from Global import (
-    href, Om0GLOB, clight, Dl_z_vectorized, Dl_z_approx, fname, runpath
-)
-
-
+from Global import *
+#-----------------------Costants-----------------------------------------
+href=67 #69
+Om0GLOB=0.319
+Xi0Glob =1.
+clight = 2.99792458* 10**5#km/s
+cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
+#------------------------------------------------------------------------
 #------------------Functions---------------------------------------------
 
 @njit
@@ -45,6 +48,13 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
     likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vectorized likelihood
     return np.sum(likelihoods)
 
+
+# def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
+#     to_sum = np.zeros(len(z_hosts))
+#     for v in range(len(z_hosts)):
+#         dl = Dl_z(z_hosts[v], Htemp, Om0GLOB)
+#         to_sum[v] = likelihood_line(mu_DS, dl, sigma)
+#     return np.sum(to_sum)
 
 # Parallelized function to compute the pixel likelihood
 def compute_pixel_likelihood(args):
@@ -63,12 +73,9 @@ def compute_pixel_likelihood(args):
 #########################################################################################
 
 if __name__=='__main__':
-    print(f"Constants: H0 = {href}, Omega_M = {Om0GLOB}")
-    print(f"Files to process: {fname}")
-    print(f"Results will be saved in folder: {runpath}")
      working_dir = os.getcwd()
     path = 'Results'
-    #runpath = 'FirstBatch'
+    runpath = 'FirstBatch'
 
     # Ensure directory exists
     folder = os.path.join(path, runpath)
@@ -90,7 +97,7 @@ if __name__=='__main__':
 
     # Load GW Data
     print('Loading GW data')
-    #fname = ['GWtest07.fits', 'GWtest08.fits']
+    fname = ['GWtest07.fits', 'GWtest08.fits']
     MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
 
@@ -134,6 +141,35 @@ if __name__=='__main__':
             for pix in pix_selected
             if len(hostcat_filtered[hostcat_filtered['Pixel'] == pix]) > 0
         ]
+        
+        # pixel_args = []
+        # for pix in pix_selected:
+        #     pixel_galaxies = hostcat_filtered[hostcat_filtered['Pixel'] == pix]
+        #     z_hosts = np.asarray(pixel_galaxies['z'])
+        #     if len(z_hosts) > 0:
+        #         # Pass only the pixel-specific values (allmu[pix], allsigma[pix], skyprob[pix])
+        #         pixel_args.append((pix, allmu[pix], allsigma[pix], z_hosts, H0Grid, skyprob[pix]))
+
+        # Use Pool to parallelize computation
+    #     cpu=multiprocessing.cpu_count()
+    #     print('using {} cpu'.format(cpu))
+    #     with Pool(cpu) as pool:
+    #         results = list(tqdm(pool.imap(compute_pixel_likelihood, pixel_args), total=len(pixel_args)))
+
+    #     print('shape pix_selected {}  shape H0Grid {}'.format(np.shape(pix_selected),np.shape(H0Grid)))
+    #     print('result shape {}'.format(np.shape(results)))
+
+    #     for i, pixel_post in enumerate(results):
+    #         #print(f"Parallel pixel_post for pixel {i}: {pixel_post}")
+    #         single_post += pixel_post
+    #     total_post += single_post
+    #     # Append the event name and likelihood to DF_results
+    #     DF_results = pd.concat(
+    #         [DF_results, pd.DataFrame({'Event': [DSs.event_name], 'Likelihood': [single_post.tolist()]})],
+    #         ignore_index=True
+    #     )
+
+    # DF_results.to_csv(folder + '/GW01_10.csv', index=False)
 
             # Parallel computation
         cpu = min(multiprocessing.cpu_count(), len(pixel_args))
