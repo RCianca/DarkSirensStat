@@ -1,38 +1,19 @@
-import numpy as np
-import pandas as pd
-import healpy as hp
-
-import matplotlib.pyplot as plt
-import matplotlib.pylab as pl
-
-from scipy import integrate
-from scipy import interpolate
-from scipy.optimize import fsolve
-#from scipy.special import erfc
-from profilehooks import profile 
-
-from astropy.cosmology import FlatLambdaCDM
-
-from os import mkdir
-from os import listdir
-from os.path import isfile, join
-
-from multiprocessing import Pool
-import multiprocessing
-import time
-from numba import njit
-from tqdm import tqdm
-import sys
-#---------------------script import------------------------------------------
+from Global import (
+    href, Om0GLOB, clight, Dl_z_vectorized,Dl_z, fname, runpath
+)
 from SkyMap import GWskymap
 from GalaxyCat import GalCat
-from Global import (
-    href, Om0GLOB, clight, Dl_z_vectorized, Dl_z_approx, fname, runpath
-)
-
+import numpy as np
+import pandas as pd
+import os
+from tqdm import tqdm
+import multiprocessing
+from multiprocessing import Pool
+import matplotlib.pyplot as plt
+from numba import njit
 
 #------------------Functions---------------------------------------------
-
+#---------------------- Likelihood----------------------------------------
 @njit
 def likelihood_line(mu_DS, dl, sigma):
     norm = 1 / (np.sqrt(2 * np.pi) * sigma)
@@ -41,32 +22,54 @@ def likelihood_line(mu_DS, dl, sigma):
 
 
 def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
+    """
+    Compute the likelihood of H0 for a single pixel.
+    """
+    if len(z_hosts) == 0:
+        raise ValueError("z_hosts is empty")
+    if np.isnan(z_hosts).any():
+        raise ValueError("z_hosts contains NaN values")
+
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
+    #begin mod speed up
+    dl_array=dl_array[dl_array<=mu_DS+3.5*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-3.5*sigma]
+    #end mod speed up
+    if dl_array is None or np.isnan(dl_array).any():
+        raise ValueError("Dl_z_vectorized returned None or NaN")
+
     likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vectorized likelihood
     return np.sum(likelihoods)
+
+
 
 
 # Parallelized function to compute the pixel likelihood
 def compute_pixel_likelihood(args):
     pix, mu_pix, sigma_pix, z_hosts, H0Grid, angular_prob = args
     pixel_post = np.zeros(len(H0Grid))
-    # Print debug info to compare with sequential version
-    #print(f'Processing pixel: {pix}')
-    
-    # Loop over H0Grid and compute the likelihood for each value of H0
+    if len(z_hosts) == 0:
+        #print('No hosts for this line of sight')
+        return pixel_post
+    if np.isnan(z_hosts).any():
+        #print('NONE in z_hosts')
+        return pixel_post
+    #print('debug:found hosts')
     for j, h in enumerate(H0Grid):
         pixel_post[j] = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
     
     return pixel_post
 
 
+
+
 #########################################################################################
 
 if __name__=='__main__':
-    print(f"Constants: H0 = {href}, Omega_M = {Om0GLOB}")
+    print(f"Flagship params: H0 = {href}, Omega_M = {Om0GLOB}")
     print(f"Files to process: {fname}")
     print(f"Results will be saved in folder: {runpath}")
-     working_dir = os.getcwd()
+    working_dir = os.getcwd()
     path = 'Results'
     #runpath = 'FirstBatch'
 
@@ -78,14 +81,15 @@ if __name__=='__main__':
     # H0 Grid
     H0min, H0max = 40, 100
     H0Grid = np.linspace(H0min, H0max, 1000)
-    DF_results = pd.DataFrame(columns=['Event', 'Likelihood'])
+    #DF_results = pd.DataFrame(columns=['Event', 'Likelihood'])
     total_post = np.ones(len(H0Grid))  # Total posterior
 
     # Read Galaxy Catalogue
-    print('Reading Galaxy Catalogue')
-    to_read = 'Uniform_paper.txt'
+    to_read = 'Uniform_paper_sampled_almostone.txt'
+    print('Reading Galaxy Catalogue--'+to_read)
     nside = 128
     hostcat = GalCat(to_read, nside).read_catalogue()
+    mypixels = GalCat(to_read, nside).pixelizer()
     print('Reading catalogue completed')
 
     # Load GW Data
@@ -121,7 +125,7 @@ if __name__=='__main__':
         print('len dL={}'.format(len(allmu[pix_selected])))
 
         # Filter Galaxy Catalogue
-        mypixels = GalCat(to_read, nside).pixelizer()
+        
         hostcat['Pixel'] = mypixels
         hostcat_filtered = hostcat[hostcat['Pixel'].isin(pix_selected)]
 
@@ -136,23 +140,38 @@ if __name__=='__main__':
         ]
 
             # Parallel computation
-        cpu = min(multiprocessing.cpu_count(), len(pixel_args))
-        print(f'Using {cpu} CPUs')
-        with Pool(cpu) as pool:
-            results = list(tqdm(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=50), total=len(pixel_args)))
+        #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
+        #print(f'Using {cpu} CPUs')
+        #with Pool(cpu) as pool:
+        #    results = list(pool.imap(compute_pixel_likelihood, pixel_args))
 
-        single_post = np.sum(results, axis=0)
-        total_post += single_post
-        DF_results = pd.concat(
-            [DF_results, pd.DataFrame({'Event': [DSs.event_name], 'Likelihood': [single_post.tolist()]})],
-            ignore_index=True
-        )
+        if len(pixel_args) > 0:
+            #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
+            cpu = multiprocessing.cpu_count()
+            print(f'Using {cpu} CPUs')
+            with Pool(cpu) as pool:
+                results = list(pool.imap(compute_pixel_likelihood, pixel_args))
+            single_post = np.sum(results, axis=0)
+        else:
+            print("No Hosts found for this DS, skipping computation.")
+            results = []
+
+        
+        likename='like_'+name.split('.')[0]
+        np.save(os.path.join(folder,likename),single_post)
+        total_post *= single_post
+        total_post+=0.000000001
+        #DF_results = pd.concat(
+        #    [DF_results, pd.DataFrame({'Event': [DSs.event_name], 'Likelihood': [single_post.tolist()]})],
+        #    ignore_index=True
+        #)
 
     # Save results
-    DF_results.to_csv(os.path.join(folder, 'GW01_10.csv'), index=False)
+    #DF_results.to_csv(os.path.join(folder, 'GW01_10.csv'), index=False)
 
         ####################Plot###########################################################
     # Plot results
+    print('Plotting total likelihood')
     fig, ax = plt.subplots(1, figsize=(15, 10))
     ax.tick_params(axis='both', which='major', labelsize=25)
     ax.yaxis.get_offset_text().set_fontsize(25)
@@ -169,8 +188,8 @@ if __name__=='__main__':
     normalized_post = total_post / np.trapz(total_post, x)
     ax.plot(x, normalized_post, label='Total_posterior', linewidth=4, linestyle='solid')
     ax.legend(fontsize=13, ncol=2)
-
-    plotpath = os.path.join(folder, 'MultyTest.pdf')
+    plotname='Total_Like.pdf'
+    plotpath=os.path.join(folder,plotname)
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
     plt.close()
 

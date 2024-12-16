@@ -1,6 +1,6 @@
 import numpy as np
 import healpy as hp
-from scipy.integrate import quad, quad_vec
+from scipy.integrate import quad, quad_vec,simpson
 from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from astropy.cosmology import FlatLambdaCDM
@@ -36,48 +36,52 @@ def Dl_z(z, H0, Om=Om0GLOB):
     Scalar luminosity distance D_L(z).
     """
     return r_z(z, H0, Om) * (1 + z)
+# def r_z_vectorized(z, H0, Om=Om0GLOB):
+#     """
+#     Vectorized comoving distance r(z) for array inputs.
+#     Handles both scalar and array inputs for z.
+#     """
+#     c = clight
+#     integrand = lambda x: 1 / E_z(x, H0, Om)
+#     if np.isscalar(z):
+#         integral = quad_vec(integrand, 0, z)[0]
+#     else:
+#         integral = np.array([quad_vec(integrand, 0, zi)[0] for zi in z])
+#     return integral * c / H0
 
-def r_z_vectorized(z, H0, Om=Om0GLOB):
+def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=1000):
     """
-    Vectorized comoving distance r(z) for array inputs.
+    Vectorized comoving distance r(z) for array inputs using Simpson's rule.
+    Handles both scalar and array inputs for z.
     """
     c = clight
-    integrand = lambda x: 1 / E_z(x, H0, Om)
-    integral = quad_vec(integrand, 0, z)[0]  # Vectorized integration
+
+    def integrand(x):
+        return 1 / E_z(x, H0, Om)
+
+    if np.isscalar(z):
+        x_grid = np.linspace(0, z, num_points)
+        y_values = integrand(x_grid)
+        if len(x_grid) == 0 or len(y_values) == 0:
+            raise ValueError("Empty integration grid or invalid values")
+        integral = simpson(y_values, x_grid)
+    else:
+        integral = np.array([
+            simpson(
+                integrand(np.linspace(0, zi, num_points)),
+                np.linspace(0, zi, num_points)
+            ) for zi in z
+        ])
+    if integral is None or np.isnan(integral).any():
+        raise ValueError("Integration failed, returned None or NaN")
     return integral * c / H0
+
 
 def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
     Vectorized luminosity distance D_L(z) for array inputs.
     """
     return r_z_vectorized(z, H0, Om) * (1 + z)
-
-# --------------------- Precomputed Distance ------------------------------
-
-def precompute_r_z(H0, Om=Om0GLOB, z_max=10, num_points=10000):
-    """
-    Precomputes comoving distance r(z) and creates an interpolation function.
-    """
-    z_grid = np.linspace(0, z_max, num_points)
-    integrand = lambda x: 1 / E_z(x, H0, Om)
-    r_values = [quad(integrand, 0, z)[0] for z in z_grid]  # Compute r(z) for grid
-    r_interp = interp1d(z_grid, np.array(r_values) * clight / H0, kind='cubic', fill_value="extrapolate")
-    return r_interp
-
-# Precompute r(z) for Dl_z_approx
-r_interp = precompute_r_z(H0=href, Om=Om0GLOB)
-
-def r_z_approx(z):
-    """
-    Comoving distance r(z) using precomputed interpolation.
-    """
-    return r_interp(z)
-
-def Dl_z_approx(z, H0, Om=Om0GLOB):
-    """
-    Luminosity distance D_L(z) using precomputed interpolation.
-    """
-    return r_z_approx(z) * (1 + z)
 
 # --------------------- Redshift and Hubble Functions ---------------------
 
@@ -129,10 +133,11 @@ def get_credible_region_pixels(all_pixels, p_posterior, level=0.99):
     """
     return all_pixels[p_posterior > _get_credible_region_pth(p_posterior, level=level)]
 
+
 # --------------------- File and Run Settings -----------------------------
 
 # List of GW data files to process
-fname = ['GWtest07.fits', 'GWtest08.fits']
+fname = ['GWtest52.fits']#,'GWtest01.fits','GWtest03.fits','GWtest02.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'FirstBatch'
+runpath = 'Flamegraph-Batch02_Simpson_almostone_1DS'

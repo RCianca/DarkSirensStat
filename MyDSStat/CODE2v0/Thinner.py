@@ -13,7 +13,6 @@ import sys
 
 import gwfast.gwfastGlobals as glob
 import gwfast
-from gwfast.waveforms import IMRPhenomD,IMRPhenomHM
 from gwfast.gwfastUtils import load_population
 
 from tqdm import tqdm
@@ -70,7 +69,7 @@ if __name__=='__main__':
     tosave=load_population(COV_SAVE_PATH+Population)
     Allevents_DS = pd.DataFrame.from_dict(tosave, orient='columns')
     print(list(Allevents_DS.columns))
-    selected=7
+    selected=52
     DS_dl=Allevents_DS.iloc[selected]['dL']*1000
     DS_theta=Allevents_DS.iloc[selected]['theta']
     DS_phi=Allevents_DS.iloc[selected]['phi']
@@ -92,12 +91,13 @@ if __name__=='__main__':
         temp_df = hostcat.loc[i]
         print(DS_dl,DS_theta,DS_phi)
         hostcat = hostcat.drop(i)
-        hostcat_sampled = hostcat.sample(10, replace=False, random_state=42)
+        hostcat_sampled = hostcat.sample(frac=0.01, replace=False, random_state=42)
         hostcat_sampled = hostcat_sampled._append(temp_df, ignore_index=True)
         print('Tail of the sampled catalog:')
         print(hostcat_sampled.tail(3))
         print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
-        hostcat_sampled.to_csv(output_path+'Uniform_paper_sampled_almostone_GW07.txt', index=False)
+        name='Uniform_paper_sampled_frac_01.txt'
+        hostcat_sampled.to_csv(os.path.join(output_path,name), index=False)
         print(f'Sampled catalog saved to {output_path}')
     else:
         print('No unique host found or multiple hosts found.')
