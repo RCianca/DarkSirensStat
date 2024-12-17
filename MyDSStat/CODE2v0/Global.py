@@ -140,4 +140,4 @@ def get_credible_region_pixels(all_pixels, p_posterior, level=0.99):
 fname = ['GWtest52.fits']#,'GWtest01.fits','GWtest03.fits','GWtest02.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Flamegraph-Batch02_Simpson_almostone_1DS'
+runpath = 'Flamegraph_better-Batch03_Simpson_almostone_1DS'

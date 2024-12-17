@@ -8,6 +8,7 @@ import pandas as pd
 import os
 from tqdm import tqdm
 import multiprocessing
+from multiprocessing.dummy import Pool as ThreadPool # remove if you are not using threads. Default is with pool
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from numba import njit
@@ -128,16 +129,24 @@ if __name__=='__main__':
         
         hostcat['Pixel'] = mypixels
         hostcat_filtered = hostcat[hostcat['Pixel'].isin(pix_selected)]
+        # Pre-group by pixel to speed up filtering
+        grouped_hostcat = hostcat_filtered.groupby('Pixel')['z'] # Remove if creates proble. This shoud group already hostcat and avoid to do it in pixel_args
 
         ###Cross-Correlation#############################################    
     
         single_post=np.zeros(len(H0Grid))
 
+        #pixel_args = [
+        #    (pix, allmu[pix], allsigma[pix], hostcat_filtered[hostcat_filtered['Pixel'] == pix]['z'].values, H0Grid, skyprob[pix])
+        #    for pix in pix_selected
+        #    if len(hostcat_filtered[hostcat_filtered['Pixel'] == pix]) > 0
+        #]
+
         pixel_args = [
-            (pix, allmu[pix], allsigma[pix], hostcat_filtered[hostcat_filtered['Pixel'] == pix]['z'].values, H0Grid, skyprob[pix])
+            (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
             for pix in pix_selected
-            if len(hostcat_filtered[hostcat_filtered['Pixel'] == pix]) > 0
-        ]
+            if pix in grouped_hostcat.groups
+        ] # This is the new version with goupby. If not working rmove also groupby above
 
             # Parallel computation
         #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
@@ -149,12 +158,16 @@ if __name__=='__main__':
             #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
             cpu = multiprocessing.cpu_count()
             print(f'Using {cpu} CPUs')
+            chunksize = max(1, len(pixel_args) // (2 * cpu))
             with Pool(cpu) as pool:
-                results = list(pool.imap(compute_pixel_likelihood, pixel_args))
+                results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
+            #with ThreadPool(cpu) as pool:
+            #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) RC:this is a major change, try first with the new optimizations
             single_post = np.sum(results, axis=0)
         else:
             print("No Hosts found for this DS, skipping computation.")
-            results = []
+            results = [0]
+            #single_post = np.sum(results, axis=0)# to verify
 
         
         likename='like_'+name.split('.')[0]
