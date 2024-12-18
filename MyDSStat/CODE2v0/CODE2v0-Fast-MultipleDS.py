@@ -1,6 +1,7 @@
 from Global import (
-    href, Om0GLOB, clight, Dl_z_vectorized,Dl_z, fname, runpath
+    href, Om0GLOB, clight, fname, runpath,to_read
 )
+from scipy.integrate import quad, quad_vec,simpson
 from SkyMap import GWskymap
 from GalaxyCat import GalCat
 import numpy as np
@@ -14,6 +15,45 @@ import matplotlib.pyplot as plt
 from numba import njit
 
 #------------------Functions---------------------------------------------
+@njit
+def E_z(z, H0, Om=Om0GLOB):
+    """
+    Helper function for Hubble parameter as a function of redshift.
+    """
+    return np.sqrt(Om * (1 + z)**3 + (1 - Om))
+def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
+    """
+    Vectorized comoving distance r(z) for array inputs using Simpson's rule.
+    Handles both scalar and array inputs for z.
+    """
+    c = clight
+
+    def integrand(x):
+        return 1 / E_z(x, H0, Om)
+
+    if np.isscalar(z):
+        x_grid = np.linspace(0, z, num_points)
+        y_values = integrand(x_grid)
+        if len(x_grid) == 0 or len(y_values) == 0:
+            raise ValueError("Empty integration grid or invalid values")
+        integral = simpson(y_values, x_grid)
+    else:
+        integral = np.array([
+            simpson(
+                y=integrand(np.linspace(0, zi, num_points)),
+                x=np.linspace(0, zi, num_points)
+            ) for zi in z
+        ])
+    if integral is None or np.isnan(integral).any():
+        raise ValueError("Integration failed, returned None or NaN")
+    return integral * c / H0
+
+
+def Dl_z_vectorized(z, H0, Om=Om0GLOB):
+    """
+    Vectorized luminosity distance D_L(z) for array inputs.
+    """
+    return r_z_vectorized(z, H0, Om) * (1 + z)
 #---------------------- Likelihood----------------------------------------
 @njit
 def likelihood_line(mu_DS, dl, sigma):
@@ -33,8 +73,8 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+3.5*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-3.5*sigma]
+    dl_array=dl_array[dl_array<=mu_DS+2.5*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-2.5*sigma]
     #end mod speed up
     if dl_array is None or np.isnan(dl_array).any():
         raise ValueError("Dl_z_vectorized returned None or NaN")
@@ -86,7 +126,7 @@ if __name__=='__main__':
     total_post = np.ones(len(H0Grid))  # Total posterior
 
     # Read Galaxy Catalogue
-    to_read = 'Uniform_paper_sampled_almostone.txt'
+    
     print('Reading Galaxy Catalogue--'+to_read)
     nside = 128
     hostcat = GalCat(to_read, nside).read_catalogue()
@@ -134,7 +174,7 @@ if __name__=='__main__':
 
         ###Cross-Correlation#############################################    
     
-        single_post=np.zeros(len(H0Grid))
+        single_post=np.ones(len(H0Grid))
 
         #pixel_args = [
         #    (pix, allmu[pix], allsigma[pix], hostcat_filtered[hostcat_filtered['Pixel'] == pix]['z'].values, H0Grid, skyprob[pix])
@@ -162,18 +202,18 @@ if __name__=='__main__':
             with Pool(cpu) as pool:
                 results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
             #with ThreadPool(cpu) as pool:
-            #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) RC:this is a major change, try first with the new optimizations
+            #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) #RC:this is a major change, try first with the new optimizations
             single_post = np.sum(results, axis=0)
         else:
             print("No Hosts found for this DS, skipping computation.")
-            results = [0]
+            results = []
             #single_post = np.sum(results, axis=0)# to verify
 
         
         likename='like_'+name.split('.')[0]
         np.save(os.path.join(folder,likename),single_post)
         total_post *= single_post
-        total_post+=0.000000001
+        #total_post+=0.000000001
         #DF_results = pd.concat(
         #    [DF_results, pd.DataFrame({'Event': [DSs.event_name], 'Likelihood': [single_post.tolist()]})],
         #    ignore_index=True

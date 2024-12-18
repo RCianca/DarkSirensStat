@@ -91,12 +91,12 @@ if __name__=='__main__':
         temp_df = hostcat.loc[i]
         print(DS_dl,DS_theta,DS_phi)
         hostcat = hostcat.drop(i)
-        hostcat_sampled = hostcat.sample(frac=0.01, replace=False, random_state=42)
+        hostcat_sampled = hostcat.sample(frac=0.005, replace=False, random_state=42)
         hostcat_sampled = hostcat_sampled._append(temp_df, ignore_index=True)
         print('Tail of the sampled catalog:')
         print(hostcat_sampled.tail(3))
         print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
-        name='Uniform_paper_sampled_frac_01.txt'
+        name='Uniform_paper_sampled_frac_005.txt'
         hostcat_sampled.to_csv(os.path.join(output_path,name), index=False)
         print(f'Sampled catalog saved to {output_path}')
     else:

@@ -48,8 +48,8 @@ def Dl_z(z, H0, Om=Om0GLOB):
 #     else:
 #         integral = np.array([quad_vec(integrand, 0, zi)[0] for zi in z])
 #     return integral * c / H0
-
-def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=1000):
+@njit
+def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
     """
     Vectorized comoving distance r(z) for array inputs using Simpson's rule.
     Handles both scalar and array inputs for z.
@@ -137,7 +137,9 @@ def get_credible_region_pixels(all_pixels, p_posterior, level=0.99):
 # --------------------- File and Run Settings -----------------------------
 
 # List of GW data files to process
-fname = ['GWtest52.fits']#,'GWtest01.fits','GWtest03.fits','GWtest02.fits']
+fname = ['GWtest52.fits']#,'GWtest07.fits']#,'GWtest03.fits','GWtest02.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Flamegraph_better-Batch03_Simpson_almostone_1DS'
+runpath = 'test-frac01_1DS'
+#Host Catalogue to read
+to_read = 'Uniform_paper_sampled_frac_01.txt'
