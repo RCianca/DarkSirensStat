@@ -137,9 +137,20 @@ def get_credible_region_pixels(all_pixels, p_posterior, level=0.99):
 # --------------------- File and Run Settings -----------------------------
 
 # List of GW data files to process
-fname = ['GWtest52.fits']#,'GWtest07.fits']#,'GWtest03.fits','GWtest02.fits']
+# Not to test: GWtest03
+fname = [
+'GWtest52.fits','GWtest01.fits','GWtest02.fits','GWtest03.fits','GWtest04.fits','GWtest05.fits',
+'GWtest06.fits','GWtest07.fits','GWtest08.fits','GWtest09.fits','GWtest10.fits','GWtest11.fits',
+'GWtest12.fits','GWtest13.fits','GWtest14.fits','GWtest15.fits','GWtest16.fits','GWtest17.fits',
+'GWtest18.fits','GWtest19.fits','GWtest20.fits','GWtest21.fits','GWtest22.fits','GWtest23.fits',
+'GWtest24.fits','GWtest25.fits','GWtest26.fits','GWtest27.fits','GWtest28.fits','GWtest29.fits',
+'GWtest30.fits','GWtest31.fits','GWtest32.fits','GWtest33.fits','GWtest34.fits','GWtest35.fits',
+'GWtest36.fits','GWtest37.fits','GWtest38.fits','GWtest39.fits','GWtest40.fits','GWtest41.fits',
+'GWtest42.fits','GWtest43.fits','GWtest44.fits','GWtest45.fits','GWtest46.fits','GWtest47.fits',
+'GWtest49.fits','GWtest49.fits','GWtest50.fits','GWtest51.fits','GWtest53.fits','GWtest54.fits',
+]
 
 # Name of the runpath folder for saving results
-runpath = 'test-frac01_1DS'
+runpath = 'test-frac005_54DS'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_frac_01.txt'
+to_read = 'Uniform_paper_sampled_frac_005.txt'

@@ -139,7 +139,8 @@ if __name__=='__main__':
     MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
 
-
+    os.system('CODE2v0-Fast-MultipleDS.py '+folder+'/Script-copy.py')
+    os.system('Global.py '+folder+'/Global-copy.py')
     for name in fname:
 
         DSs = GWskymap(os.path.join(MapPath, name), level=level)
@@ -163,64 +164,60 @@ if __name__=='__main__':
 
         print('DS data:')
         print('pix selected ={}'.format(len(pix_selected)))
-        print('len dL={}'.format(len(allmu[pix_selected])))
+        if(len(pix_selected)>1200): #this can be relaxed, now is a test run. Such confition should be implemented in the skymap generator to have different quality sets
+            print(f'Skipping {name}, too many pixels')
+            
+        else:    
+            print('len dL={}'.format(len(allmu[pix_selected])))
 
-        # Filter Galaxy Catalogue
+            # Filter Galaxy Catalogue
+            
+            hostcat['Pixel'] = mypixels
+            hostcat_filtered = hostcat[hostcat['Pixel'].isin(pix_selected)]
+            # Pre-group by pixel to speed up filtering
+            grouped_hostcat = hostcat_filtered.groupby('Pixel')['z'] # Remove if creates proble. This shoud group already hostcat and avoid to do it in pixel_args
+
+            ###Cross-Correlation#############################################    
         
-        hostcat['Pixel'] = mypixels
-        hostcat_filtered = hostcat[hostcat['Pixel'].isin(pix_selected)]
-        # Pre-group by pixel to speed up filtering
-        grouped_hostcat = hostcat_filtered.groupby('Pixel')['z'] # Remove if creates proble. This shoud group already hostcat and avoid to do it in pixel_args
+            single_post=np.ones(len(H0Grid))
 
-        ###Cross-Correlation#############################################    
-    
-        single_post=np.ones(len(H0Grid))
+            #pixel_args = [
+            #    (pix, allmu[pix], allsigma[pix], hostcat_filtered[hostcat_filtered['Pixel'] == pix]['z'].values, H0Grid, skyprob[pix])
+            #    for pix in pix_selected
+            #    if len(hostcat_filtered[hostcat_filtered['Pixel'] == pix]) > 0
+            #]
 
-        #pixel_args = [
-        #    (pix, allmu[pix], allsigma[pix], hostcat_filtered[hostcat_filtered['Pixel'] == pix]['z'].values, H0Grid, skyprob[pix])
-        #    for pix in pix_selected
-        #    if len(hostcat_filtered[hostcat_filtered['Pixel'] == pix]) > 0
-        #]
+            pixel_args = [
+                (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
+                for pix in pix_selected
+                if pix in grouped_hostcat.groups
+            ] # This is the new version with goupby. If not working rmove also groupby above
 
-        pixel_args = [
-            (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
-            for pix in pix_selected
-            if pix in grouped_hostcat.groups
-        ] # This is the new version with goupby. If not working rmove also groupby above
-
-            # Parallel computation
-        #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
-        #print(f'Using {cpu} CPUs')
-        #with Pool(cpu) as pool:
-        #    results = list(pool.imap(compute_pixel_likelihood, pixel_args))
-
-        if len(pixel_args) > 0:
+                # Parallel computation
             #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
-            cpu = multiprocessing.cpu_count()
-            print(f'Using {cpu} CPUs')
-            chunksize = max(1, len(pixel_args) // (2 * cpu))
-            with Pool(cpu) as pool:
-                results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
-            #with ThreadPool(cpu) as pool:
-            #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) #RC:this is a major change, try first with the new optimizations
-            single_post = np.sum(results, axis=0)
-        else:
-            print("No Hosts found for this DS, skipping computation.")
-            results = []
-            #single_post = np.sum(results, axis=0)# to verify
+            #print(f'Using {cpu} CPUs')
+            #with Pool(cpu) as pool:
+            #    results = list(pool.imap(compute_pixel_likelihood, pixel_args))
 
-        
-        likename='like_'+name.split('.')[0]
-        np.save(os.path.join(folder,likename),single_post)
-        total_post *= single_post
-        #total_post+=0.000000001
-        #DF_results = pd.concat(
-        #    [DF_results, pd.DataFrame({'Event': [DSs.event_name], 'Likelihood': [single_post.tolist()]})],
-        #    ignore_index=True
-        #)
+            if len(pixel_args) > 0:
+                #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
+                cpu = multiprocessing.cpu_count()
+                print(f'Using {cpu} CPUs')
+                chunksize = max(1, len(pixel_args) // (2 * cpu))
+                with Pool(cpu) as pool:
+                    results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
+                #with ThreadPool(cpu) as pool:
+                #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) #RC:this is a major change, try first with the new optimizations
+                single_post = np.sum(results, axis=0)
+            else:
+                print("No Hosts found for this DS, skipping computation.")
+                results = []
+                #single_post = np.sum(results, axis=0)# to verify
 
-    # Save results
-    #DF_results.to_csv(os.path.join(folder, 'GW01_10.csv'), index=False)
+            
+            likename='like_'+name.split('.')[0]
+            np.save(os.path.join(folder,likename),single_post)
+            total_post *= single_post
 
         ####################Plot###########################################################
     # Plot results
