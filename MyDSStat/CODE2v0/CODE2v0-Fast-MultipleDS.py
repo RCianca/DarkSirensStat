@@ -73,8 +73,8 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+2.5*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-2.5*sigma]
+    dl_array=dl_array[dl_array<=mu_DS+3*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-3*sigma]
     #end mod speed up
     if dl_array is None or np.isnan(dl_array).any():
         raise ValueError("Dl_z_vectorized returned None or NaN")
@@ -118,6 +118,8 @@ if __name__=='__main__':
     folder = os.path.join(path, runpath)
     os.makedirs(folder, exist_ok=True)
     print(f'\nData will be saved in {folder}')
+    os.system('cp CODE2v0-Fast-MultipleDS.py '+folder+'/Script-copy.py')
+    os.system('cp Global.py '+folder+'/Global-copy.py')
 
     # H0 Grid
     H0min, H0max = 40, 100
@@ -139,8 +141,7 @@ if __name__=='__main__':
     MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
 
-    os.system('CODE2v0-Fast-MultipleDS.py '+folder+'/Script-copy.py')
-    os.system('Global.py '+folder+'/Global-copy.py')
+
     for name in fname:
 
         DSs = GWskymap(os.path.join(MapPath, name), level=level)
@@ -158,7 +159,7 @@ if __name__=='__main__':
             print('There are NaN values in allsigma')
 
         mumean = np.sum(allmu * skyprob) / np.sum(skyprob)
-        sigmamean = np.sum(allsigma * skyprob) / np.sum(skyprob)
+        sigmamean = np.mean(allsigma[pix_selected])#np.sum(allsigma * skyprob) / np.sum(skyprob)
         print(f'mu_pesato: {mumean} Mpc, sigma_pesato: {sigmamean} Mpc')
 
 
@@ -189,6 +190,7 @@ if __name__=='__main__':
 
             pixel_args = [
                 (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
+                #(pix, mumean, allsigma[pix]*7, grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
                 for pix in pix_selected
                 if pix in grouped_hostcat.groups
             ] # This is the new version with goupby. If not working rmove also groupby above
@@ -218,7 +220,8 @@ if __name__=='__main__':
             likename='like_'+name.split('.')[0]
             np.save(os.path.join(folder,likename),single_post)
             total_post *= single_post
-
+    postname='Total_Posterior'
+    np.save(os.path.join(folder,postname),total_post)
         ####################Plot###########################################################
     # Plot results
     print('Plotting total likelihood')

@@ -148,9 +148,13 @@ fname = [
 'GWtest36.fits','GWtest37.fits','GWtest38.fits','GWtest39.fits','GWtest40.fits','GWtest41.fits',
 'GWtest42.fits','GWtest43.fits','GWtest44.fits','GWtest45.fits','GWtest46.fits','GWtest47.fits',
 'GWtest49.fits','GWtest49.fits','GWtest50.fits','GWtest51.fits','GWtest53.fits','GWtest54.fits',
+'GWtest55.fits','GWtest56.fits','GWtest57.fits','GWtest58.fits','GWtest59.fits','GWtest60.fits',
+'GWtest61.fits','GWtest62.fits','GWtest63.fits','GWtest64.fits','GWtest65.fits','GWtest66.fits',
+'GWtest67.fits','GWtest68.fits','GWtest69.fits','GWtest70.fits','GWtest71.fits','GWtest72.fits',
 ]
+#fname=['GWtest61.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'test-frac005_54DS'
+runpath = 'Uniform_paper_sampled_onlyhost'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_frac_005.txt'
+to_read = 'Uniform_paper_sampled_onlyhost.txt'

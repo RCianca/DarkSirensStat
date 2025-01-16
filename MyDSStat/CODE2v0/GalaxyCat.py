@@ -55,8 +55,8 @@ class GalCat:
             hostcat.columns=colnames
             print('showing head of {}'.format(self.catname))
             print(hostcat.head(3))
-            Alltheta=hostcat['theta']
-            Allphi=hostcat['phi']
+            Alltheta=hostcat['theta'].to_numpy()
+            Allphi=hostcat['phi'].to_numpy()
             Allpixels=hp.ang2pix(self.nside,Alltheta,Allphi)
             print(len(Allpixels),len(Alltheta))
             np.save(os.path.join(self.maskpath,self.maskname),Allpixels)
