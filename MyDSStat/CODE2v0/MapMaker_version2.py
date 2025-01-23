@@ -139,8 +139,8 @@ if __name__=='__main__':
     print('using {} CPU' .format(multiprocessing.cpu_count()))
 
     #-----------------------ORDERING OF THE VARIABLES--------------------------------------
-    Cov_file='Cov_SNR_more_than_100_200.npy'
-    Population='SNR_more_than_100_200.h5'
+    Cov_file='Cov_SNR_more_than_100_400_to_600.npy'
+    Population='SNR_more_than_100_400_to_600.h5'
     tosave=load_population(COV_SAVE_PATH+Population)
 
     Allevents_DS_fromfile = pd.DataFrame.from_dict(tosave, orient='columns')
@@ -160,9 +160,10 @@ if __name__=='__main__':
     print(keys)
     #---------------------------------------------------------------------------------------
     allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
-
-    for i in range(100):
-        print(f"Generating map {i:02d}")
+    shift=400
+    for i in range(200):
+        k=i+shift
+        print(f"Generating map {k:02d}")
 
         # Select a different row for each map (you can modify this selection logic if needed)
         selected = i
@@ -170,16 +171,27 @@ if __name__=='__main__':
         # Construct mean vector and covariance matrix for the selected event
         mean = np.array(Allevents_DS.iloc[selected])
         cov = np.float64(allcov[:, :, selected])
-
+        #print("Eigenvalues before permutation:", np.linalg.eigvalsh(cov))
+        condition_number = np.linalg.cond(cov)
+        #print("Condition number:", condition_number)
+        if condition_number>10**12:
+            epsilon = 1e-10 * np.trace(cov)
+            cov += np.eye(cov.shape[0]) * epsilon
+            print('condition number was too hight, used eigenvalues regularisation')
+        #condition_number = np.linalg.cond(cov)
+        #print("Condition number:", condition_number)       
+        
         try:
             np.linalg.cholesky(cov)
             print('Cov Matrix is Cholesky approved')
         except:
-            print('Cov nont positive semi-defined')
+            print('Cov not positive semi-defined')
 
         # Permutation and Cholesky decomposition
         args = mean, cov, parameters_list
         perm_mean, perm_cov, perm_keys = permutation(args)
+        #print("Eigenvalues after permutation:", np.linalg.eigvalsh(perm_cov))
+        #print("Condition number after permutation:", np.linalg.cond(perm_cov))
         #diag_cov=perm_cov.diagonal()#remove after test
         #perm_cov=np.diag(diag_cov)#remove after test
         L = np.linalg.cholesky(perm_cov)
@@ -211,8 +223,8 @@ if __name__=='__main__':
         os.chdir(COV_SAVE_PATH)
 
         plt.figure(figsize=(12, 8))
-        hp.mollview(sky_map, title=f'GWtest{i:02d}-skyprob', nest=False, hold=True)
-        plt.savefig(f'GWtest{i:02d}.pdf')
+        hp.mollview(sky_map, title=f'GWtest{k:02d}-skyprob', nest=False, hold=True)
+        plt.savefig(f'GWtest{k:02d}.pdf')
         plt.close()      
         theta_mean=perm_mean[-2]
         phi_mean=perm_mean[-1]
@@ -234,7 +246,7 @@ if __name__=='__main__':
         mod_postnorm = np.ones(hp.nside2npix(nside))
 
         # Save the map with an incremental name
-        fname = f'GWtest{i:02d}.fits'
+        fname = f'GWtest{k:02d}.fits'
         dat = Table([sky_map, all_mu, all_std, mod_postnorm],
                     names=('PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM'))
         os.chdir(COV_SAVE_PATH)

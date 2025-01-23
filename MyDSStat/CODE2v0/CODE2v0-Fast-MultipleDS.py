@@ -1,5 +1,5 @@
 from Global import (
-    href, Om0GLOB, clight, fname, runpath,to_read
+    href, Om0GLOB, clight, start,stop,InputEvents, runpath,to_read
 )
 from scipy.integrate import quad, quad_vec,simpson
 from SkyMap import GWskymap
@@ -48,7 +48,6 @@ def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
         raise ValueError("Integration failed, returned None or NaN")
     return integral * c / H0
 
-
 def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
     Vectorized luminosity distance D_L(z) for array inputs.
@@ -66,24 +65,21 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
     """
     Compute the likelihood of H0 for a single pixel.
     """
-    if len(z_hosts) == 0:
-        raise ValueError("z_hosts is empty")
-    if np.isnan(z_hosts).any():
-        raise ValueError("z_hosts contains NaN values")
+    #if len(z_hosts) == 0:
+    #    raise ValueError("z_hosts is empty")
+    #if np.isnan(z_hosts).any():
+    #    raise ValueError("z_hosts contains NaN values")
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+3*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-3*sigma]
-    #end mod speed up
+    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
+    
     if dl_array is None or np.isnan(dl_array).any():
         raise ValueError("Dl_z_vectorized returned None or NaN")
 
     likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vectorized likelihood
     return np.sum(likelihoods)
-
-
-
 
 # Parallelized function to compute the pixel likelihood
 def compute_pixel_likelihood(args):
@@ -101,13 +97,11 @@ def compute_pixel_likelihood(args):
     
     return pixel_post
 
-
-
-
 #########################################################################################
 
 if __name__=='__main__':
     print(f"Flagship params: H0 = {href}, Omega_M = {Om0GLOB}")
+    fname = InputEvents(start,stop)
     print(f"Files to process: {fname}")
     print(f"Results will be saved in folder: {runpath}")
     working_dir = os.getcwd()
@@ -137,7 +131,6 @@ if __name__=='__main__':
 
     # Load GW Data
     print('Loading GW data')
-    #fname = ['GWtest07.fits', 'GWtest08.fits']
     MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
 
@@ -145,8 +138,8 @@ if __name__=='__main__':
     for name in fname:
 
         DSs = GWskymap(os.path.join(MapPath, name), level=level)
-        print(f'DS name: {DSs.event_name}')
-        print(f'Area of DS: {DSs.area()} deg^2 at 90%')
+        #print(f'DS name: {DSs.event_name}')
+        #print(f'Area of DS: {DSs.area()} deg^2 at 90%')
         
         pix_selected = DSs.get_credible_region_pixels(level=level)
         nside = int(DSs.nside)
@@ -154,22 +147,21 @@ if __name__=='__main__':
         allmu, allsigma = DSs.mu * 1000, DSs.sigma * 1000  # Convert to Mpc
 
         if np.isnan(allmu).any():
-            print('There are NaN values in allmu')
+            print(f'There are NaN values in allmu of {name}')
         if np.isnan(allsigma).any():
-            print('There are NaN values in allsigma')
+            print(f'There are NaN values in allsigma of {name}')
 
-        mumean = np.sum(allmu * skyprob) / np.sum(skyprob)
-        sigmamean = np.mean(allsigma[pix_selected])#np.sum(allsigma * skyprob) / np.sum(skyprob)
-        print(f'mu_pesato: {mumean} Mpc, sigma_pesato: {sigmamean} Mpc')
+        #mumean = np.sum(allmu * skyprob) / np.sum(skyprob)
+        #sigmamean = np.mean(allsigma[pix_selected])#np.sum(allsigma * skyprob) / np.sum(skyprob)
+        #print(f'mu_pesato: {mumean} Mpc, sigma_pesato: {sigmamean} Mpc')
 
-
-        print('DS data:')
-        print('pix selected ={}'.format(len(pix_selected)))
         if(len(pix_selected)>1200): #this can be relaxed, now is a test run. Such confition should be implemented in the skymap generator to have different quality sets
             print(f'Skipping {name}, too many pixels')
             
         else:    
-            print('len dL={}'.format(len(allmu[pix_selected])))
+            print('DS data:')
+            print(f'Using {name}')
+            print(f'Area of DS: {DSs.area()} deg^2 at 90%')
 
             # Filter Galaxy Catalogue
             
@@ -182,24 +174,12 @@ if __name__=='__main__':
         
             single_post=np.ones(len(H0Grid))
 
-            #pixel_args = [
-            #    (pix, allmu[pix], allsigma[pix], hostcat_filtered[hostcat_filtered['Pixel'] == pix]['z'].values, H0Grid, skyprob[pix])
-            #    for pix in pix_selected
-            #    if len(hostcat_filtered[hostcat_filtered['Pixel'] == pix]) > 0
-            #]
-
             pixel_args = [
                 (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
                 #(pix, mumean, allsigma[pix]*7, grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
                 for pix in pix_selected
                 if pix in grouped_hostcat.groups
             ] # This is the new version with goupby. If not working rmove also groupby above
-
-                # Parallel computation
-            #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
-            #print(f'Using {cpu} CPUs')
-            #with Pool(cpu) as pool:
-            #    results = list(pool.imap(compute_pixel_likelihood, pixel_args))
 
             if len(pixel_args) > 0:
                 #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
@@ -211,15 +191,19 @@ if __name__=='__main__':
                 #with ThreadPool(cpu) as pool:
                 #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) #RC:this is a major change, try first with the new optimizations
                 single_post = np.sum(results, axis=0)
+                if np.sum(single_post)==0:
+                    single_post=np.ones(len(H0Grid))
+                if np.isnan(single_post).any():
+                    single_post=np.ones(len(H0Grid))
+                print('some NaN in singlepost, skipped\n')
             else:
                 print("No Hosts found for this DS, skipping computation.")
                 results = []
-                #single_post = np.sum(results, axis=0)# to verify
-
-            
+      
             likename='like_'+name.split('.')[0]
             np.save(os.path.join(folder,likename),single_post)
             total_post *= single_post
+            total_post += 1*10**(-9)
     postname='Total_Posterior'
     np.save(os.path.join(folder,postname),total_post)
         ####################Plot###########################################################
@@ -245,8 +229,3 @@ if __name__=='__main__':
     plotpath=os.path.join(folder,plotname)
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
     plt.close()
-
-
-
-
-    

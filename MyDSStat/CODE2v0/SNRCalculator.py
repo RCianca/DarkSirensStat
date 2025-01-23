@@ -48,12 +48,11 @@ SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 
 os.chdir(CAT_FOLDER)
 DS_Cat= pd.read_csv('DS_From_Parent_Uniform_Complete.txt')
-dlmean=np.mean(DS_Cat['Luminosity Distance'])
-print('dl media in Mpc')
-print(dlmean)
-dlmean=np.mean(np.array(DS_Cat['Luminosity Distance']/1000.0 ))#np.array(current_chunk['Luminosity Distance']/1000.0 )
-print('dl media in Gpc')
-print(dlmean)
+#dlmean=np.mean(DS_Cat['Luminosity Distance'])
+#print('dl media in Mpc')
+#print(dlmean)
+#dlmean=np.mean(np.array(DS_Cat['Luminosity Distance']/1000.0 ))#np.array(current_chunk['Luminosity Distance']/1000.0 )
+#print(dlmean)
 os.chdir(SCRIPT_FOLDER)
 
 ParNums = IMRPhenomHM().ParNums

@@ -68,6 +68,17 @@ if __name__=='__main__':
     Population='SNR_more_than_100_200.h5'
     tosave=load_population(COV_SAVE_PATH+Population)
     Allevents_DS = pd.DataFrame.from_dict(tosave, orient='columns')
+
+    More_population='SNR_more_than_100_200_to_400.h5'
+    tosave=load_population(COV_SAVE_PATH+More_population)
+    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
+    Allevents_DS= pd.concat([Allevents_DS, tmp])
+
+    More_population='SNR_more_than_100_400_to_600.h5'
+    tosave=load_population(COV_SAVE_PATH+More_population)
+    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
+    Allevents_DS= pd.concat([Allevents_DS, tmp])
+
     print(list(Allevents_DS.columns))
     selected=np.arange(0,Allevents_DS.shape[0])
     temp_df = pd.DataFrame()
@@ -92,7 +103,7 @@ if __name__=='__main__':
         hostcat = hostcat.drop(i)
 
     # Sample the remaining entries in the host catalog
-    hostcat_sampled = hostcat.sample(frac=0.001, replace=False, random_state=42)
+    hostcat_sampled = hostcat.sample(frac=0.002, replace=False, random_state=42)
 
     # Add back the removed entries to the sampled catalog
     hostcat_sampled = pd.concat([hostcat_sampled, temp_df], ignore_index=True)
@@ -102,7 +113,7 @@ if __name__=='__main__':
     print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
 
     # Save the sampled catalog
-    name='Uniform_paper_sampled_frac001-host.txt'
+    name='Uniform_paper_sampled_frac_002_host.txt'
     temp_df.to_csv(os.path.join(output_path,name), index=False)
     print(f'Sampled catalog saved to {output_path}')
 

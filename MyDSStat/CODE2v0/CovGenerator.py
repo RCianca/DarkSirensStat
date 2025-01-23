@@ -77,29 +77,27 @@ alldl=np.asarray(DS_Cat['Luminosity Distance'])/1000.0#servono i Gpc
 
 
 tcoal=np.asarray(GPSt_to_LMST(tGPS, lat=40.516666666666666, long=9.416666666666666))
-
+start=1000
 quanti=int(min(200,DS_Cat.shape[0]))
-Allevents_DS = {'Mc':1*allMc[0:quanti]*(1+allz)[0:quanti],
-            'eta':alleta[0:quanti],#alleta_tmp[2:3],
-            'dL':alldl[0:quanti],
-            'theta':alltheta[0:quanti],
-            'phi':allphi[0:quanti],
-            'iota':alliota[0:quanti],
-            'psi':allpsi[0:quanti],
-            'tcoal':1*tcoal*np.ones(len(allMc))[0:quanti], # GMST is LMST computed at long = 0°
-            'Phicoal':0.0003*np.ones(len(allMc))[0:quanti],
-            'chi1z':0.00002*np.ones(len(allMc))[0:quanti],
-            'chi2z':0.00001*np.ones(len(allMc))[0:quanti]
+Allevents_DS = {'Mc':1*allMc[start:start+quanti]*(1+allz)[start:start+quanti],
+            'eta':alleta[start:start+quanti],#alleta_tmp[2:3],
+            'dL':alldl[start:start+quanti],
+            'theta':alltheta[start:start+quanti],
+            'phi':allphi[start:start+quanti],
+            'iota':alliota[start:start+quanti],
+            'psi':allpsi[start:start+quanti],
+            'tcoal':1*tcoal*np.ones(len(allMc))[start:start+quanti], # GMST is LMST computed at long = 0°
+            'Phicoal':0.0003*np.ones(len(allMc))[start:start+quanti],
+            'chi1z':0.00002*np.ones(len(allMc))[start:start+quanti],
+            'chi2z':0.00001*np.ones(len(allMc))[start:start+quanti]
             #'chi2z':np.zeros(len(allMc))[0:1]
            }
 
-gwfast.gwfastUtils.save_data(COV_SAVE_PATH+'SNR_more_than_100_200.h5', Allevents_DS)
-#tosave=gwfast.gwfastUtils.load_population(COV_SAVE_PATH+'SNR_more_than_50_100.h5')
-#df_Allevents_DS = pd.DataFrame.from_dict(Allevents_DS, orient='columns')
-#df_Allevents_DS.to_csv('SNR_more_than_50_100.csv')
+gwfast.gwfastUtils.save_data(COV_SAVE_PATH+'SNR_more_than_100_1000_to_1200.h5', Allevents_DS)
 totFET = myET.FisherMatr(Allevents_DS)
 print('The computed Fisher matrix has shape %s'%str(totFET.shape))
-np.save(COV_SAVE_PATH+'Fish_SNR_more_than_100_200',totFET)
+np.save(COV_SAVE_PATH+'Fish_SNR_more_than_100_1000_to_1200',totFET)
 totCov_ET, inversion_err_ET = CovMatr(totFET)
 #name='Allevents_from_Uniform_complete'
-np.save(COV_SAVE_PATH+'Cov_SNR_more_than_100_200',totCov_ET)
+np.save(COV_SAVE_PATH+'Cov_SNR_more_than_100_1000_to_1200',totCov_ET)
+print('Number of computed Covs'+str(np.shape(totCov_ET)[0]))
