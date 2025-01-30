@@ -139,8 +139,8 @@ if __name__=='__main__':
     print('using {} CPU' .format(multiprocessing.cpu_count()))
 
     #-----------------------ORDERING OF THE VARIABLES--------------------------------------
-    Cov_file='Cov_SNR_more_than_100_400_to_600.npy'
-    Population='SNR_more_than_100_400_to_600.h5'
+    Cov_file='Cov_SNR_more_than_100_700_800.npy'
+    Population='SNR_more_than_100_700_800.h5'
     tosave=load_population(COV_SAVE_PATH+Population)
 
     Allevents_DS_fromfile = pd.DataFrame.from_dict(tosave, orient='columns')
@@ -160,8 +160,8 @@ if __name__=='__main__':
     print(keys)
     #---------------------------------------------------------------------------------------
     allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
-    shift=400
-    for i in range(200):
+    shift=700
+    for i in range(100):
         k=i+shift
         print(f"Generating map {k:02d}")
 
