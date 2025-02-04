@@ -1,158 +1,165 @@
 import pandas as pd
 import numpy as np
-import healpy as hp
-import matplotlib.pyplot as plt
-
-from astropy.cosmology import FlatLambdaCDM
-from astropy.table import Table
-
-from ligo.skymap.io import fits
+import multiprocessing
 import os
-import sys
+import glob
 
-
-import gwfast.gwfastGlobals as glob
 import gwfast
 from gwfast.gwfastUtils import load_population
-
-from tqdm import tqdm
-
-import h5py
-from multiprocessing import Pool
-import multiprocessing
-import pickle
-from numba import jit
 
 from GalaxyCat import GalCat
 from Global import *
 
-#################################################################################
+from multiprocessing import shared_memory
 
-def list_perm(lista,permutazione):
-    tmp=[]
-    for e in permutazione:
-        tmp.append(lista[e])
-    return tmp
+# Global variable for shared access
+hostcat_shared_mem = None
+hostcat_shape = None
+hostcat_columns = None
 
-def cat2parameter(args):
-    catalogue, keys = args
+def init_worker(shared_name, shape, columns):
+    """ Initialize the shared memory for hostcat in each worker process """
+    global hostcat_shared_mem, hostcat_shape, hostcat_columns
     
-    missing_columns = [key for key in keys if key not in catalogue.columns]
-    if missing_columns:
-        raise ValueError(f"Some keys are missing in the DataFrame: {missing_columns}")
+    hostcat_shared_mem = shared_memory.SharedMemory(name=shared_name)
+    hostcat_shape = shape
+    hostcat_columns = columns
+
+def process_event(k):
+    """ Worker function to filter hostcat based on event properties """
+    global hostcat_shared_mem, hostcat_shape, hostcat_columns
+
+    DS_dl = Allevents_DS.iloc[k]['dL'] * 1000
+    DS_theta = Allevents_DS.iloc[k]['theta']
+    DS_phi = Allevents_DS.iloc[k]['phi']
+
+    # Reconstruct the DataFrame from shared memory
+    hostcat_array = np.ndarray(hostcat_shape, dtype=np.float64, buffer=hostcat_shared_mem.buf)
+    hostcat = pd.DataFrame(hostcat_array, columns=hostcat_columns)
+
+    # Use np.isclose() for floating-point tolerance
+    matched_rows = hostcat[
+        np.isclose(hostcat['Luminosity Distance'], DS_dl, atol=1e-7) &  
+        np.isclose(hostcat['theta'], DS_theta, atol=1e-6) &
+        np.isclose(hostcat['phi'], DS_phi, atol=1e-6)
+    ]
     
-    # Reorder the catalogue according to the order in keys
-    catalogue_permuted = catalogue[keys]
-    
-    return catalogue_permuted
+    # **Logging Issues**
+    if matched_rows.empty:
+        print(f"Warning: No match found for event {k} (dL={DS_dl}, theta={DS_theta}, phi={DS_phi})")
+    elif len(matched_rows) > 1:
+        print(f"Warning: Multiple matches found for event {k}, taking the first one.")
 
+    # Take the first match or return empty row
+    return matched_rows.iloc[:1] if not matched_rows.empty else pd.DataFrame(columns=hostcat_columns)
 
+if __name__ == '__main__':
+    folder = 'Uniform/TestRun00/'
+    CAT_FOLDER = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
+    COV_SAVE_PATH = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/' + folder
+    output_path = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Catalogues/GalaxyCatalogue/Uniform/'
 
-####################################################################################################################################
-if __name__=='__main__':
+    print(f'Using {multiprocessing.cpu_count()} CPUs')
 
-    folder='Uniform/TestRun00/'
-    CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
-    SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
-    COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
-    output_path='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Catalogues/GalaxyCatalogue/Uniform/'
-
-    print('using {} CPU' .format(multiprocessing.cpu_count()))
-
-    #-----------------------load the galaxy catalogue and the GW event--------------------------------------
+    # Load the galaxy catalog
     print('Reading Galaxy Catalogue')
-    #reading the catalogue and selecting the pixel
-    to_read='Uniform_paper.txt'
-    nside=128
-    hostcat=GalCat(to_read).read_catalogue()
-    Population='SNR_more_than_100_200.h5'
-    tosave=load_population(COV_SAVE_PATH+Population)
-    Allevents_DS = pd.DataFrame.from_dict(tosave, orient='columns')
+    to_read = 'Uniform_paper.txt'
+    hostcat = GalCat(to_read).read_catalogue()
 
-    More_population='SNR_more_than_100_200_to_400.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_400_to_600.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_600_to_800.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_800_to_1000.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_1000_to_1200.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_1200_to_1400.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_1400_to_1600.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_1600_to_1800.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
-
-    More_population='SNR_more_than_100_1800_to_2000.h5'
-    tosave=load_population(COV_SAVE_PATH+More_population)
-    tmp = pd.DataFrame.from_dict(tosave, orient='columns')
-    Allevents_DS= pd.concat([Allevents_DS, tmp])
+    # Load all population files
+    Allevents_DS = pd.DataFrame()
+    for file_name in glob.glob(os.path.join(COV_SAVE_PATH, 'SNR_more_than_100_*.h5')):
+        tosave = load_population(file_name)
+        More_population = os.path.basename(file_name)
+        tmp = pd.DataFrame.from_dict(tosave, orient='columns')
+        Allevents_DS = pd.concat([Allevents_DS, tmp], ignore_index=True)
+        print('Loaded population {}'.format(More_population))
 
     print(list(Allevents_DS.columns))
-    selected=np.arange(0,Allevents_DS.shape[0])
-    temp_df = pd.DataFrame()
-    Host_in_cat=hostcat.shape[0]
-    Density_cat=0.0008535495806629083
-    Density_version1=0.0001428903404274413
-    Nhost=Host_in_cat*Density_version1/Density_cat
-# Iterate through selected indices and filter entries
-    for k in selected:
-        DS_dl = Allevents_DS.iloc[k]['dL'] * 1000
-        DS_theta = Allevents_DS.iloc[k]['theta']
-        DS_phi = Allevents_DS.iloc[k]['phi']
+    
+    selected = np.arange(0, Allevents_DS.shape[0])
+    Host_in_cat = hostcat.shape[0]
+    Density_cat = 0.00171
+    Density_version1 = 0.000286
+    Nhost = int(Host_in_cat * Density_version1 / Density_cat)
 
-        print('DS info:')
-        print(DS_dl, DS_theta, DS_phi)
+    # Convert hostcat to NumPy array for shared memory
+    hostcat_array = hostcat.to_numpy(dtype=np.float64)
+    hostcat_columns = list(hostcat.columns)
+    hostcat_shape = hostcat_array.shape
 
-        # Filter hostcat based on the given properties
-        i = hostcat[((hostcat['Luminosity Distance'] == DS_dl) &
-                     (hostcat['theta'] == DS_theta) &
-                     (hostcat['phi'] == DS_phi))].index
+    # Create shared memory
+    shm = shared_memory.SharedMemory(create=True, size=hostcat_array.nbytes)
+    shared_hostcat = np.ndarray(hostcat_shape, dtype=np.float64, buffer=shm.buf)
+    shared_hostcat[:] = hostcat_array[:]  # Copy data to shared memory
 
-        # Append the removed entries to the temporary DataFrame
-        temp_df = pd.concat([temp_df, hostcat.loc[i]])
+    # Use multiprocessing to process events in parallel
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count(), initializer=init_worker, initargs=(shm.name, hostcat_shape, hostcat_columns)) as pool:
+        results = pool.map(process_event, selected)
 
-        # Drop the selected entries from the host catalog
-        hostcat = hostcat.drop(i)
+    # Convert results back to DataFrame
+    temp_df = pd.concat(results, ignore_index=True)
 
-    # Sample the remaining entries in the host catalog
+    # Free shared memory
+    shm.close()
+    shm.unlink()
+
+    print(f"Shape of hostcat before removal: {hostcat.shape[0]}")
+    print(f"Shape of extracted entries (temp_df): {temp_df.shape[0]}")
+    
+    # Remove matched rows from hostcat
+    hostcat = hostcat.drop(temp_df.index)
+
+    print(f"Shape of hostcat after removal: {hostcat.shape[0]}")
+
+    # Sample the remaining hostcat
     hostcat_sampled = hostcat.sample(n=Nhost, replace=False, random_state=42)
 
-    # Add back the removed entries to the sampled catalog
-    hostcat_sampled = pd.concat([hostcat_sampled, temp_df], ignore_index=True)
+    print(f"Shape of hostcat_sampled before concatenation: {hostcat_sampled.shape[0]}")
+    # Mark extracted entries in temp_df
+    temp_df['is_extracted'] = True
+    hostcat_sampled['is_extracted'] = False
+    # Extract the actual extracted entries for validation
+    last_entries = hostcat_sampled[hostcat_sampled['is_extracted'] == True].drop(columns=['is_extracted'])
 
-    print('Tail of the sampled catalog:')
-    print(hostcat_sampled.tail(3))
-    print(hostcat_sampled.iloc[-1]['Luminosity Distance'])
+    # Reset index for proper comparison
+    temp_df_sorted = temp_df.reset_index(drop=True)
+    last_entries_sorted = last_entries.reset_index(drop=True)
 
-    # Save the sampled catalog
-    name='Uniform_paper_sampled_density_of_version_one.txt'
-    temp_df.to_csv(os.path.join(output_path,name), index=False)
+    # **Ensure Both DataFrames Have the Same Column Order and Drop 'is_extracted'**
+    temp_df_sorted = temp_df_sorted.drop(columns=['is_extracted'], errors='ignore')  # Drop safely if exists
+    last_entries_sorted = last_entries_sorted[temp_df_sorted.columns]  # Align column order
+
+    # Ensure both DataFrames have only numeric values
+    temp_df_sorted = temp_df_sorted.select_dtypes(include=[np.number])
+    last_entries_sorted = last_entries_sorted.select_dtypes(include=[np.number])
+
+    # Check for NaN or Inf values before comparison
+    if temp_df_sorted.isnull().values.any() or last_entries_sorted.isnull().values.any():
+        print("Warning: NaN values found in the data. This may cause validation failure.")
+
+    if not np.isfinite(temp_df_sorted.to_numpy()).all() or not np.isfinite(last_entries_sorted.to_numpy()).all():
+        print("Warning: Infinite values found in the data. This may cause validation failure.")
+
+    # Convert to NumPy before comparison
+    if np.allclose(temp_df_sorted.to_numpy(), last_entries_sorted.to_numpy(), atol=1e-6):
+        print("Validation Passed: Extracted entries match after sorting (within numerical tolerance).")
+    else:
+        print("Validation Failed: Extracted entries do not match even after sorting!")
+        print("Possible numerical precision issue.")
+
+        # Debugging Output
+        print("\nFirst few rows of temp_df_sorted:")
+        print(temp_df_sorted.head())
+
+        print("\nFirst few rows of last_entries_sorted:")
+        print(last_entries_sorted.head())
+
+        print("\nDifference between DataFrames:")
+        print(temp_df_sorted.to_numpy() - last_entries_sorted.to_numpy())
+
+    # **Save the correctly updated `hostcat_sampled` instead of `temp_df`**
+    output_filename = 'Uniform_paper_sampled_density_of_version_one.txt'
+    hostcat_sampled.to_csv(os.path.join(output_path, output_filename), index=False)
     print(f'Sampled catalog saved to {output_path}')
 

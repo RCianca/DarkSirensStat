@@ -77,7 +77,7 @@ alldl=np.asarray(DS_Cat['Luminosity Distance'])/1000.0#servono i Gpc
 
 
 tcoal=np.asarray(GPSt_to_LMST(tGPS, lat=40.516666666666666, long=9.416666666666666))
-start=1900
+start=900
 print('Start is {}'.format(start))
 quanti=int(min(100,DS_Cat.shape[0]))
 Allevents_DS = {'Mc':1*allMc[start:start+quanti]*(1+allz)[start:start+quanti],
@@ -96,11 +96,11 @@ Allevents_DS = {'Mc':1*allMc[start:start+quanti]*(1+allz)[start:start+quanti],
 #print('Allevents head')
 #print(Allevents_DS.head(5))
 print('Saving files')
-gwfast.gwfastUtils.save_data(COV_SAVE_PATH+'SNR_more_than_100_1900_2000.h5', Allevents_DS)
+gwfast.gwfastUtils.save_data(COV_SAVE_PATH+'SNR_more_than_100_900_1000.h5', Allevents_DS)
 totFET = myET.FisherMatr(Allevents_DS)
 print('The computed Fisher matrix has shape %s'%str(totFET.shape))
-np.save(COV_SAVE_PATH+'Fish_SNR_more_than_100_1900_2000',totFET)
+np.save(COV_SAVE_PATH+'Fish_SNR_more_than_100_900_1000',totFET)
 totCov_ET, inversion_err_ET = CovMatr(totFET)
 #name='Allevents_from_Uniform_complete'
-np.save(COV_SAVE_PATH+'Cov_SNR_more_than_100_1900_2000',totCov_ET)
+np.save(COV_SAVE_PATH+'Cov_SNR_more_than_100_900_1000',totCov_ET)
 print('Number of computed Covs'+str(np.shape(totCov_ET)[2]))
