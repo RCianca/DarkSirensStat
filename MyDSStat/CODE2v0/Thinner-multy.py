@@ -119,6 +119,10 @@ if __name__ == '__main__':
     # Mark extracted entries in temp_df
     temp_df['is_extracted'] = True
     hostcat_sampled['is_extracted'] = False
+
+    hostcat_sampled = pd.concat([hostcat_sampled, temp_df], ignore_index=True)
+    print(f"Shape of hostcat_sampled after concatenation: {hostcat_sampled.shape[0]}")
+
     # Extract the actual extracted entries for validation
     last_entries = hostcat_sampled[hostcat_sampled['is_extracted'] == True].drop(columns=['is_extracted'])
 
@@ -157,9 +161,8 @@ if __name__ == '__main__':
 
         print("\nDifference between DataFrames:")
         print(temp_df_sorted.to_numpy() - last_entries_sorted.to_numpy())
-
-    # **Save the correctly updated `hostcat_sampled` instead of `temp_df`**
+    hostcat_sampled = hostcat_sampled.drop(columns=['is_extracted'],errors='ignore')
+    # **Save the correctly updated `hostcat_sampled`**
     output_filename = 'Uniform_paper_sampled_density_of_version_one.txt'
     hostcat_sampled.to_csv(os.path.join(output_path, output_filename), index=False)
     print(f'Sampled catalog saved to {output_path}')
-

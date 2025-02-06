@@ -1,58 +1,18 @@
-from Global import (
-    href, Om0GLOB, clight, start,stop,InputEvents, runpath,to_read
-)
-from scipy.integrate import quad, quad_vec,simpson
+#from Global import (
+#    href, Om0GLOB, clight, start,stop,InputEvents, runpath,to_read,pix_threshold,MapPath,H0min,H0max
+#)
+from Global import *
+#from scipy.integrate import quad, quad_vec,simpson
 from SkyMap import GWskymap
 from GalaxyCat import GalCat
 import numpy as np
 import pandas as pd
 import os
-from tqdm import tqdm
 import multiprocessing
-from multiprocessing.dummy import Pool as ThreadPool # remove if you are not using threads. Default is with pool
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from numba import njit
 
-#------------------Functions---------------------------------------------
-@njit
-def E_z(z, H0, Om=Om0GLOB):
-    """
-    Helper function for Hubble parameter as a function of redshift.
-    """
-    return np.sqrt(Om * (1 + z)**3 + (1 - Om))
-def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
-    """
-    Vectorized comoving distance r(z) for array inputs using Simpson's rule.
-    Handles both scalar and array inputs for z.
-    """
-    c = clight
-
-    def integrand(x):
-        return 1 / E_z(x, H0, Om)
-
-    if np.isscalar(z):
-        x_grid = np.linspace(0, z, num_points)
-        y_values = integrand(x_grid)
-        if len(x_grid) == 0 or len(y_values) == 0:
-            raise ValueError("Empty integration grid or invalid values")
-        integral = simpson(y_values, x_grid)
-    else:
-        integral = np.array([
-            simpson(
-                y=integrand(np.linspace(0, zi, num_points)),
-                x=np.linspace(0, zi, num_points)
-            ) for zi in z
-        ])
-    if integral is None or np.isnan(integral).any():
-        raise ValueError("Integration failed, returned None or NaN")
-    return integral * c / H0
-
-def Dl_z_vectorized(z, H0, Om=Om0GLOB):
-    """
-    Vectorized luminosity distance D_L(z) for array inputs.
-    """
-    return r_z_vectorized(z, H0, Om) * (1 + z)
 #---------------------- Likelihood----------------------------------------
 @njit
 def likelihood_line(mu_DS, dl, sigma):
@@ -116,7 +76,6 @@ if __name__=='__main__':
     os.system('cp Global.py '+folder+'/Global-copy.py')
 
     # H0 Grid
-    H0min, H0max = 40, 100
     H0Grid = np.linspace(H0min, H0max, 1000)
     #DF_results = pd.DataFrame(columns=['Event', 'Likelihood'])
     total_post = np.ones(len(H0Grid))  # Total posterior
@@ -131,7 +90,7 @@ if __name__=='__main__':
 
     # Load GW Data
     print('Loading GW data')
-    MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
+    #MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
 
 
@@ -155,7 +114,7 @@ if __name__=='__main__':
         #sigmamean = np.mean(allsigma[pix_selected])#np.sum(allsigma * skyprob) / np.sum(skyprob)
         #print(f'mu_pesato: {mumean} Mpc, sigma_pesato: {sigmamean} Mpc')
 
-        if(len(pix_selected)>1200): #this can be relaxed, now is a test run. Such confition should be implemented in the skymap generator to have different quality sets
+        if(len(pix_selected)>pix_threshold): #this can be relaxed, now is a test run. Such confition should be implemented in the skymap generator to have different quality sets
             print(f'Skipping {name}, too many pixels')
             
         else:    
@@ -188,8 +147,6 @@ if __name__=='__main__':
                 chunksize = max(1, len(pixel_args) // (2 * cpu))
                 with Pool(cpu) as pool:
                     results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
-                #with ThreadPool(cpu) as pool:
-                #    results = list(pool.imap(compute_pixel_likelihood, pixel_args)) #RC:this is a major change, try first with the new optimizations
                 single_post = np.sum(results, axis=0)
                 if np.sum(single_post)==0:
                     single_post=np.ones(len(H0Grid))
@@ -203,10 +160,10 @@ if __name__=='__main__':
             likename='like_'+name.split('.')[0]
             np.save(os.path.join(folder,likename),single_post)
             total_post *= single_post
-            total_post += 1*10**(-9)
+            #total_post += 1*10**(-9)
     postname='Total_Posterior'
     np.save(os.path.join(folder,postname),total_post)
-        ####################Plot###########################################################
+        ####################Plot Likelihood###########################################################
     # Plot results
     print('Plotting total likelihood')
     fig, ax = plt.subplots(1, figsize=(15, 10))
@@ -229,3 +186,4 @@ if __name__=='__main__':
     plotpath=os.path.join(folder,plotname)
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
     plt.close()
+    ###################################

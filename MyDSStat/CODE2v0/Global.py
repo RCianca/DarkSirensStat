@@ -1,10 +1,11 @@
 import numpy as np
 import healpy as hp
-from scipy.integrate import quad, quad_vec,simpson
-from scipy.interpolate import interp1d
+from scipy.integrate import simpson #quad, quad_vec
+#from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from astropy.cosmology import FlatLambdaCDM
 from numba import njit
+import os 
 
 # --------------------- Global Constants ----------------------------------
 href = 67  # Hubble constant reference value
@@ -14,28 +15,20 @@ clight = 2.99792458 * 10**5  # Speed of light in km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
 
 # --------------------- Cosmology Functions ----------------------------------
+# def r_z(z, H0, Om=Om0GLOB):
+#     """
+#     Scalar comoving distance r(z).
+#     """
+#     c = clight
+#     integrand = lambda x: 1 / E_z(x, H0, Om)
+#     integral, error = quad(integrand, 0, z)
+#     return integral * c / H0
 
-@njit
-def E_z(z, H0, Om=Om0GLOB):
-    """
-    Helper function for Hubble parameter as a function of redshift.
-    """
-    return np.sqrt(Om * (1 + z)**3 + (1 - Om))
-
-def r_z(z, H0, Om=Om0GLOB):
-    """
-    Scalar comoving distance r(z).
-    """
-    c = clight
-    integrand = lambda x: 1 / E_z(x, H0, Om)
-    integral, error = quad(integrand, 0, z)
-    return integral * c / H0
-
-def Dl_z(z, H0, Om=Om0GLOB):
-    """
-    Scalar luminosity distance D_L(z).
-    """
-    return r_z(z, H0, Om) * (1 + z)
+# def Dl_z(z, H0, Om=Om0GLOB):
+#     """
+#     Scalar luminosity distance D_L(z).
+#     """
+#     return r_z(z, H0, Om) * (1 + z)
 # def r_z_vectorized(z, H0, Om=Om0GLOB):
 #     """
 #     Vectorized comoving distance r(z) for array inputs.
@@ -49,6 +42,12 @@ def Dl_z(z, H0, Om=Om0GLOB):
 #         integral = np.array([quad_vec(integrand, 0, zi)[0] for zi in z])
 #     return integral * c / H0
 @njit
+def E_z(z, H0, Om=Om0GLOB):
+    """
+    Helper function for Hubble parameter as a function of redshift.
+    """
+    return np.sqrt(Om * (1 + z)**3 + (1 - Om))
+#@njit
 def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
     """
     Vectorized comoving distance r(z) for array inputs using Simpson's rule.
@@ -149,13 +148,19 @@ def InputEvents(start, end):
     list: List of file names in the specified range.
     """
     return [f"GWtest{num:02d}.fits" for num in range(start, end + 1)]
-
+#PARAMETES FOR THE CORE SCRIPT#######################À
+#print('Loading GW data')
+working_dir = os.getcwd()
+MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
 start=0
-stop=300
+stop=5
+pix_threshold=1200
+H0min, H0max = 40, 100
 # List of GW data files to process
 #fname=['GWtest61.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Uniform_paper_sampled_frac_002_host'
+runpath = 'Uniform_paper_old_density_testbeta'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_frac_002_host.txt'
+to_read = 'Uniform_paper_sampled_density_of_version_one.txt'
+
