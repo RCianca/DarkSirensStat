@@ -61,7 +61,7 @@ def compute_pixel_likelihood(args):
 
 if __name__=='__main__':
     print(f"Flagship params: H0 = {href}, Omega_M = {Om0GLOB}")
-    fname = InputEvents(start,stop)
+    #fname #= InputEvents(start,stop) From Global.py
     print(f"Files to process: {fname}")
     print(f"Results will be saved in folder: {runpath}")
     working_dir = os.getcwd()

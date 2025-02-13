@@ -1,25 +1,42 @@
 import numpy as np
 from Global import *
 import os
+import sys
 
 import multiprocessing
-from multiprocessing import Pool
+#from multiprocessing import Pool
 
 from GalaxyCat import GalCat
 from SkyMap import GWskymap
 
 
 #for now is a function to use in CODE2v0-Fast-MultipleDS, so all args will be passed by the script. Used as main, you need to give the arguments
+def beta_caller(name,args):
+    if name == 'Beta_fast':
+        beta= Beta_fast(args)
+    else:
+        beta= Beta2v0_pix(args)
+    return beta
+
+def Beta_fast(args):
+    mu_DS,sigma,z_hosts,Htemp=args 
+    dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
+    #begin mod speed up
+    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
+    beta = len(dl_array)# here we will add the weights
+    return beta
 
 # Parallelized function to compute beta in the pixel
-def beta2v0_pix(args):
+def Beta2v0_pix(args):
+    print('called Beta2v0,debug')
     pix, mu_pix, sigma_pix, z_hosts, H0Grid = args
     pixel_beta = np.ones(len(H0Grid))
     if len(z_hosts) == 0:
-        #print('No hosts for this line of sight')
+        print('No hosts for this line of sight')
         return pixel_beta
     if np.isnan(z_hosts).any():
-        #print('NONE in z_hosts')
+        print('NONE in z_hosts')
         return pixel_beta
     #print('debug:found hosts')
     for j, h in enumerate(H0Grid):
@@ -35,16 +52,35 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
+    if debug==1:
+        print('Debug beta_inpix of Beta2v0')
+        print('dl_array before selection\n {}'.format(dl_array))
+        print('mu_DS {} Mpc Sigma {} Mpc mu+-4.5*sigma {} {}'.format(mu_DS,sigma,mu_DS+4.5*sigma,mu_DS-4.5*sigma))
+        sys.stdout.flush()
     dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
+    if debug ==1:
+        print('dl_array afet dl+4.5*sigma selection\n {}'.format(dl_array))
+        sys.stdout.flush()
     dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
+    if debug ==1:
+        print('dl_array afet dl+4.5*sigma selection\n {}'.format(dl_array))
+        sys.stdout.flush()
     
     if dl_array is None or np.isnan(dl_array).any():
-        raise ValueError("Dl_z_vectorized returned None or NaN")
+        print(f"Warning: NaN detected in dl_array for Htemp={Htemp}")
+        sys.stdout.flush()
+
+    if len(dl_array) == 0:
+        print("Warning: No valid dl_array values")
+        sys.stdout.flush()
+        beta=1
+        return beta
 
     beta = len(dl_array)# here we will add the weights
     return beta
 
 if __name__=='__main__':
+    debug=1
     print('Computing Beta for each event.')
 
     fname = InputEvents(start,stop)
@@ -75,7 +111,6 @@ if __name__=='__main__':
     print('Loading GW data')
     #MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
-
     for name in fname:
 
         DSs = GWskymap(os.path.join(MapPath, name), level=level)
@@ -110,30 +145,41 @@ if __name__=='__main__':
     
         
             single_beta=np.ones(len(H0Grid))
+            print('using beta {}'.format(which_beta))
+            if which_beta=='Beta2v0_pix':
+                #move to a beta caller function to keep stuff organised
+                pixel_args = [
+                    (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid)
+                    for pix in pix_selected
+                    if pix in grouped_hostcat.groups
+                ] # This is the new version with goupby. If not working rmove also groupby above
 
-            pixel_args = [
-                (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid)
-                for pix in pix_selected
-                if pix in grouped_hostcat.groups
-            ] # This is the new version with goupby. If not working rmove also groupby above
-
-            if len(pixel_args) > 0:
-                #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
+                if len(pixel_args) > 0:
+                    #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
+                    cpu = multiprocessing.cpu_count()
+                    print(f'Using {cpu} CPUs')
+                    chunksize = max(1, len(pixel_args) // (2 * cpu))
+                    with multiprocessing.Pool(cpu) as pool:
+                        results = list(pool.imap(Beta2v0_pix, pixel_args, chunksize=chunksize))# better chunksize should improve time
+                    single_beta = np.sum(results, axis=0)
+                    if np.sum(single_beta)==0:
+                        single_beta=np.ones(len(H0Grid))
+                    if np.isnan(single_beta).any():
+                        #single_beta=np.ones(len(H0Grid))
+                        print('some NaN in single_beta, skipped\n')
+                else:
+                    print("No Hosts found for this DS, skipping computation.")
+                    results = []
+                betaname='beta_'+name.split('.')[0]
+                np.save(os.path.join(folder,betaname),single_beta)
+            elif which_beta=='Beta_fast':
+                mumean = np.sum(allmu[pix_selected] * skyprob[pix_selected]) / np.sum(skyprob[pix_selected])
+                sigmamean = np.mean(allsigma[pix_selected]* skyprob[pix_selected]) / np.sum(skyprob[pix_selected])
+                allz_for_beta=np.asarray(hostcat_filtered['z'])
                 cpu = multiprocessing.cpu_count()
                 print(f'Using {cpu} CPUs')
-                chunksize = max(1, len(pixel_args) // (2 * cpu))
-                with Pool(cpu) as pool:
-                    results = list(pool.imap(beta2v0_pix, pixel_args, chunksize=chunksize))# better chunksize should improve time
-                single_beta = np.sum(results, axis=0)
-                if np.sum(single_beta)==0:
-                    single_beta=np.ones(len(H0Grid))
-                if np.isnan(single_beta).any():
-                    single_beta=np.ones(len(H0Grid))
-                print('some NaN in singlepost, skipped\n')
-            else:
-                print("No Hosts found for this DS, skipping computation.")
-                results = []
-            betaname='beta_'+name.split('.')[0]
-            np.save(os.path.join(folder,betaname),single_beta)
-            #total_post *= single_post
+                chunksize = max(1, len(H0Grid) // (2 * cpu))
+                args_list = [(mumean, sigmamean, allz_for_beta, h) for h in H0Grid]
+                with multiprocessing.Pool(cpu) as pool:
+                    single_beta = pool.map(Beta_fast, args_list, chunksize)
 print('All beta Saved')

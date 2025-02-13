@@ -148,19 +148,21 @@ def InputEvents(start, end):
     list: List of file names in the specified range.
     """
     return [f"GWtest{num:02d}.fits" for num in range(start, end + 1)]
-#PARAMETES FOR THE CORE SCRIPT#######################À
+#PARAMETES FOR THE CORE SCRIPT#######################
 #print('Loading GW data')
 working_dir = os.getcwd()
 MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
 start=0
-stop=5
+stop=100
 pix_threshold=1200
 H0min, H0max = 40, 100
+which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 # List of GW data files to process
+fname = InputEvents(start,stop)
 #fname=['GWtest61.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Uniform_paper_old_density_testbeta'
+runpath = 'Test-NaN_long_run'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_density_of_version_one.txt'
+to_read = 'Uniform_paper_sampled_frac_005-host.txt'#Uniform_paper_sampled_frac_005-host
 
