@@ -200,8 +200,8 @@ if __name__=='__main__':
         theta = samples[:, -2]
         phi = samples[:, -1]
         direct_dl=samples[:,0]
-        theta_hp = np.mod(theta, np.pi)
-        phi_hp = np.mod(phi, 2 * np.pi)
+        theta_hp = np.mod(theta, np.pi) 
+        phi_hp = np.mod(phi, 2 * np.pi) 
 
         # Healpix map generation
         nside = 128
@@ -226,13 +226,13 @@ if __name__=='__main__':
         hp.mollview(sky_map, title=f'GWtest{k:02d}-skyprob', nest=False, hold=True)
         plt.savefig(f'GWtest{k:02d}.pdf')
         plt.close()      
-        theta_mean=perm_mean[-2]
-        phi_mean=perm_mean[-1]
-        mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)
-        theta_DS, phi_DS = hp.pix2ang(nside,mean_pix)
-        DS_angs = np.zeros(2)
-        DS_angs[0] = theta_DS
-        DS_angs[1] = phi_DS   
+        #theta_mean=perm_mean[-2]
+        #phi_mean=perm_mean[-1]
+        #mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)
+        #theta_DS, phi_DS = hp.pix2ang(nside,mean_pix)
+        #DS_angs = np.zeros(2)
+        #DS_angs[0] = theta_DS
+        #DS_angs[1] = phi_DS   
         all_mu = np.zeros(hp.nside2npix(nside))
         all_std = np.zeros(hp.nside2npix(nside))
         unique_pixels = np.unique(pixels)

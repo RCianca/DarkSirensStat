@@ -12,8 +12,6 @@ import multiprocessing
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from numba import njit
-
-#---------------------- Likelihood----------------------------------------
 @njit
 def likelihood_line(mu_DS, dl, sigma):
     norm = 1 / (np.sqrt(2 * np.pi) * sigma)
@@ -25,21 +23,24 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
     """
     Compute the likelihood of H0 for a single pixel.
     """
-    #if len(z_hosts) == 0:
-    #    raise ValueError("z_hosts is empty")
-    #if np.isnan(z_hosts).any():
-    #    raise ValueError("z_hosts contains NaN values")
+    if len(z_hosts) == 0:
+        raise ValueError("z_hosts is empty")
+    if np.isnan(z_hosts).any():
+        raise ValueError("z_hosts contains NaN values")
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
-    
+    dl_array=dl_array[dl_array<=mu_DS+3*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-3*sigma]
+    #end mod speed up
     if dl_array is None or np.isnan(dl_array).any():
         raise ValueError("Dl_z_vectorized returned None or NaN")
 
     likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vectorized likelihood
     return np.sum(likelihoods)
+
+
+
 
 # Parallelized function to compute the pixel likelihood
 def compute_pixel_likelihood(args):
@@ -56,6 +57,37 @@ def compute_pixel_likelihood(args):
         pixel_post[j] = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
     
     return pixel_post
+#############################Debug##############################################
+# def compute_pixel_likelihood(args):
+#     pix, mu_pix, sigma_pix, z_hosts, H0Grid, angular_prob, log_folder = args
+#     pixel_post = np.zeros(len(H0Grid))
+#     log_file = os.path.join(log_folder, f"debug_likelihood_{pix}.log")
+    
+#     with open(log_file, "w") as f:
+#         f.write(f"Pixel: {pix}\n")
+#         f.write(f"mu_pix: {mu_pix}, sigma_pix: {sigma_pix}\n")
+#         f.write(f"z_hosts: {z_hosts}\n")
+    
+#     if len(z_hosts) == 0:
+#         with open(log_file, "a") as f:
+#             f.write("No hosts for this line of sight\n")
+#         return pixel_post
+    
+#     if np.isnan(z_hosts).any():
+#         with open(log_file, "a") as f:
+#             f.write("NaN in z_hosts\n")
+#         return pixel_post
+
+#     for j, h in enumerate(H0Grid):
+#         likelihood = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
+#         pixel_post[j] = likelihood
+
+#         if np.isnan(likelihood):
+#             with open(log_file, "a") as f:
+#                 f.write(f"NaN likelihood at H0={h}\n")
+    
+#     return pixel_post
+##############################################################################################
 
 #########################################################################################
 
@@ -92,6 +124,7 @@ if __name__=='__main__':
     print('Loading GW data')
     #MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
     level = 0.9
+    set_log_folder(folder)
 
 
     for name in fname:
@@ -109,10 +142,6 @@ if __name__=='__main__':
             print(f'There are NaN values in allmu of {name}')
         if np.isnan(allsigma).any():
             print(f'There are NaN values in allsigma of {name}')
-
-        #mumean = np.sum(allmu * skyprob) / np.sum(skyprob)
-        #sigmamean = np.mean(allsigma[pix_selected])#np.sum(allsigma * skyprob) / np.sum(skyprob)
-        #print(f'mu_pesato: {mumean} Mpc, sigma_pesato: {sigmamean} Mpc')
 
         if(len(pix_selected)>pix_threshold): #this can be relaxed, now is a test run. Such confition should be implemented in the skymap generator to have different quality sets
             print(f'Skipping {name}, too many pixels')
@@ -135,7 +164,7 @@ if __name__=='__main__':
 
             pixel_args = [
                 (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
-                #(pix, mumean, allsigma[pix]*7, grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
+                #(pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix],folder)# This if you want a pix-by-pix debug. Uncomment the debug variant of functions
                 for pix in pix_selected
                 if pix in grouped_hostcat.groups
             ] # This is the new version with goupby. If not working rmove also groupby above
@@ -148,11 +177,6 @@ if __name__=='__main__':
                 with Pool(cpu) as pool:
                     results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
                 single_post = np.sum(results, axis=0)
-                if np.sum(single_post)==0:
-                    single_post=np.ones(len(H0Grid))
-                if np.isnan(single_post).any():
-                    single_post=np.ones(len(H0Grid))
-                print('some NaN in singlepost, skipped\n')
             else:
                 print("No Hosts found for this DS, skipping computation.")
                 results = []

@@ -66,13 +66,17 @@ print(ParNums)
 # allcos=np.asarray(DS_Cat['cos_iota'])
 # alliota=np.arccos(allcos)
 # allpsi=np.asarray(DS_Cat['psi'])/2
-tGPS = np.array([1187008882.4])#arbitrario
+tGPS = np.array([1187008882.4])#arbitrario one year is 28944000 31/12/2024=1417046418 1/01/2024=1388102418
+tGPS_max=1417046418
+tGPS_min=1388102418
 # #tGPS = np.array([1187508882.4])
 # allz=np.asarray(DS_Cat['z'])
 # allphi=np.asarray(DS_Cat['phi'])
 # alltheta=np.asarray(DS_Cat['theta'])
 # alldl=np.asarray(DS_Cat['Luminosity Distance'])/1000#servono i Gpc
 tcoal=np.asarray(GPSt_to_LMST(tGPS, lat=40.516666666666666, long=9.416666666666666))
+tcoal_max=GPSt_to_LMST(tGPS_max, lat=40.516666666666666, long=9.416666666666666)
+tcoal_min=GPSt_to_LMST(tGPS_min, lat=40.516666666666666, long=9.416666666666666)
 
 # Configure ET and the PSD
 ETdet = {'ET': copy.deepcopy(glob.detectors).pop('ETS') }
@@ -116,6 +120,10 @@ for start in range(0, total_length, chunksize):
     iota_array = np.arccos(np.array(current_chunk['cos_iota']))  # Convert cos(iota) to iota
     psi_array = np.array(current_chunk['psi']) / 2  # Apply the division to psi
     eta_array = np.array(current_chunk['q'] / (1 + current_chunk['q'])**2 )
+    tcoal_array = np.random.uniform(tcoal_min, tcoal_max, len(current_chunk))
+    Phicoal_array = np.random.uniform(0., 2. * np.pi, len(current_chunk))
+    chi1z_array = np.random.uniform(-.05, .05, len(current_chunk))
+    chi2z_array = np.random.uniform(-.05, .05, len(current_chunk))
 
     # Create the Allevents dictionary for the current chunk with numpy arrays
     Allevents = {
@@ -126,17 +134,20 @@ for start in range(0, total_length, chunksize):
         'phi': phi_array,
         'iota': iota_array,
         'psi': psi_array,
-        'tcoal': 1 * tcoal * np.ones(len(current_chunk)),  # GMST is LMST computed at long = 0°
-        'Phicoal': np.full(len(current_chunk), 0.0003),
-        'chi1z': np.full(len(current_chunk), 0.00002),
-        'chi2z': np.full(len(current_chunk), 0.00001)
+        'tcoal': tcoal_array, #1 * tcoal * np.ones(len(current_chunk)),  # GMST is LMST computed at long = 0°
+        'Phicoal': Phicoal_array, #np.full(len(current_chunk), 0.0003),
+        'chi1z': chi1z_array, #np.full(len(current_chunk), 0.00002),
+        'chi2z': chi1z_array #np.full(len(current_chunk), 0.00001)
     }
-
     # Compute the SNR for the current chunk
     SNR_ET = myET.SNR(Allevents)
 
     # Add the SNR column to the current chunk
     current_chunk['SNR'] = SNR_ET
+    current_chunk['tcoal'] = tcoal_array
+    current_chunk['Phicoal'] = Phicoal_array
+    current_chunk['chi1z'] = chi1z_array
+    current_chunk['chi2z'] = chi2z_array
 
     # Save the current chunk to the file
     mode = 'w' if start == 0 else 'a'

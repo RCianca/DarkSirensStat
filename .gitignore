@@ -26,7 +26,7 @@ DSCatalogueCreator/EVA02_detected12_oneyear.fits
 DSCatalogueCreator/wrongsnrEVA02.fits
 DSCatalogueCreator/m1masses_paper.txt
 
-
+MyDSStat/CODE2v0/.giosaveX8tlLl
 MyDSStat/Allevents_from_Uniform_complete.h5
 MyDSStat/Allevents_from_Uniform_complete.npy
 MyDSStat/CODE2v0/Events
@@ -35,6 +35,7 @@ MyDSStat/CODE2v0/Results
 MyDSStat/CODE2v0/Catalogues/
 MyDSStat/DS_From_Parent_Uniform_Complete-Sliced.txt
 MyDSStat/DS_From_Parent_Uniform_Complete_SNR.txt
+MyDSStat/DS_From_Parent_UNiform_Complete_SNR_old.txt
 MyDSStat/DS_From_Parent_Uniform.txt
 MyDSStat/DS_From_Parent_Uniform_Complete.txt
 MyDSStat/results

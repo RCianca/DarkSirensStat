@@ -14,6 +14,16 @@ Xi0Glob = 1.0  # Cosmological coupling constant
 clight = 2.99792458 * 10**5  # Speed of light in km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
 
+
+# Global variable for log directory
+log_folder = "."
+
+def set_log_folder(folder_path):
+    """Set the global log folder for saving debug logs."""
+    global log_folder
+    log_folder = folder_path
+
+
 # --------------------- Cosmology Functions ----------------------------------
 # def r_z(z, H0, Om=Om0GLOB):
 #     """
@@ -47,7 +57,6 @@ def E_z(z, H0, Om=Om0GLOB):
     Helper function for Hubble parameter as a function of redshift.
     """
     return np.sqrt(Om * (1 + z)**3 + (1 - Om))
-#@njit
 def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
     """
     Vectorized comoving distance r(z) for array inputs using Simpson's rule.
@@ -74,7 +83,37 @@ def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
     if integral is None or np.isnan(integral).any():
         raise ValueError("Integration failed, returned None or NaN")
     return integral * c / H0
+########################################DEBUG#########################################
+# def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
+#     c = clight
+#     def integrand(x):
+#         return 1 / E_z(x, H0, Om)
 
+#     try:
+#         if np.isscalar(z):
+#             x_grid = np.linspace(0, z, num_points)
+#             y_values = integrand(x_grid)
+#             integral = simpson(y_values, x_grid)
+#         else:
+#             integral = np.array([
+#                 simpson(
+#                     integrand(np.linspace(0, zi, num_points)),
+#                     np.linspace(0, zi, num_points)
+#                 ) for zi in z
+#             ])
+#     except Exception as e:
+#         log_file = os.path.join(log_folder, "debug_global.log")
+#         with open(log_file, "a") as f:
+#             f.write(f"Error in r_z_vectorized: {e}\n")
+#         return np.nan
+
+#     if np.isnan(integral).any():
+#         log_file = os.path.join(log_folder, "debug_global.log")
+#         with open(log_file, "a") as f:
+#             f.write(f"NaN in r_z_vectorized output for z={z}, H0={H0}\n")
+
+#     return integral * c / H0
+##############################################################################################
 
 def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
@@ -148,12 +187,14 @@ def InputEvents(start, end):
     list: List of file names in the specified range.
     """
     return [f"GWtest{num:02d}.fits" for num in range(start, end + 1)]
+
+
 #PARAMETES FOR THE CORE SCRIPT#######################
 #print('Loading GW data')
 working_dir = os.getcwd()
 MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
-start=0
-stop=100
+start=1501
+stop=1750
 pix_threshold=1200
 H0min, H0max = 40, 100
 which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
@@ -162,7 +203,7 @@ fname = InputEvents(start,stop)
 #fname=['GWtest61.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Test-NaN_long_run'
+runpath = 'Paper-Uniform_old_dens_1751_2000'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_frac_005-host.txt'#Uniform_paper_sampled_frac_005-host
+to_read = 'Uniform_paper_sampled_density_of_version_one.txt'#Uniform_paper_sampled_frac_005-host#Uniform_paper_sampled_density_of_version_one
 

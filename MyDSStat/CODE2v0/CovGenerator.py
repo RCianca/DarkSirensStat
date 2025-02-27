@@ -39,7 +39,7 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Uniform/TestRun00/'
+folder='Uniform/TestRun01/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
@@ -71,9 +71,13 @@ allpsi=np.asarray(DS_Cat['psi'])/2
 tGPS = np.array([1187008882.4])#arbitrario
 #tGPS = np.array([1187508882.4])
 allz=np.asarray(DS_Cat['z'])
-allphi=np.asarray(DS_Cat['phi'])
-alltheta=np.asarray(DS_Cat['theta'])
+allphi=np.asarray(DS_Cat['phi']) 
+alltheta=np.asarray(DS_Cat['theta']) 
 alldl=np.asarray(DS_Cat['Luminosity Distance'])/1000.0#servono i Gpc
+alltcoal=np.asarray(DS_Cat['tcoal']) 
+allPhicoal=np.asarray(DS_Cat['Phicoal']) 
+allchi1z=np.asarray(DS_Cat['chi1z']) 
+allchi2z=np.asarray(DS_Cat['chi2z']) 
 
 
 tcoal=np.asarray(GPSt_to_LMST(tGPS, lat=40.516666666666666, long=9.416666666666666))
@@ -87,10 +91,10 @@ Allevents_DS = {'Mc':1*allMc[start:start+quanti]*(1+allz)[start:start+quanti],
             'phi':allphi[start:start+quanti],
             'iota':alliota[start:start+quanti],
             'psi':allpsi[start:start+quanti],
-            'tcoal':1*tcoal*np.ones(len(allMc))[start:start+quanti], # GMST is LMST computed at long = 0°
-            'Phicoal':0.0003*np.ones(len(allMc))[start:start+quanti],
-            'chi1z':0.00002*np.ones(len(allMc))[start:start+quanti],
-            'chi2z':0.00001*np.ones(len(allMc))[start:start+quanti]
+            'tcoal':alltcoal[start:start+quanti], # GMST is LMST computed at long = 0°
+            'Phicoal':allPhicoal[start:start+quanti],
+            'chi1z':allchi1z[start:start+quanti],
+            'chi2z':allchi2z[start:start+quanti]
             #'chi2z':np.zeros(len(allMc))[0:1]
            }
 #print('Allevents head')

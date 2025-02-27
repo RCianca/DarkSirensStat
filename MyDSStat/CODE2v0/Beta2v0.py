@@ -83,7 +83,7 @@ if __name__=='__main__':
     debug=1
     print('Computing Beta for each event.')
 
-    fname = InputEvents(start,stop)
+    #fname = InputEvents(start,stop)
     print(f"Files to process: {fname}")
     #print(f"Results will be saved in the beta folder inside: {runpath}")
     working_dir = os.getcwd()
@@ -132,7 +132,7 @@ if __name__=='__main__':
             
         else:    
             print('DS data:')
-            print(f'Using {name}')
+            print(f'Event {name}')
             print(f'Area of DS: {DSs.area()} deg^2 at 90%')
 
             # Filter Galaxy Catalogue
@@ -146,13 +146,13 @@ if __name__=='__main__':
         
             single_beta=np.ones(len(H0Grid))
             print('using beta {}'.format(which_beta))
-            if which_beta=='Beta2v0_pix':
+            if which_beta=='Beta2v0':
                 #move to a beta caller function to keep stuff organised
                 pixel_args = [
                     (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid)
                     for pix in pix_selected
                     if pix in grouped_hostcat.groups
-                ] # This is the new version with goupby. If not working rmove also groupby above
+                ]
 
                 if len(pixel_args) > 0:
                     #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
@@ -164,13 +164,23 @@ if __name__=='__main__':
                     single_beta = np.sum(results, axis=0)
                     if np.sum(single_beta)==0:
                         single_beta=np.ones(len(H0Grid))
-                    if np.isnan(single_beta).any():
+                    #if np.isnan(single_beta).any():
                         #single_beta=np.ones(len(H0Grid))
-                        print('some NaN in single_beta, skipped\n')
+                        #print('some NaN in single_beta, skipped\n')
                 else:
                     print("No Hosts found for this DS, skipping computation.")
                     results = []
                 betaname='beta_'+name.split('.')[0]
+                # if single_beta is None:
+                #     print("Error: single_beta is None!")
+                # elif np.isnan(single_beta).any():
+                #     print("Error: single_beta contains NaN values!")
+                # elif len(single_beta) == 0:
+                #     print("Error: single_beta is empty!")
+                # else:
+                #     print("Saving single_beta:", single_beta)
+                # print(f"single_beta shape: {single_beta.shape}")
+                # print(f"single_beta first values: {single_beta[:5]}")
                 np.save(os.path.join(folder,betaname),single_beta)
             elif which_beta=='Beta_fast':
                 mumean = np.sum(allmu[pix_selected] * skyprob[pix_selected]) / np.sum(skyprob[pix_selected])
@@ -182,4 +192,5 @@ if __name__=='__main__':
                 args_list = [(mumean, sigmamean, allz_for_beta, h) for h in H0Grid]
                 with multiprocessing.Pool(cpu) as pool:
                     single_beta = pool.map(Beta_fast, args_list, chunksize)
-print('All beta Saved')
+                np.save(os.path.join(folder,betaname),single_beta)
+    print('All beta Saved')
