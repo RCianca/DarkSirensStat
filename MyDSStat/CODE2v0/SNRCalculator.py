@@ -111,7 +111,7 @@ for start in range(0, total_length, chunksize):
     
     # Slice the data for the current chunk
     current_chunk = DS_Cat.iloc[start:end].copy()
-    print(current_chunk.head(3))
+    #print(current_chunk.head(3))
     # Convert necessary columns to numpy arrays
     mc_array = np.array(current_chunk['MC'] * (1 + current_chunk['z']))
     dl_array = np.array(current_chunk['Luminosity Distance'])/1000.0  # Convert to Gpc
