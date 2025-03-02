@@ -139,8 +139,8 @@ if __name__=='__main__':
     print('using {} CPU' .format(multiprocessing.cpu_count()))
 
     #-----------------------ORDERING OF THE VARIABLES--------------------------------------
-    Cov_file='Cov_SNR_more_than_200_300.npy'
-    Population='SNR_more_than_200_300.h5'
+    Cov_file='Cov_SNR_more_than_100_200_300.npy'
+    Population='SNR_more_than_100_200_300.h5'
     tosave=load_population(COV_SAVE_PATH+Population)
 
     Allevents_DS_fromfile = pd.DataFrame.from_dict(tosave, orient='columns')
@@ -226,13 +226,13 @@ if __name__=='__main__':
         hp.mollview(sky_map, title=f'GWtest{k:02d}-skyprob', nest=False, hold=True)
         plt.savefig(f'GWtest{k:02d}.pdf')
         plt.close()      
-        #theta_mean=perm_mean[-2]
-        #phi_mean=perm_mean[-1]
-        #mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)
-        #theta_DS, phi_DS = hp.pix2ang(nside,mean_pix)
-        #DS_angs = np.zeros(2)
-        #DS_angs[0] = theta_DS
-        #DS_angs[1] = phi_DS   
+        theta_mean=perm_mean[-2]
+        phi_mean=perm_mean[-1]
+        mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)
+        theta_DS, phi_DS = hp.pix2ang(nside,mean_pix) #to fix DS in the pix. If galaxies are in the same piz, ang dist must be 0, you are in the same pix
+        DS_angs = np.zeros(2)
+        DS_angs[0] = theta_DS
+        DS_angs[1] = phi_DS   
         all_mu = np.zeros(hp.nside2npix(nside))
         all_std = np.zeros(hp.nside2npix(nside))
         unique_pixels = np.unique(pixels)
@@ -241,7 +241,7 @@ if __name__=='__main__':
         for pix, mu, std,distance_sampled in results:
             all_mu[pix] = mu
             all_std[pix] = std
-            luminosity_distance_samples[pix] = distance_sampled
+            luminosity_distance_samples[pix] = distance_sampled #to check dist in each pix. Not used after test good
 
         mod_postnorm = np.ones(hp.nside2npix(nside))
 
