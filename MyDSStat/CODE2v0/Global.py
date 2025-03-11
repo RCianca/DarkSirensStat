@@ -245,7 +245,7 @@ fname = ThresholdInput(pix_threshold, th_start, th_stop)
 # Name of the runpath folder for saving results
 runpath = 'Paper-Uniform_old_dens_testrun01_few_1100_1199'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_density_of_version_one_testrun01_few.txt'
+to_read = 'Uniform_paper_sampled_density_of_version_one_testrun01.txt'
 #Uniform_paper_sampled_frac_005-host
 #Uniform_paper_sampled_density_of_version_one
 #Uniform_paper_sampled_density_of_version_one_testrun01.txt

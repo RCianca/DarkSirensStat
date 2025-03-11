@@ -54,7 +54,7 @@ Om0GLOB=0.319
 Xi0Glob =1.
 cosmoeuclid = FlatLambdaCDM(H0=H0GLOB, Om0=Om0GLOB)
 
-ParNums = IMRPhenomD().ParNums
+ParNums = IMRPhenomHM().ParNums
 print(ParNums)
 totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]

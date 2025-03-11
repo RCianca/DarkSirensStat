@@ -33,17 +33,17 @@ if __name__ == '__main__':
         allmu, allsigma = DSs.mu * 1000, DSs.sigma * 1000  # Convert to Mpc
 
         if np.isnan(allmu).any():
-            print(f'There are NaN values in allmu of {name}')
+            print(f'There are NaN values in allmu of {os.path.basename(name)}')
         if np.isnan(allsigma).any():
-            print(f'There are NaN values in allsigma of {name}')
+            print(f'There are NaN values in allsigma of {os.path.basename(name)}')
 
         if len(pix_selected) < pix_threshold:  # Save the event if pix_selected is less than the threshold
             print('DS data:')
-            print(f'Using {name}')
+            print(f'Using {os.path.basename(name)}')
             print(f'Area of DS: {DSs.area()} deg^2 at 90%')
             saved_events.append(os.path.basename(name))
         else:
-            print(f'Skipping {name}, too many pixels')
+            print(f'Skipping {os.path.basename(name)}, too many pixels')
 
     # Save the valid event names as a NumPy array
     print('Number of files in folder= {}'.format(len(fits_files)))
