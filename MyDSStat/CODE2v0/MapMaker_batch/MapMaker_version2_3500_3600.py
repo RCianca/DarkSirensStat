@@ -139,8 +139,8 @@ if __name__=='__main__':
     print('using {} CPU' .format(multiprocessing.cpu_count()))
 
     #-----------------------ORDERING OF THE VARIABLES--------------------------------------
-    Cov_file='Cov_SNR_more_than_100_200_300.npy'
-    Population='SNR_more_than_100_200_300.h5'
+    Cov_file='Cov_SNR_more_than_100_3500_3600.npy'
+    Population='SNR_more_than_100_3500_3600.h5'
     tosave=load_population(COV_SAVE_PATH+Population)
 
     Allevents_DS_fromfile = pd.DataFrame.from_dict(tosave, orient='columns')
@@ -160,7 +160,7 @@ if __name__=='__main__':
     print(keys)
     #---------------------------------------------------------------------------------------
     allcov = np.load(COV_SAVE_PATH+Cov_file, allow_pickle=True)
-    shift=200
+    shift=3500
     for i in range(100):
         k=i+shift
         print(f"Generating map {k:02d}")
@@ -175,7 +175,7 @@ if __name__=='__main__':
         condition_number = np.linalg.cond(cov)
         #print("Condition number:", condition_number)
         if condition_number>10**12:
-            epsilon = 1e-8 * np.trace(cov)
+            epsilon = 1e-10 * np.trace(cov)
             cov += np.eye(cov.shape[0]) * epsilon
             print('condition number was too hight, used eigenvalues regularisation')
         #condition_number = np.linalg.cond(cov)
@@ -225,8 +225,8 @@ if __name__=='__main__':
         #plt.figure(figsize=(12, 8))
         #hp.mollview(sky_map, title=f'GWtest{k:02d}-skyprob', nest=False, hold=True)
         #plt.savefig(f'GWtest{k:02d}.pdf')
-        #plt.close()  
-            
+        #plt.close()
+
         theta_mean=perm_mean[-2]
         phi_mean=perm_mean[-1]
         mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)

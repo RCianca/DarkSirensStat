@@ -57,7 +57,7 @@ if __name__ == '__main__':
     print('Number of hosts in {}'.format(to_read))
 
     Allevents_DS = pd.DataFrame()
-    for file_name in glob.glob(os.path.join(COV_SAVE_PATH, 'SNR_more_than_100_*.h5')):
+    for file_name in glob.glob(os.path.join(COV_SAVE_PATH, 'SNR_more_than_100_11*.h5')): # So use a map in the 1100_1200 range
         tosave = load_population(file_name)
         tmp = pd.DataFrame.from_dict(tosave, orient='columns')
         Allevents_DS = pd.concat([Allevents_DS, tmp], ignore_index=True)
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     print(f"Shape of hostcat after removal: {hostcat.shape[0]}")
 
-    Nhost = min(Nhost, hostcat.shape[0])  # Adjust Nhost to available entries
+    Nhost = 500#min(Nhost, hostcat.shape[0])  # Adjust Nhost to available entries
 
     hostcat_sampled = hostcat.sample(n=Nhost, replace=False, random_state=42)
     print(f"Shape of hostcat after dilution: {hostcat_sampled.shape[0]}")
@@ -98,6 +98,6 @@ if __name__ == '__main__':
     hostcat_sampled = pd.concat([hostcat_sampled, temp_df], ignore_index=True)
     print(f"Shape of hostcat after contact: {hostcat_sampled.shape[0]}")
         
-    output_filename = 'Uniform_paper_sampled_density_of_version_one_testrun01.txt'
+    output_filename = 'Uniform_paper_sampled_density_of_version_one_testrun01_few.txt'
     hostcat_sampled.to_csv(os.path.join(output_path, output_filename), index=False)
     print(f'Sampled catalog saved to {output_path}')

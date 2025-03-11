@@ -186,24 +186,68 @@ def InputEvents(start, end):
     Returns:
     list: List of file names in the specified range.
     """
+    if start == end:
+        return [f"GWtest{start:02d}.fits"]
     return [f"GWtest{num:02d}.fits" for num in range(start, end + 1)]
+
+def ThresholdInput(th_value, start, stop):
+    """
+    Selects elements from the numpy file in the folder /DS_th/th_{th_value}/ 
+    between the indices `start` and `stop`.
+
+    Parameters:
+        th_value (int): Threshold value used to determine the folder.
+        start (int): Start index.
+        stop (int): Stop index.
+
+    Returns:
+        list or str: A list of filenames if start != stop, else a single filename.
+    """
+    folder_path = f"DS_th/th_{th_value}"
+    file_path = os.path.join(folder_path, "saved_events.npy")
+
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        print(f"Error: File {file_path} not found.")
+        return []
+
+    # Load the saved events from the numpy file
+    events = np.load(file_path)
+
+    # Handle stop being too large
+    stop = min(stop, len(events))
+
+    # If start and stop are the same, return a single filename
+    if start == stop:
+        return events[start] if start < len(events) else None
+
+    # Otherwise, return the list of events within range
+    return events[start:stop]
+
 
 
 #PARAMETES FOR THE CORE SCRIPT#######################
 #print('Loading GW data')
 working_dir = os.getcwd()
-MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
-start=1501
-stop=1750
-pix_threshold=1200
+MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun01/')
+start=1100
+stop=1199
+pix_threshold=200
 H0min, H0max = 40, 100
 which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 # List of GW data files to process
-fname = InputEvents(start,stop)
-#fname=['GWtest61.fits']
+#fname = InputEvents(start,stop)
+th_start=0
+th_stop=100
+fname = ThresholdInput(pix_threshold, th_start, th_stop)
+#fname=['GWtest1100.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Paper-Uniform_old_dens_1751_2000'
+runpath = 'Paper-Uniform_old_dens_testrun01_few_1100_1199'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_density_of_version_one.txt'#Uniform_paper_sampled_frac_005-host#Uniform_paper_sampled_density_of_version_one
+to_read = 'Uniform_paper_sampled_density_of_version_one_testrun01_few.txt'
+#Uniform_paper_sampled_frac_005-host
+#Uniform_paper_sampled_density_of_version_one
+#Uniform_paper_sampled_density_of_version_one_testrun01.txt
+#Uniform_paper_sampled_density_of_version_one_testrun01_few.txt
 
