@@ -235,6 +235,7 @@ stop=1199
 pix_threshold=200
 H0min, H0max = 40, 100
 which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
+debug=0
 # List of GW data files to process
 #fname = InputEvents(start,stop)
 th_start=0

@@ -29,7 +29,7 @@ def Beta_fast(args):
 
 # Parallelized function to compute beta in the pixel
 def Beta2v0_pix(args):
-    print('called Beta2v0,debug')
+    #print('called Beta2v0,debug')
     pix, mu_pix, sigma_pix, z_hosts, H0Grid = args
     pixel_beta = np.ones(len(H0Grid))
     if len(z_hosts) == 0:
