@@ -80,7 +80,7 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
     return beta
 
 if __name__=='__main__':
-    debug=1
+    debug=0
     print('Computing Beta for each event.')
 
     #fname = InputEvents(start,stop)

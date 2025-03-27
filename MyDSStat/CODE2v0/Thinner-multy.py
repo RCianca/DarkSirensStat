@@ -45,7 +45,7 @@ def process_event(k):
     return matched_rows
 
 if __name__ == '__main__':
-    folder = 'Uniform/TestRun01/'
+    folder = 'Uniform/TestRun02/'
     COV_SAVE_PATH = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/' + folder
     output_path = '/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Catalogues/GalaxyCatalogue/Uniform/'
 
@@ -98,6 +98,6 @@ if __name__ == '__main__':
     hostcat_sampled = pd.concat([hostcat_sampled, temp_df], ignore_index=True)
     print(f"Shape of hostcat after contact: {hostcat_sampled.shape[0]}")
         
-    output_filename = 'Uniform_paper_sampled_density_of_version_one_testrun01.txt'
+    output_filename = 'Uniform_paper_sampled_density_of_version_one_testrun02.txt'
     hostcat_sampled.to_csv(os.path.join(output_path, output_filename), index=False)
     print(f'Sampled catalog saved to {output_path}')

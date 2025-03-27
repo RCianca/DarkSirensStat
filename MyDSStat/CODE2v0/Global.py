@@ -190,6 +190,29 @@ def InputEvents(start, end):
         return [f"GWtest{start:02d}.fits"]
     return [f"GWtest{num:02d}.fits" for num in range(start, end + 1)]
 
+def ImprovedInputEvets(folder_path, start, end):
+    """
+    Lists .fits files in the specified folder and selects a range based on start and end indices.
+
+    Parameters:
+    folder_path (str): The path to the folder containing the .fits files.
+    start (int): The start index for file selection.
+    end (int): The end index for file selection.
+
+    Returns:
+    list: A list of selected .fits files.
+    """
+    # List all files in the folder
+    all_files = os.listdir(folder_path)
+
+    # Filter the .fits files
+    fits_files = [f for f in all_files if f.endswith('.fits')]
+
+    # Select the range of files
+    selected_files = fits_files[start:end+1]
+
+    return selected_files
+
 def ThresholdInput(th_value, start, stop):
     """
     Selects elements from the numpy file in the folder /DS_th/th_{th_value}/ 
@@ -229,7 +252,7 @@ def ThresholdInput(th_value, start, stop):
 #PARAMETES FOR THE CORE SCRIPT#######################
 #print('Loading GW data')
 working_dir = os.getcwd()
-MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun01/')
+MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun02/')
 start=1100
 stop=1199
 pix_threshold=200
@@ -238,17 +261,18 @@ which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 debug=0
 # List of GW data files to process
 #fname = InputEvents(start,stop)
-th_start=0
-th_stop=100
-fname = ThresholdInput(pix_threshold, th_start, th_stop)
+th_start=126
+th_stop=146
+fname = ImprovedInputEvets(MapPath, th_start, th_stop)
 #fname=['GWtest1100.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Paper-Uniform_old_dens_testrun01_few_1100_1199'
+runpath = 'Profile-TestRun02_126_146'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_density_of_version_one_testrun01.txt'
+to_read = 'Uniform_paper_sampled_density_of_version_one_testrun02.txt'
 #Uniform_paper_sampled_frac_005-host
 #Uniform_paper_sampled_density_of_version_one
 #Uniform_paper_sampled_density_of_version_one_testrun01.txt
 #Uniform_paper_sampled_density_of_version_one_testrun01_few.txt
+#Uniform_paper_sampled_density_of_version_one_testrun02.txt
 

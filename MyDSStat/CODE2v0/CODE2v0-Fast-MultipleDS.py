@@ -30,8 +30,8 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+3*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-3*sigma]
+    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
     #end mod speed up
     if dl_array is None or np.isnan(dl_array).any():
         raise ValueError("Dl_z_vectorized returned None or NaN")

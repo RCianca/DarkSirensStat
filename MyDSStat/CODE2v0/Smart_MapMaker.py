@@ -188,7 +188,7 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Uniform/TestRun02/'
+folder='Uniform/TestRun03/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
@@ -209,7 +209,7 @@ totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]
 print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*DS_Cat.shape[0]/totalds))
 print(DS_Cat.head(5))
-start_index=21951
+start_index=0
 iteration_count = 0
 max_iterations=500
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():
@@ -241,7 +241,7 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     # Compute localization area
     area_deg2=compute_localization_region(totCov_ET,ParNums,Allevents_DS['theta'])
 
-    if area_deg2 <= 100:
+    if area_deg2 <= 40:
         iteration_count += 1
         np.save(COV_SAVE_PATH + f'Cov_SNR_more_than_100_{event_index}', totCov_ET)
         print(f"Saved covariance matrix for event {event_index}")
