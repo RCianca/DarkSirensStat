@@ -192,7 +192,7 @@ def InputEvents(start, end):
 
 def ImprovedInputEvets(folder_path, start, end):
     """
-    Lists .fits files in the specified folder and selects a range based on start and end indices.
+    Lists .fits files in the specified folder and selects a range based on start and end indices. returns up to end -1
 
     Parameters:
     folder_path (str): The path to the folder containing the .fits files.
@@ -209,7 +209,7 @@ def ImprovedInputEvets(folder_path, start, end):
     fits_files = [f for f in all_files if f.endswith('.fits')]
 
     # Select the range of files
-    selected_files = fits_files[start:end+1]
+    selected_files = fits_files[start:end]
 
     return selected_files
 
@@ -251,23 +251,26 @@ def ThresholdInput(th_value, start, stop):
 
 #PARAMETES FOR THE CORE SCRIPT#######################
 #print('Loading GW data')
+
 working_dir = os.getcwd()
 MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun02/')
 start=1100
 stop=1199
-pix_threshold=200
+pix_threshold=100
 H0min, H0max = 40, 100
+H0Grid = np.linspace(H0min, H0max, 1000)
 which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 debug=0
 # List of GW data files to process
 #fname = InputEvents(start,stop)
-th_start=126
-th_stop=146
+th_start=400
+th_stop=500
+how_many_sigma=5
 fname = ImprovedInputEvets(MapPath, th_start, th_stop)
-#fname=['GWtest1100.fits']
+#fname=['GWtest225903.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'Profile-TestRun02_126_146'
+runpath = 'TestRun02-new-400_500'
 #Host Catalogue to read
 to_read = 'Uniform_paper_sampled_density_of_version_one_testrun02.txt'
 #Uniform_paper_sampled_frac_005-host

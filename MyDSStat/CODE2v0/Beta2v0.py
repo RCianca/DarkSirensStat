@@ -22,8 +22,8 @@ def Beta_fast(args):
     mu_DS,sigma,z_hosts,Htemp=args 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
+    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
     beta = len(dl_array)# here we will add the weights
     return beta
 
@@ -53,17 +53,19 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
     if debug==1:
+        print("----------------------------------------------------------------")
         print('Debug beta_inpix of Beta2v0')
         print('dl_array before selection\n {}'.format(dl_array))
-        print('mu_DS {} Mpc Sigma {} Mpc mu+-4.5*sigma {} {}'.format(mu_DS,sigma,mu_DS+4.5*sigma,mu_DS-4.5*sigma))
+        print('mu_DS {} Mpc Sigma {} Mpc mu+-4.5*sigma {} {}\n Htemp= {}'.format(mu_DS,sigma,mu_DS+how_many_sigma*sigma,mu_DS-how_many_sigma*sigma,Htemp))
         sys.stdout.flush()
-    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
+    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
     if debug ==1:
         print('dl_array afet dl+4.5*sigma selection\n {}'.format(dl_array))
         sys.stdout.flush()
-    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
     if debug ==1:
         print('dl_array afet dl+4.5*sigma selection\n {}'.format(dl_array))
+        print("----------------------------------------------------------------")
         sys.stdout.flush()
     
     if dl_array is None or np.isnan(dl_array).any():
@@ -71,8 +73,8 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
         sys.stdout.flush()
 
     if len(dl_array) == 0:
-        print("Warning: No valid dl_array values")
-        sys.stdout.flush()
+        #print("Warning: No valid dl_array values")
+        #sys.stdout.flush()
         beta=1
         return beta
 
@@ -97,7 +99,7 @@ if __name__=='__main__':
     os.system('cp Beta2v0.py '+folder+'/beta-copy.py')
 
     # H0 Grid
-    H0Grid = np.linspace(H0min, H0max, 1000)
+    #H0Grid = np.linspace(H0min, H0max, 1000)
 
     # Read Galaxy Catalogue
     

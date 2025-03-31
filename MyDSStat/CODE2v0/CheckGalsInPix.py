@@ -34,8 +34,8 @@ for fits_file in fits_files:
     gw_pixels = gw_map.get_credible_region_pixels(level=0.9)
     n_pixels = len(gw_pixels)
     allmu, allsigma = gw_map.mu * 1000, gw_map.sigma * 1000  # Convert to Mpc
-    allmu[gw_pixels]
-    allsigma[gw_pixels]
+    allmu=allmu[gw_pixels]
+    allsigma=allsigma[gw_pixels]
 
 
     # Get nside resolution
@@ -58,15 +58,21 @@ for fits_file in fits_files:
     # New check for zero values in mu and sigma
     zero_mu_pixels = np.where(allmu == 0)[0]
     if zero_mu_pixels.size > 0:
-        print(f'Error: mu is zero for {zero_mu_pixels.size} pixels in event {fits_file}')
-
+        print(f'  Error: mu is zero for {zero_mu_pixels.size} pixels in event {fits_file}')
+    else:
+        mumean=np.mean(allmu)
+        #print(allmu[:6])
+        print(f"  mean mu {mumean} MPc")
     zero_sigma_pixels = np.where(allsigma == 0)[0]
     if zero_sigma_pixels.size > 0:
-        print(f'Error: sigma is zero for {zero_sigma_pixels.size} pixels in event {fits_file}')
-
+        print(f'  Error: sigma is zero for {zero_sigma_pixels.size} pixels in event {fits_file}')
+    else:
+        sigmamean=np.mean(allsigma)
+        #print(allsigma[:6])
+        print(f"  mean sigma {sigmamean} MPc")
     # Existing NaN checks
     if np.isnan(allmu).any():
-        print(f'There are NaN values in allmu of {fits_file}')
+        print(f'  There are NaN values in allmu of {fits_file}')
 
     if np.isnan(allsigma).any():
-        print(f'There are NaN values in allsigma of {fits_file}')
+        print(f'  There are NaN values in allsigma of {fits_file}')

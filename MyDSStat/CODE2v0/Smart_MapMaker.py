@@ -188,7 +188,7 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Uniform/TestRun03/'
+folder='Uniform/TestRun04/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
@@ -233,7 +233,7 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
         'chi1z': np.array([row['chi1z']]),
         'chi2z': np.array([row['chi2z']])
     }
-    
+    my_DS_theta=Allevents_DS['theta']
     # Compute Fisher and Covariance matrix
     totFET = myET.FisherMatr(Allevents_DS)
     totCov_ET, inversion_err_ET = CovMatr(totFET)
@@ -241,7 +241,7 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     # Compute localization area
     area_deg2=compute_localization_region(totCov_ET,ParNums,Allevents_DS['theta'])
 
-    if area_deg2 <= 40:
+    if area_deg2 <= 25:
         iteration_count += 1
         np.save(COV_SAVE_PATH + f'Cov_SNR_more_than_100_{event_index}', totCov_ET)
         print(f"Saved covariance matrix for event {event_index}")

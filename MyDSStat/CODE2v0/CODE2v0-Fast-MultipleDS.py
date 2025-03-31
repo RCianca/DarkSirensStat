@@ -30,8 +30,8 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
 
     dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
     #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+4.5*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-4.5*sigma]
+    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
+    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
     #end mod speed up
     if dl_array is None or np.isnan(dl_array).any():
         raise ValueError("Dl_z_vectorized returned None or NaN")
@@ -108,7 +108,7 @@ if __name__=='__main__':
     os.system('cp Global.py '+folder+'/Global-copy.py')
 
     # H0 Grid
-    H0Grid = np.linspace(H0min, H0max, 1000)
+    #H0Grid = np.linspace(H0min, H0max, 1000)
     #DF_results = pd.DataFrame(columns=['Event', 'Likelihood'])
     total_post = np.ones(len(H0Grid))  # Total posterior
 
