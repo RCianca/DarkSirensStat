@@ -209,9 +209,9 @@ totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]
 print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*DS_Cat.shape[0]/totalds))
 print(DS_Cat.head(5))
-start_index=0
+start_index=49181
 iteration_count = 0
-max_iterations=500
+max_iterations=700
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     if iteration_count%10==0:
         print('Computed {} maps'.format(iteration_count))

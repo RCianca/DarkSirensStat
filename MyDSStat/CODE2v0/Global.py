@@ -263,14 +263,14 @@ which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 debug=0
 # List of GW data files to process
 #fname = InputEvents(start,stop)
-th_start=400
-th_stop=500
+th_start=20
+th_stop=40
 how_many_sigma=5
 fname = ImprovedInputEvets(MapPath, th_start, th_stop)
 #fname=['GWtest225903.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'TestRun02-new-400_500'
+runpath = 'TestRun02-new-20_40'
 #Host Catalogue to read
 to_read = 'Uniform_paper_sampled_density_of_version_one_testrun02.txt'
 #Uniform_paper_sampled_frac_005-host
