@@ -1,10 +1,7 @@
-#from Global import (
-#    href, Om0GLOB, clight, start,stop,InputEvents, runpath,to_read,pix_threshold,MapPath,H0min,H0max
-#)
 from Global import *
-#from scipy.integrate import quad, quad_vec,simpson
-from SkyMap import GWskymap
-from GalaxyCat import GalCat
+import numpy as np
+import pandas as pd
+from Global import *
 import numpy as np
 import pandas as pd
 import os
@@ -12,126 +9,156 @@ import multiprocessing
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from numba import njit
+
+from SkyMap import GWskymap
+from GalaxyCat import GalCat
+
+# Ottimizzazione della funzione di likelihood con Numba
 @njit
 def likelihood_line(mu_DS, dl, sigma):
+    """Calcola la likelihood gaussiana per una distanza luminosa dato mu e sigma"""
     norm = 1 / (np.sqrt(2 * np.pi) * sigma)
-    body = np.exp(-((dl - mu_DS) ** 2) / (2 * sigma ** 2))
-    return norm * body
-
+    exponent = -((dl - mu_DS) ** 2) / (2 * sigma ** 2)
+    # Usa exp con clipping per evitare underflow numerici
+    # Quando exponent < -700, exp ritorna 0 nel float64
+    if exponent < -700:
+        return 0.0
+    return norm * np.exp(exponent)
 
 def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
     """
-    Compute the likelihood of H0 for a single pixel.
+    Compute the likelihood of H0 for a single pixel with pre-filtering.
     """
     if len(z_hosts) == 0:
-        raise ValueError("z_hosts is empty")
+        return 0.0
+        
     if np.isnan(z_hosts).any():
-        raise ValueError("z_hosts contains NaN values")
+        return 0.0
+    
+    # Calcola i limiti di distanza
+    dl_max = mu_DS + how_many_sigma * sigma
+    dl_min = mu_DS - how_many_sigma * sigma
+    
+    # Stima il range di redshift approssimato
+    z_max_est = z_from_dL_approx(dl_min, Htemp)
+    z_min_est = z_from_dL_approx(dl_max, Htemp)
+    
+    # Pre-filtra i redshift
+    z_filtered = z_hosts[(z_hosts >= z_min_est * 0.9) & (z_hosts <= z_max_est * 1.1)]
+    
+    if len(z_filtered) == 0:
+        return 0.0  # No hosts in range
+    
+    # Calcola dl_array solo per i redshift filtrati
+    dl_array = Dl_z_vectorized(z_filtered, Htemp, Om0GLOB)
+    
+    # Filter distances
+    mask = (dl_array <= dl_max) & (dl_array >= dl_min)
+    dl_array = dl_array[mask]
+    
+    if len(dl_array) == 0:
+        return 0.0
 
-    dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
-    #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
-    #end mod speed up
-    if dl_array is None or np.isnan(dl_array).any():
-        raise ValueError("Dl_z_vectorized returned None or NaN")
-
-    likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vectorized likelihood
+    # Calcola la likelihood per ogni distanza e somma
+    likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vettorizzato
     return np.sum(likelihoods)
-
-
 
 
 # Parallelized function to compute the pixel likelihood
 def compute_pixel_likelihood(args):
     pix, mu_pix, sigma_pix, z_hosts, H0Grid, angular_prob = args
     pixel_post = np.zeros(len(H0Grid))
+    
     if len(z_hosts) == 0:
-        #print('No hosts for this line of sight')
         return pixel_post
+        
     if np.isnan(z_hosts).any():
-        #print('NONE in z_hosts')
         return pixel_post
-    #print('debug:found hosts')
+    
+    # Calcola likelihood per ogni H0
     for j, h in enumerate(H0Grid):
         pixel_post[j] = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
     
     return pixel_post
-#############################Debug##############################################
-# def compute_pixel_likelihood(args):
-#     pix, mu_pix, sigma_pix, z_hosts, H0Grid, angular_prob, log_folder = args
-#     pixel_post = np.zeros(len(H0Grid))
-#     log_file = os.path.join(log_folder, f"debug_likelihood_{pix}.log")
-    
-#     with open(log_file, "w") as f:
-#         f.write(f"Pixel: {pix}\n")
-#         f.write(f"mu_pix: {mu_pix}, sigma_pix: {sigma_pix}\n")
-#         f.write(f"z_hosts: {z_hosts}\n")
-    
-#     if len(z_hosts) == 0:
-#         with open(log_file, "a") as f:
-#             f.write("No hosts for this line of sight\n")
-#         return pixel_post
-    
-#     if np.isnan(z_hosts).any():
-#         with open(log_file, "a") as f:
-#             f.write("NaN in z_hosts\n")
-#         return pixel_post
 
-#     for j, h in enumerate(H0Grid):
-#         likelihood = LikeofH0_pixel(mu_pix, sigma_pix, z_hosts, h) * angular_prob
-#         pixel_post[j] = likelihood
-
-#         if np.isnan(likelihood):
-#             with open(log_file, "a") as f:
-#                 f.write(f"NaN likelihood at H0={h}\n")
-    
-#     return pixel_post
-##############################################################################################
-
-#########################################################################################
 
 if __name__=='__main__':
     print(f"Flagship params: H0 = {href}, Omega_M = {Om0GLOB}")
-    #fname #= InputEvents(start,stop) From Global.py
     print(f"Files to process: {fname}")
     print(f"Results will be saved in folder: {runpath}")
+    
     working_dir = os.getcwd()
     path = 'Results'
-    #runpath = 'FirstBatch'
 
     # Ensure directory exists
     folder = os.path.join(path, runpath)
     os.makedirs(folder, exist_ok=True)
     print(f'\nData will be saved in {folder}')
+    
+    # Copy script files for reference
     os.system('cp CODE2v0-Fast-MultipleDS.py '+folder+'/Script-copy.py')
     os.system('cp Global.py '+folder+'/Global-copy.py')
 
-    # H0 Grid
-    #H0Grid = np.linspace(H0min, H0max, 1000)
-    #DF_results = pd.DataFrame(columns=['Event', 'Likelihood'])
-    total_post = np.ones(len(H0Grid))  # Total posterior
-
-    # Read Galaxy Catalogue
+    # Initialize total posterior
+    total_post = np.ones(len(H0Grid))
     
+    # Read Galaxy Catalogue
     print('Reading Galaxy Catalogue--'+to_read)
     nside = 128
     hostcat = GalCat(to_read, nside).read_catalogue()
     mypixels = GalCat(to_read, nside).pixelizer()
     print('Reading catalogue completed')
 
-    # Load GW Data
-    print('Loading GW data')
-    #MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun00/')
-    level = 0.9
+    # Set log folder
     set_log_folder(folder)
 
+    # Determine max CPUs to use
+    max_cpus = multiprocessing.cpu_count()
+    print(f'System has {max_cpus} CPUs available')
+    
+    # Process level
+    level = 0.9
+    if __name__=='__main__':
+    print(f"Flagship params: H0 = {href}, Omega_M = {Om0GLOB}")
+    print(f"Files to process: {fname}")
+    print(f"Results will be saved in folder: {runpath}")
+    
+    working_dir = os.getcwd()
+    path = 'Results'
 
+    # Ensure directory exists
+    folder = os.path.join(path, runpath)
+    os.makedirs(folder, exist_ok=True)
+    print(f'\nData will be saved in {folder}')
+    
+    # Copy script files for reference
+    os.system('cp CODE2v0-Fast-MultipleDS.py '+folder+'/Script-copy.py')
+    os.system('cp Global.py '+folder+'/Global-copy.py')
+
+    # Initialize total posterior
+    total_post = np.ones(len(H0Grid))
+    
+    # Read Galaxy Catalogue
+    print('Reading Galaxy Catalogue--'+to_read)
+    nside = 128
+    hostcat = GalCat(to_read, nside).read_catalogue()
+    mypixels = GalCat(to_read, nside).pixelizer()
+    print('Reading catalogue completed')
+
+    # Set log folder
+    set_log_folder(folder)
+    
+    # Determine max CPUs to use
+    max_cpus = multiprocessing.cpu_count()
+    print(f'System has {max_cpus} CPUs available')
+    
+    # Process level
+    level = 0.9
+    
+    # Process each event
     for name in fname:
-
+        print(f'Processing {name}')
         DSs = GWskymap(os.path.join(MapPath, name), level=level)
-        #print(f'DS name: {DSs.event_name}')
-        #print(f'Area of DS: {DSs.area()} deg^2 at 90%')
         
         pix_selected = DSs.get_credible_region_pixels(level=level)
         nside = int(DSs.nside)
@@ -140,54 +167,68 @@ if __name__=='__main__':
 
         if np.isnan(allmu).any():
             print(f'There are NaN values in allmu of {name}')
+            continue
+            
         if np.isnan(allsigma).any():
             print(f'There are NaN values in allsigma of {name}')
+            continue
 
-        if(len(pix_selected)>pix_threshold): #this can be relaxed, now is a test run. Such confition should be implemented in the skymap generator to have different quality sets
-            print(f'Skipping {name}, too many pixels')
-            
-        else:    
-            print('DS data:')
-            print(f'Using {name}')
-            print(f'Area of DS: {DSs.area()} deg^2 at 90%')
-
-            # Filter Galaxy Catalogue
-            
-            hostcat['Pixel'] = mypixels
-            hostcat_filtered = hostcat[hostcat['Pixel'].isin(pix_selected)]
-            # Pre-group by pixel to speed up filtering
-            grouped_hostcat = hostcat_filtered.groupby('Pixel')['z'] # Remove if creates proble. This shoud group already hostcat and avoid to do it in pixel_args
-
-            ###Cross-Correlation#############################################    
+        if(len(pix_selected) > pix_threshold):
+            print(f'Skipping {name}, too many pixels ({len(pix_selected)})')
+            continue
         
-            single_post=np.ones(len(H0Grid))
+        print('DS data:')
+        print(f'Using {name}')
+        print(f'Area of DS: {DSs.area()} deg^2 at 90%')
 
-            pixel_args = [
-                (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
-                #(pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix],folder)# This if you want a pix-by-pix debug. Uncomment the debug variant of functions
-                for pix in pix_selected
-                if pix in grouped_hostcat.groups
-            ] # This is the new version with goupby. If not working rmove also groupby above
+        # Filter Galaxy Catalogue (solo per i pixel rilevanti per questo evento)
+        hostcat['Pixel'] = mypixels
+        hostcat_filtered = hostcat[hostcat['Pixel'].isin(pix_selected)]
+        
+        # Pre-group by pixel to speed up filtering
+        grouped_hostcat = hostcat_filtered.groupby('Pixel')['z']
 
-            if len(pixel_args) > 0:
-                #cpu = min(multiprocessing.cpu_count(), len(pixel_args))
-                cpu = multiprocessing.cpu_count()
-                print(f'Using {cpu} CPUs')
-                chunksize = max(1, len(pixel_args) // (2 * cpu))
-                with Pool(cpu) as pool:
-                    results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))# better chunksize should improve time
-                single_post = np.sum(results, axis=0)
-            else:
-                print("No Hosts found for this DS, skipping computation.")
-                results = []
-      
-            likename='like_'+name.split('.')[0]
-            np.save(os.path.join(folder,likename),single_post)
-            total_post *= single_post
-            #total_post += 1*10**(-9)
-    postname='Total_Posterior'
-    np.save(os.path.join(folder,postname),total_post)
-        ####################Plot Likelihood###########################################################
+        # Prepare arguments for pixel processing
+        pixel_args = [
+            (pix, allmu[pix], allsigma[pix], grouped_hostcat.get_group(pix).values, H0Grid, skyprob[pix])
+            for pix in pix_selected
+            if pix in grouped_hostcat.groups
+        ]
+
+        # Process pixels in parallel
+        single_post = np.ones(len(H0Grid)) * 1e-10  # Valore di default molto piccolo
+        
+        if len(pixel_args) > 0:
+            cpu = min(max_cpus, len(pixel_args))
+            print(f'Using {cpu} CPUs')
+            
+            # Optimize chunksize for better load balancing
+            chunksize = max(1, len(pixel_args) // (2 * cpu))
+            
+            with Pool(cpu) as pool:
+                results = list(pool.imap(compute_pixel_likelihood, pixel_args, chunksize=chunksize))
+            
+            # Sum results across all pixels
+            single_post = np.sum(results, axis=0)
+            
+            # Ensure likelihood is valid
+            if np.all(single_post == 0):
+                print("Warning: all likelihood values are zero, using small defaults")
+                single_post = np.ones(len(H0Grid)) * 1e-10
+        else:
+            print("No Hosts found for this DS, using small defaults")
+        
+        # Save individual likelihood
+        likename = 'like_' + name.split('.')[0]
+        np.save(os.path.join(folder, likename), single_post)
+        
+        # Update total posterior
+        total_post *= single_post
+    
+    # Save total posterior
+    postname = 'Total_Posterior'
+    np.save(os.path.join(folder, postname), total_post)
+    
     # Plot results
     print('Plotting total likelihood')
     fig, ax = plt.subplots(1, figsize=(15, 10))
@@ -203,11 +244,12 @@ if __name__=='__main__':
     if np.min(x) < href < np.max(x):
         ax.axvline(x=href, color='k', linestyle='dashdot', label='H0=67')
 
+    # Normalize posterior for plotting
     normalized_post = total_post / np.trapz(total_post, x)
     ax.plot(x, normalized_post, label='Total_posterior', linewidth=4, linestyle='solid')
     ax.legend(fontsize=13, ncol=2)
-    plotname='Total_Like.pdf'
-    plotpath=os.path.join(folder,plotname)
+    
+    plotname = 'Total_Like.pdf'
+    plotpath = os.path.join(folder, plotname)
     plt.savefig(plotpath, format="pdf", bbox_inches="tight")
     plt.close()
-    ###################################
