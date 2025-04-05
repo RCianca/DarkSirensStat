@@ -1,11 +1,11 @@
 import numpy as np
 import healpy as hp
-from scipy.integrate import simpson
+from scipy.integrate import simpson #quad, quad_vec
+#from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from astropy.cosmology import FlatLambdaCDM
 from numba import njit
 import os 
-import warnings
 
 # --------------------- Global Constants ----------------------------------
 href = 67  # Hubble constant reference value
@@ -13,6 +13,7 @@ Om0GLOB = 0.319  # Matter density
 Xi0Glob = 1.0  # Cosmological coupling constant
 clight = 2.99792458 * 10**5  # Speed of light in km/s
 cosmoflag = FlatLambdaCDM(H0=href, Om0=Om0GLOB)
+
 
 # Global variable for log directory
 log_folder = "."
@@ -22,60 +23,97 @@ def set_log_folder(folder_path):
     global log_folder
     log_folder = folder_path
 
+
+# --------------------- Cosmology Functions ----------------------------------
+# def r_z(z, H0, Om=Om0GLOB):
+#     """
+#     Scalar comoving distance r(z).
+#     """
+#     c = clight
+#     integrand = lambda x: 1 / E_z(x, H0, Om)
+#     integral, error = quad(integrand, 0, z)
+#     return integral * c / H0
+
+# def Dl_z(z, H0, Om=Om0GLOB):
+#     """
+#     Scalar luminosity distance D_L(z).
+#     """
+#     return r_z(z, H0, Om) * (1 + z)
+# def r_z_vectorized(z, H0, Om=Om0GLOB):
+#     """
+#     Vectorized comoving distance r(z) for array inputs.
+#     Handles both scalar and array inputs for z.
+#     """
+#     c = clight
+#     integrand = lambda x: 1 / E_z(x, H0, Om)
+#     if np.isscalar(z):
+#         integral = quad_vec(integrand, 0, z)[0]
+#     else:
+#         integral = np.array([quad_vec(integrand, 0, zi)[0] for zi in z])
+#     return integral * c / H0
 @njit
 def E_z(z, H0, Om=Om0GLOB):
     """
     Helper function for Hubble parameter as a function of redshift.
     """
     return np.sqrt(Om * (1 + z)**3 + (1 - Om))
-
-# Cache per i calcoli di r_z
-_r_z_cache = {}
-
-def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=100):
+def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
     """
     Vectorized comoving distance r(z) for array inputs using Simpson's rule.
-    Optimized with caching and reduced integration points.
+    Handles both scalar and array inputs for z.
     """
     c = clight
-    
-    # Per input scalare, usa cache
-    if np.isscalar(z):
-        cache_key = (z, H0, Om)
-        if cache_key in _r_z_cache:
-            return _r_z_cache[cache_key]
-        
-        x_grid = np.linspace(0, z, num_points)
-        y_values = 1.0 / E_z(x_grid, H0, Om)
-        integral = simpson(y_values, x_grid)
-        result = integral * c / H0
-        
-        # Limita dimensione cache
-        if len(_r_z_cache) < 10000:
-            _r_z_cache[cache_key] = result
-            
-        return result
-    else:
-        # Per array, calcola per ogni z
-        results = []
-        for zi in z:
-            cache_key = (zi, H0, Om)
-            if cache_key in _r_z_cache:
-                results.append(_r_z_cache[cache_key])
-            else:
-                x_grid = np.linspace(0, zi, num_points)
-                y_values = 1.0 / E_z(x_grid, H0, Om)
-                try:
-                    integral = simpson(y_values, x_grid)
-                    result = integral * c / H0
-                    if len(_r_z_cache) < 10000:
-                        _r_z_cache[cache_key] = result
-                    results.append(result)
-                except Exception as e:
-                    warnings.warn(f"Integration error: {e}")
-                    results.append(0.0)
-        return np.array(results)
 
+    def integrand(x):
+        return 1 / E_z(x, H0, Om)
+
+    if np.isscalar(z):
+        x_grid = np.linspace(0, z, num_points)
+        y_values = integrand(x_grid)
+        if len(x_grid) == 0 or len(y_values) == 0:
+            raise ValueError("Empty integration grid or invalid values")
+        integral = simpson(y_values, x_grid)
+    else:
+        integral = np.array([
+            simpson(
+                integrand(np.linspace(0, zi, num_points)),
+                np.linspace(0, zi, num_points)
+            ) for zi in z
+        ])
+    if integral is None or np.isnan(integral).any():
+        raise ValueError("Integration failed, returned None or NaN")
+    return integral * c / H0
+########################################DEBUG#########################################
+# def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
+#     c = clight
+#     def integrand(x):
+#         return 1 / E_z(x, H0, Om)
+
+#     try:
+#         if np.isscalar(z):
+#             x_grid = np.linspace(0, z, num_points)
+#             y_values = integrand(x_grid)
+#             integral = simpson(y_values, x_grid)
+#         else:
+#             integral = np.array([
+#                 simpson(
+#                     integrand(np.linspace(0, zi, num_points)),
+#                     np.linspace(0, zi, num_points)
+#                 ) for zi in z
+#             ])
+#     except Exception as e:
+#         log_file = os.path.join(log_folder, "debug_global.log")
+#         with open(log_file, "a") as f:
+#             f.write(f"Error in r_z_vectorized: {e}\n")
+#         return np.nan
+
+#     if np.isnan(integral).any():
+#         log_file = os.path.join(log_folder, "debug_global.log")
+#         with open(log_file, "a") as f:
+#             f.write(f"NaN in r_z_vectorized output for z={z}, H0={H0}\n")
+
+#     return integral * c / H0
+##############################################################################################
 
 def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
@@ -83,24 +121,8 @@ def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
     return r_z_vectorized(z, H0, Om) * (1 + z)
 
-# Funzione approssimata per stimare z da dL (per pre-filtraggio)
-def z_from_dL_approx(dL_val, H0):
-    """
-    Quick approximation of z from luminosity distance.
-    Using simple relation z ≈ H0 * dL / c for small z.
-    """
-    # Approssimazione semplice: z ≈ H0 * dL / c
-    z_approx = H0 * dL_val / clight
-    
-    # Applica correzione basata su cosmologia
-    if z_approx < 0.1:
-        return z_approx
-    elif z_approx < 0.5:
-        return z_approx * 0.9  # Correzione per z medi
-    else:
-        return z_approx * 0.8  # Correzione per z alti
-
 # --------------------- Redshift and Hubble Functions ---------------------
+
 def z_from_dcom(dc_val):
     """
     Returns redshift for a given comoving distance dc (in Mpc).
@@ -109,40 +131,21 @@ def z_from_dcom(dc_val):
     z = fsolve(func, 0.02)
     return z[0]
 
-# Cache per z_from_dL
-_z_from_dL_cache = {}
+def h_of_z_dl(z, dl):
+    """
+    Solves for H0 given a redshift z and luminosity distance dl.
+    """
+    func = lambda h: Dl_z(z, h, Om0GLOB) - dl
+    heq = fsolve(func, 30)[0]
+    return heq
 
 def z_from_dL(dL_val):
     """
     Returns redshift for a given luminosity distance dL (in Mpc).
     """
-    # Usa cache se possibile
-    cache_key = dL_val
-    if cache_key in _z_from_dL_cache:
-        return _z_from_dL_cache[cache_key]
-    
-    # Calcola redshift
     func = lambda z: cosmoflag.luminosity_distance(z).value - dL_val
-    z = fsolve(func, 0.02)[0]
-    
-    # Salva in cache
-    if len(_z_from_dL_cache) < 10000:
-        _z_from_dL_cache[cache_key] = z
-    
-    return z
-
-def h_of_z_dl(z, dl):
-    """
-    Solves for H0 given a redshift z and luminosity distance dl.
-    """
-    # Per redshift piccoli
-    if z < 0.1:
-        return clight * z / (dl / (1 + z))
-    
-    # Per redshift maggiori
-    func = lambda h: Dl_z_vectorized(z, h, Om0GLOB) - dl
-    heq = fsolve(func, 30)[0]
-    return heq
+    z = fsolve(func, 0.02)
+    return z[0]
 
 # --------------------- HEALPix Utilities ---------------------------------
 
@@ -189,26 +192,26 @@ def InputEvents(start, end):
 
 def ImprovedInputEvets(folder_path, start, end):
     """
-    Lists .fits files in the specified folder and selects a range.
+    Lists .fits files in the specified folder and selects a range based on start and end indices. returns up to end -1
+
+    Parameters:
+    folder_path (str): The path to the folder containing the .fits files.
+    start (int): The start index for file selection.
+    end (int): The end index for file selection.
+
+    Returns:
+    list: A list of selected .fits files.
     """
-    try:
-        all_files = os.listdir(folder_path)
-    except OSError as e:
-        print(f"Error accessing folder {folder_path}: {e}")
-        return []
-    
+    # List all files in the folder
+    all_files = os.listdir(folder_path)
+
+    # Filter the .fits files
     fits_files = [f for f in all_files if f.endswith('.fits')]
-    
-    if not fits_files:
-        return []
-        
-    if start >= len(fits_files):
-        print(f"Start index {start} exceeds the number of files {len(fits_files)}")
-        return []
-    
-    end = min(end, len(fits_files))
-    
-    return fits_files[start:end]
+
+    # Select the range of files
+    selected_files = fits_files[start:end]
+
+    return selected_files
 
 def ThresholdInput(th_value, start, stop):
     """
@@ -246,26 +249,30 @@ def ThresholdInput(th_value, start, stop):
 
 
 
-# --------------------- Script Parameters ---------------------------------
+#PARAMETES FOR THE CORE SCRIPT#######################
+#print('Loading GW data')
+
 working_dir = os.getcwd()
 MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun02/')
-start = 1100
-stop = 1199
-pix_threshold = 100
+start=1100
+stop=1199
+pix_threshold=100
 H0min, H0max = 40, 100
 H0Grid = np.linspace(H0min, H0max, 1000)
-which_beta = 'Beta2v0'  # 'Beta_fast'
-debug = 0
-th_start = 0
-th_stop = 100
-how_many_sigma = 5
+which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
+debug=0
+# List of GW data files to process
+#fname = InputEvents(start,stop)
+th_start=20
+th_stop=40
+how_many_sigma=5
 fname = ImprovedInputEvets(MapPath, th_start, th_stop)
-runpath = 'TestRun02-speedup-0_100'
+#fname=['GWtest225903.fits']
+
+# Name of the runpath folder for saving results
+runpath = 'TestRun02-new-20_40'
+#Host Catalogue to read
 to_read = 'Uniform_paper_sampled_density_of_version_one_testrun02.txt'
-# Altre impostazioni globali
-
-
-
 #Uniform_paper_sampled_frac_005-host
 #Uniform_paper_sampled_density_of_version_one
 #Uniform_paper_sampled_density_of_version_one_testrun01.txt
