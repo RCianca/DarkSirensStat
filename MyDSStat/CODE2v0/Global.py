@@ -23,101 +23,99 @@ def set_log_folder(folder_path):
     global log_folder
     log_folder = folder_path
 
-
-# --------------------- Cosmology Functions ----------------------------------
-# def r_z(z, H0, Om=Om0GLOB):
-#     """
-#     Scalar comoving distance r(z).
-#     """
-#     c = clight
-#     integrand = lambda x: 1 / E_z(x, H0, Om)
-#     integral, error = quad(integrand, 0, z)
-#     return integral * c / H0
-
-# def Dl_z(z, H0, Om=Om0GLOB):
-#     """
-#     Scalar luminosity distance D_L(z).
-#     """
-#     return r_z(z, H0, Om) * (1 + z)
-# def r_z_vectorized(z, H0, Om=Om0GLOB):
-#     """
-#     Vectorized comoving distance r(z) for array inputs.
-#     Handles both scalar and array inputs for z.
-#     """
-#     c = clight
-#     integrand = lambda x: 1 / E_z(x, H0, Om)
-#     if np.isscalar(z):
-#         integral = quad_vec(integrand, 0, z)[0]
-#     else:
-#         integral = np.array([quad_vec(integrand, 0, zi)[0] for zi in z])
-#     return integral * c / H0
 @njit
 def E_z(z, H0, Om=Om0GLOB):
     """
     Helper function for Hubble parameter as a function of redshift.
     """
     return np.sqrt(Om * (1 + z)**3 + (1 - Om))
+
+# Cache per i calcoli di r_z
+_r_z_cache = {}
+
 def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
     """
     Vectorized comoving distance r(z) for array inputs using Simpson's rule.
-    Handles both scalar and array inputs for z.
+    Optimized with caching for repeated calculations.
+    
+    Args:
+        z: Redshift value or array
+        H0: Hubble constant
+        Om: Matter density parameter (default: Om0GLOB)
+        num_points: Number of integration points
+        
+    Returns:
+        Comoving distance in Mpc
     """
     c = clight
 
     def integrand(x):
         return 1 / E_z(x, H0, Om)
 
+    # Per valori scalari, usa cache
     if np.isscalar(z):
+        cache_key = (z, H0, Om)
+        if cache_key in _r_z_cache:
+            return _r_z_cache[cache_key]
+        
         x_grid = np.linspace(0, z, num_points)
         y_values = integrand(x_grid)
+        
         if len(x_grid) == 0 or len(y_values) == 0:
             raise ValueError("Empty integration grid or invalid values")
-        integral = simpson(y_values, x_grid)
+            
+        integral = simpson(y=y_values, x=x_grid)
+        
+        if integral is None or np.isnan(integral):
+            raise ValueError("Integration failed, returned None or NaN")
+            
+        result = integral * c / H0
+        
+        # Memorizza il risultato nella cache se non è troppo grande
+        if len(_r_z_cache) < 10000:
+            _r_z_cache[cache_key] = result
+        
+        # Gestisci la dimensione della cache per evitare problemi di memoria
+        elif len(_r_z_cache) >= 12000:  # Con un po' di margine rispetto al limite
+            # Rimuovi casualmente alcune voci dalla cache
+            keys_to_remove = list(_r_z_cache.keys())[:2000]  # Rimuovi 2000 voci
+            for key in keys_to_remove:
+                _r_z_cache.pop(key)
+                
+        return result
     else:
-        integral = np.array([
-            simpson(
-                integrand(np.linspace(0, zi, num_points)),
-                np.linspace(0, zi, num_points)
-            ) for zi in z
-        ])
-    if integral is None or np.isnan(integral).any():
-        raise ValueError("Integration failed, returned None or NaN")
-    return integral * c / H0
-########################################DEBUG#########################################
-# def r_z_vectorized(z, H0, Om=Om0GLOB, num_points=500):
-#     c = clight
-#     def integrand(x):
-#         return 1 / E_z(x, H0, Om)
-
-#     try:
-#         if np.isscalar(z):
-#             x_grid = np.linspace(0, z, num_points)
-#             y_values = integrand(x_grid)
-#             integral = simpson(y_values, x_grid)
-#         else:
-#             integral = np.array([
-#                 simpson(
-#                     integrand(np.linspace(0, zi, num_points)),
-#                     np.linspace(0, zi, num_points)
-#                 ) for zi in z
-#             ])
-#     except Exception as e:
-#         log_file = os.path.join(log_folder, "debug_global.log")
-#         with open(log_file, "a") as f:
-#             f.write(f"Error in r_z_vectorized: {e}\n")
-#         return np.nan
-
-#     if np.isnan(integral).any():
-#         log_file = os.path.join(log_folder, "debug_global.log")
-#         with open(log_file, "a") as f:
-#             f.write(f"NaN in r_z_vectorized output for z={z}, H0={H0}\n")
-
-#     return integral * c / H0
-##############################################################################################
+        # Per array, processa ogni valore singolarmente per usare la cache
+        results = []
+        for zi in z:
+            cache_key = (zi, H0, Om)
+            if cache_key in _r_z_cache:
+                results.append(_r_z_cache[cache_key])
+            else:
+                x_grid = np.linspace(0, zi, num_points)
+                y_values = integrand(x_grid)
+                
+                if len(x_grid) == 0 or len(y_values) == 0:
+                    raise ValueError(f"Empty integration grid or invalid values for z={zi}")
+                    
+                integral = simpson(y=y_values, x=x_grid)
+                
+                if integral is None or np.isnan(integral):
+                    raise ValueError(f"Integration failed, returned None or NaN for z={zi}")
+                    
+                result = integral * c / H0
+                
+                # Memorizza il risultato nella cache
+                if len(_r_z_cache) < 10000:
+                    _r_z_cache[cache_key] = result
+                    
+                results.append(result)
+        
+        return np.array(results)
 
 def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
     Vectorized luminosity distance D_L(z) for array inputs.
+    Uses caching for improved performance on repeated calculations.
     """
     return r_z_vectorized(z, H0, Om) * (1 + z)
 
