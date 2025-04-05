@@ -119,6 +119,23 @@ def Dl_z_vectorized(z, H0, Om=Om0GLOB):
     """
     return r_z_vectorized(z, H0, Om) * (1 + z)
 
+# Funzione approssimata per stimare z da dL (per pre-filtraggio)
+def z_from_dL_approx(dL_val, H0):
+    """
+    Quick approximation of z from luminosity distance.
+    Using simple relation z ≈ H0 * dL / c for small z.
+    """
+    # Approssimazione semplice: z ≈ H0 * dL / c
+    z_approx = H0 * dL_val / clight
+    
+    # Applica correzione basata su cosmologia
+    if z_approx < 0.1:
+        return z_approx
+    elif z_approx < 0.5:
+        return z_approx * 0.9  # Correzione per z medi
+    else:
+        return z_approx * 0.8  # Correzione per z alti
+
 # --------------------- Redshift and Hubble Functions ---------------------
 
 def z_from_dcom(dc_val):
@@ -190,26 +207,26 @@ def InputEvents(start, end):
 
 def ImprovedInputEvets(folder_path, start, end):
     """
-    Lists .fits files in the specified folder and selects a range based on start and end indices. returns up to end -1
-
-    Parameters:
-    folder_path (str): The path to the folder containing the .fits files.
-    start (int): The start index for file selection.
-    end (int): The end index for file selection.
-
-    Returns:
-    list: A list of selected .fits files.
+    Lists .fits files in the specified folder and selects a range.
     """
-    # List all files in the folder
-    all_files = os.listdir(folder_path)
-
-    # Filter the .fits files
+    try:
+        all_files = os.listdir(folder_path)
+    except OSError as e:
+        print(f"Error accessing folder {folder_path}: {e}")
+        return []
+    
     fits_files = [f for f in all_files if f.endswith('.fits')]
-
-    # Select the range of files
-    selected_files = fits_files[start:end]
-
-    return selected_files
+    
+    if not fits_files:
+        return []
+        
+    if start >= len(fits_files):
+        print(f"Start index {start} exceeds the number of files {len(fits_files)}")
+        return []
+    
+    end = min(end, len(fits_files))
+    
+    return fits_files[start:end]
 
 def ThresholdInput(th_value, start, stop):
     """
@@ -251,7 +268,7 @@ def ThresholdInput(th_value, start, stop):
 #print('Loading GW data')
 
 working_dir = os.getcwd()
-MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun02/')
+MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun03/')
 start=1100
 stop=1199
 pix_threshold=100
@@ -261,16 +278,16 @@ which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 debug=0
 # List of GW data files to process
 #fname = InputEvents(start,stop)
-th_start=20
-th_stop=40
+th_start=0
+th_stop=350
 how_many_sigma=5
 fname = ImprovedInputEvets(MapPath, th_start, th_stop)
 #fname=['GWtest225903.fits']
 
 # Name of the runpath folder for saving results
-runpath = 'TestRun02-new-20_40'
+runpath = 'TestRun03-speed-0_all'
 #Host Catalogue to read
-to_read = 'Uniform_paper_sampled_density_of_version_one_testrun02.txt'
+to_read = 'Uniform_paper_sampled_density_of_version_one_testrun03.txt'
 #Uniform_paper_sampled_frac_005-host
 #Uniform_paper_sampled_density_of_version_one
 #Uniform_paper_sampled_density_of_version_one_testrun01.txt

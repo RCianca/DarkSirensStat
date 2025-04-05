@@ -19,14 +19,30 @@ def beta_caller(name,args):
     return beta
 
 def Beta_fast(args):
-    mu_DS,sigma,z_hosts,Htemp=args 
-    dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
-    #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
-    beta = len(dl_array)# here we will add the weights
+    mu_DS, sigma, z_hosts, Htemp = args
+    
+    # Calcola i limiti di distanza
+    dl_max = mu_DS + how_many_sigma * sigma
+    dl_min = mu_DS - how_many_sigma * sigma
+    
+    # Stima il range di redshift approssimato
+    z_max_est = z_from_dL_approx(dl_max, Htemp)
+    z_min_est = z_from_dL_approx(dl_min, Htemp)
+    
+    # Pre-filtra i redshift
+    z_filtered = z_hosts[(z_hosts >= z_min_est * 0.9) & (z_hosts <= z_max_est * 1.1)]
+    
+    if len(z_filtered) == 0:
+        return 0  # No hosts in range
+        
+    # Calcola dl_array solo per i redshift filtrati
+    dl_array = Dl_z_vectorized(z_filtered, Htemp, Om0GLOB)
+    
+    # Filtra ulteriormente in base alla distanza luminosa
+    dl_array = dl_array[(dl_array <= dl_max) & (dl_array >= dl_min)]
+    
+    beta = len(dl_array)
     return beta
-
 # Parallelized function to compute beta in the pixel
 def Beta2v0_pix(args):
     #print('called Beta2v0,debug')
@@ -49,36 +65,49 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
     Compute the beta of H0 for a single pixel. Count how many possible hosts in the pixel
     between dl_max and dl_min.
     """
-
-    dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
-    #begin mod speed up
-    if debug==1:
+    # Calcola i limiti di distanza
+    dl_max = mu_DS + how_many_sigma * sigma
+    dl_min = mu_DS - how_many_sigma * sigma
+    
+    # Stima il range di redshift approssimato
+    z_max_est = z_from_dL_approx(dl_max, Htemp)
+    z_min_est = z_from_dL_approx(dl_min, Htemp)
+    
+    # Pre-filtra i redshift (approssimazione rapida)
+    z_filtered = z_hosts[(z_hosts >= z_min_est * 0.7) & (z_hosts <= z_max_est * 1.1)]
+    
+    if len(z_filtered) == 0:
+        return 0  # No hosts in range
+        
+    # Calculate dl_array only for the filtered redshifts
+    dl_array = Dl_z_vectorized(z_filtered, Htemp, Om0GLOB)
+    
+    # Only print debug info if debug is enabled
+    if debug == 1:
         print("----------------------------------------------------------------")
         print('Debug beta_inpix of Beta2v0')
-        print('dl_array before selection\n {}'.format(dl_array))
-        print('mu_DS {} Mpc Sigma {} Mpc mu+-4.5*sigma {} {}\n Htemp= {}'.format(mu_DS,sigma,mu_DS+how_many_sigma*sigma,mu_DS-how_many_sigma*sigma,Htemp))
+        print(f'dl_array before selection\n {dl_array}')
+        print(f'mu_DS {mu_DS} Mpc Sigma {sigma} Mpc mu+-{how_many_sigma}*sigma {mu_DS+how_many_sigma*sigma} {mu_DS-how_many_sigma*sigma}\n Htemp= {Htemp}')
         sys.stdout.flush()
-    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
-    if debug ==1:
-        print('dl_array afet dl+4.5*sigma selection\n {}'.format(dl_array))
-        sys.stdout.flush()
-    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
-    if debug ==1:
-        print('dl_array afet dl+4.5*sigma selection\n {}'.format(dl_array))
+    
+    # Filter by luminosity distance
+    dl_array = dl_array[(dl_array <= dl_max) & (dl_array >= dl_min)]
+    
+    if debug == 1:
+        print(f'dl_array after dl_max, dl_min selection\n {dl_array}')
         print("----------------------------------------------------------------")
         sys.stdout.flush()
     
     if dl_array is None or np.isnan(dl_array).any():
-        print(f"Warning: NaN detected in dl_array for Htemp={Htemp}")
-        sys.stdout.flush()
+        if debug == 1:
+            print(f"Warning: NaN detected in dl_array for Htemp={Htemp}")
+            sys.stdout.flush()
+        return 1
 
     if len(dl_array) == 0:
-        #print("Warning: No valid dl_array values")
-        #sys.stdout.flush()
-        beta=1
-        return beta
+        return 1  # No hosts in range after filtering
 
-    beta = len(dl_array)# here we will add the weights
+    beta = len(dl_array)  # here we will add the weights
     return beta
 
 if __name__=='__main__':

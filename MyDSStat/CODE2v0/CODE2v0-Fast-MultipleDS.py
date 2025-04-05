@@ -21,22 +21,40 @@ def likelihood_line(mu_DS, dl, sigma):
 
 def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
     """
-    Compute the likelihood of H0 for a single pixel.
+    Compute the likelihood of H0 for a single pixel with pre-filtering.
     """
     if len(z_hosts) == 0:
-        raise ValueError("z_hosts is empty")
+        return 0.0
+        
     if np.isnan(z_hosts).any():
-        raise ValueError("z_hosts contains NaN values")
+        return 0.0
+    
+    # Calcola i limiti di distanza
+    dl_max = mu_DS + how_many_sigma * sigma
+    dl_min = mu_DS - how_many_sigma * sigma
+    
+    # Stima il range di redshift approssimato
+    z_max_est = z_from_dL_approx(dl_max, Htemp)
+    z_min_est = z_from_dL_approx(dl_min, Htemp)
+    
+    # Pre-filtra i redshift
+    z_filtered = z_hosts[(z_hosts >= z_min_est * 0.7) & (z_hosts <= z_max_est * 1.1)]
+    
+    if len(z_filtered) == 0:
+        return 0.0  # No hosts in range
+    
+    # Calcola dl_array solo per i redshift filtrati
+    dl_array = Dl_z_vectorized(z_filtered, Htemp, Om0GLOB)
+    
+    # Filter distances
+    mask = (dl_array <= dl_max) & (dl_array >= dl_min)
+    dl_array = dl_array[mask]
+    
+    if len(dl_array) == 0:
+        return 0.0
 
-    dl_array = Dl_z_vectorized(z_hosts, Htemp, Om0GLOB)  # Vectorized computation
-    #begin mod speed up
-    dl_array=dl_array[dl_array<=mu_DS+how_many_sigma*sigma]
-    dl_array=dl_array[dl_array>=mu_DS-how_many_sigma*sigma]
-    #end mod speed up
-    if dl_array is None or np.isnan(dl_array).any():
-        raise ValueError("Dl_z_vectorized returned None or NaN")
-
-    likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vectorized likelihood
+    # Calcola la likelihood per ogni distanza e somma
+    likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vettorizzato
     return np.sum(likelihoods)
 
 
