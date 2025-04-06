@@ -12,7 +12,7 @@ import h5py
 from multiprocessing import Pool
 import multiprocessing
 import pickle
-from numba import jit
+from numba import njit
 import warnings
 
 PACKAGE_PARENT = '..'
@@ -32,6 +32,16 @@ from gwfastUtils import GPSt_to_LMST
 from gwfast.gwfastUtils import load_population
 
 ###########################################################################################################################
+
+samples = None
+pixels = None
+perm_mean = None
+perm_cov = None
+DS_angs = None
+nside = None
+
+
+
 def sample_multivariate_gaussian(mean, cov, num_samples):
     return np.random.multivariate_normal(mean, cov, num_samples)
 
@@ -75,6 +85,7 @@ def permutation(args):
     return mean_permuted, cov_permuted, keys_permuted
 
 # Funzioni per gestire i problemi ai poli mediante rotazione della sfera
+@njit
 def rotate_coordinates(theta, phi, rot_theta=np.pi/4):
     """
     Applica una rotazione rigida alle coordinate sferiche.
@@ -111,7 +122,7 @@ def rotate_coordinates(theta, phi, rot_theta=np.pi/4):
     phi_rot = np.mod(phi_rot, 2*np.pi)
     
     return theta_rot, phi_rot
-
+@njit
 def inverse_rotate_coordinates(theta, phi, rot_theta=np.pi/4):
     """
     Applica la rotazione inversa per tornare alle coordinate originali.
@@ -298,6 +309,11 @@ def get_credible_region_pixels(all_pixels, p_posterior, level=0.9):
     Returns the pixels within the level% credible region.
     """
     return all_pixels[p_posterior > _get_credible_region_pth(p_posterior, level=level)]
+def ensure_scalar(value):
+    """Convert NumPy arrays to scalar values safely."""
+    if isinstance(value, np.ndarray):
+        return float(value.item()) if value.size == 1 else float(value[0])
+    return float(value)
 
 
 ############################################################################################################################
@@ -320,7 +336,7 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Uniform/TestRun04/'
+folder='Uniform/TestRun05/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
@@ -341,9 +357,9 @@ totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]
 print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*DS_Cat.shape[0]/totalds))
 print(DS_Cat.head(5))
-start_index=49181
+start_index=0
 iteration_count = 0
-max_iterations=700
+max_iterations=15
 
 # Log file per tenere traccia degli eventi con problemi ai poli
 pole_log_file = os.path.join(COV_SAVE_PATH, "pole_issues.log")
@@ -433,31 +449,158 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
             epsilon = 1e-8 * np.trace(cov)
             cov += np.eye(cov.shape[0]) * epsilon
             np.linalg.cholesky(cov)           
+#------------------ Restore this to go back to pre-adaptive sampling-------------------------------------------------
+        # Permutation and Cholesky decomposition
+        # args = mean, cov, parameters_list
+        # perm_mean, perm_cov, perm_keys = permutation(args)
+        
+        # L = np.linalg.cholesky(perm_cov)
+        # z = np.random.randn(10**8, len(perm_mean))
+        # samples = perm_mean + z @ L.T
+        
+        # # Ottieni theta e phi medi
+        # theta_mean = perm_mean[-2]
+        # phi_mean = perm_mean[-1]
+        
+        # # Genera la mappa di skyprob applicando rotazione se necessario
+        # nside = 128
+        # sky_map, pixels, was_rotated = process_near_pole_event(samples, theta_mean, phi_mean, 
+        #                                             nside=nside, pole_threshold=pole_threshold)
+#------------------------Up to this point -----------------------------------------------------------------------------
 
+        #------------------------------ CAMPIONAMENTO INCREMENTALE RIVISTO ------------------------------#
         # Permutation and Cholesky decomposition
         args = mean, cov, parameters_list
         perm_mean, perm_cov, perm_keys = permutation(args)
-        
+
         L = np.linalg.cholesky(perm_cov)
-        z = np.random.randn(10**8, len(perm_mean))
-        samples = perm_mean + z @ L.T
-        
+
         # Ottieni theta e phi medi
         theta_mean = perm_mean[-2]
         phi_mean = perm_mean[-1]
-        
-        # Genera la mappa di skyprob applicando rotazione se necessario
+
+        # Inizializza nside
         nside = 128
-        sky_map, pixels, was_rotated = process_near_pole_event(samples, theta_mean, phi_mean, 
-                                                    nside=nside, pole_threshold=pole_threshold)
+
+        # Verifica se l'evento è vicino al polo
+        is_near_pole_event = (theta_mean < pole_threshold) or (theta_mean > (np.pi - pole_threshold))
+        rot_theta = np.pi/4  # Angolo di rotazione: 45 gradi
+
+        # Parametri per il campionamento incrementale
+        max_samples = 10**8  # Limite massimo di campioni
+        samples_per_batch = 10**6  # Dimensione del batch
+        samples_list = []
+        pixels_list = []
+        unique_pixels_set = set()
+
+        # Calcolo del numero atteso di pixel nella regione di 25 deg²
+        total_sky_pixels = hp.nside2npix(nside)
+        total_sky_area = 4 * np.pi * (180/np.pi)**2  # circa 41.253 deg²
+        pixels_per_deg2 = total_sky_pixels / total_sky_area
+        expected_pixels = int(25 * pixels_per_deg2)  # Numero atteso di pixel in 25 deg²
+
+        # Imposta un target ragionevole basato sull'area attesa
+        pixel_coverage_target = min(expected_pixels * 3, total_sky_pixels)  # 3x per essere sicuri
+        min_sample_batches = 5  # Assicura almeno questo numero di batch per stabilità statistica
+
+        print(f"Area prevista: circa 25 deg² (~{expected_pixels} pixel)")
+        print(f"Target di copertura: {pixel_coverage_target} pixel")
+        print(f"Avviando campionamento incrementale...")
+
+        # Variabili per il monitoraggio della convergenza
+        prev_unique_count = 0
+        stable_iterations = 0
+        required_stable_iterations = 3
+        convergence_tolerance = 0.02  # 2% di cambiamento
+
+        for batch_idx in range(0, max_samples // samples_per_batch):
+            # Genera campioni per questo batch
+            z_batch = np.random.randn(samples_per_batch, len(perm_mean))
+            batch_samples = perm_mean + z_batch @ L.T
+            
+            # Estrai theta e phi dai campioni
+            theta_batch = batch_samples[:, -2]
+            phi_batch = batch_samples[:, -1]
+            
+            # Applica rotazione se necessario
+            if is_near_pole_event:
+                theta_rot_batch, phi_rot_batch = rotate_coordinates(theta_batch, phi_batch, rot_theta)
+                theta_hp = np.mod(theta_rot_batch, np.pi)
+                phi_hp = np.mod(phi_rot_batch, 2*np.pi)
+            else:
+                theta_hp = np.mod(theta_batch, np.pi)
+                phi_hp = np.mod(phi_batch, 2*np.pi)
+            
+            # Converti in pixel HEALPix
+            batch_pixels = hp.ang2pix(nside, theta_hp, phi_hp)
+            
+            # Aggiungi alle liste
+            samples_list.append(batch_samples)
+            pixels_list.append(batch_pixels)
+            
+            # Aggiorna i pixel unici
+            prev_unique_count = len(unique_pixels_set)
+            unique_pixels_current = set(batch_pixels)
+            unique_pixels_set.update(unique_pixels_current)
+            current_unique_count = len(unique_pixels_set)
+            
+            # Calcola la percentuale di cambiamento
+            if prev_unique_count > 0:
+                percent_change = (current_unique_count - prev_unique_count) / prev_unique_count
+            else:
+                percent_change = 1.0
+            
+            # Stampa progresso
+            total_samples = (batch_idx + 1) * samples_per_batch
+            print(f"Batch {batch_idx+1}: {current_unique_count} pixel unici (Δ: {percent_change:.2%}), {total_samples:,} campioni")
+            
+            # Verifica convergenza: il numero di pixel unici si stabilizza
+            if percent_change < convergence_tolerance:
+                stable_iterations += 1
+            else:
+                stable_iterations = 0
+            
+            # Criteri di terminazione
+            min_samples_reached = batch_idx >= min_sample_batches
+            convergence_reached = stable_iterations >= required_stable_iterations
+            
+            if min_samples_reached and convergence_reached:
+                print(f"Convergenza raggiunta dopo {total_samples:,} campioni con {current_unique_count} pixel unici")
+                break
+                
+            # Verifica se abbiamo raggiunto il numero massimo di batch
+            if (batch_idx + 1) * samples_per_batch >= max_samples:
+                print(f"Raggiunto limite massimo di {max_samples:,} campioni con {current_unique_count} pixel unici")
+                break
+
+        # Combina tutti i batch
+        samples = np.vstack(samples_list)
+        pixels = np.concatenate(pixels_list)
+
+        print(f"Campionamento completato: generati {samples.shape[0]:,} campioni con {len(unique_pixels_set):,} pixel unici")
+
+        # Genera la mappa
+        sky_map = np.zeros(hp.nside2npix(nside))
+        np.add.at(sky_map, pixels, 1)
+        sky_map = sky_map / np.sum(sky_map)
+
+        # Se l'evento era vicino al polo, devi ruotare la mappa indietro
+        if is_near_pole_event:
+            print("Ruotando la mappa indietro alla posizione originale")
+            sky_map = rotate_skymap(sky_map, rot_theta, inverse=True)
+
+        # Salva il valore per il log
+        was_rotated = is_near_pole_event
+        #------------------------------ FINE CAMPIONAMENTO INCREMENTALE ------------------------------#
 
         # Compute the area of the 90% credible region
         all_pixels = np.arange(hp.nside2npix(nside))
         gw_area = compute_area(nside, all_pixels, sky_map, level=0.9)
+
         
         # Registra informazioni sugli eventi con problemi ai poli
         with open(pole_log_file, "a") as f:
-            f.write(f"{event_index}, {is_near_pole}, {gw_area:.2f}, {was_rotated}, {area_deg2:.2f}\n")
+            f.write(f"{event_index}, {is_near_pole}, {ensure_scalar(gw_area):.2f}, {was_rotated}, {ensure_scalar(area_deg2):.2f}\n")
 
         print('Number of unique pixels {}'.format(len(np.unique(pixels))))
         allsky = hp.nside2npix(nside) * hp.nside2pixarea(nside, degrees=True)
@@ -483,7 +626,7 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
         luminosity_distance_samples = {}
         
         # Definiamo le variabili globali necessarie per il processing dei pixel
-        global samples, pixels, perm_mean, perm_cov, DS_angs, nside
+        #global samples, pixels, perm_mean, perm_cov, DS_angs, nside
         # Qui non serve riassegnare queste variabili, ma dichiarare che sono globali
         results = parallel_process_pixels(unique_pixels)
 
@@ -503,4 +646,4 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
         print(f'Map {fname} saved')
 
     else:
-        print(f"Skipping event {event_index}, area too large: {area_deg2:.2f} deg^2\n")
+        print(f"Skipping event {event_index}, area too large: {ensure_scalar(area_deg2):.2f} deg^2\n")

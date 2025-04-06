@@ -207,7 +207,7 @@ def InputEvents(start, end):
 
 def ImprovedInputEvets(folder_path, start, end):
     """
-    Lists .fits files in the specified folder and selects a range.
+    Lists .fits files in the specified folder, sorts them by name, and selects a range.
     """
     try:
         all_files = os.listdir(folder_path)
@@ -215,7 +215,7 @@ def ImprovedInputEvets(folder_path, start, end):
         print(f"Error accessing folder {folder_path}: {e}")
         return []
     
-    fits_files = [f for f in all_files if f.endswith('.fits')]
+    fits_files = sorted([f for f in all_files if f.endswith('.fits')])  # Sort by filename
     
     if not fits_files:
         return []
@@ -227,6 +227,7 @@ def ImprovedInputEvets(folder_path, start, end):
     end = min(end, len(fits_files))
     
     return fits_files[start:end]
+
 
 def ThresholdInput(th_value, start, stop):
     """
