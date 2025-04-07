@@ -40,15 +40,12 @@ import h5py
 from multiprocessing import Pool
 import multiprocessing
 import pickle
-from numba import jit, njit
+from numba import jit
 
 
 ###########################################################################################################################
-def ensure_scalar(value):
-    """Convert NumPy arrays to scalar values safely."""
-    if isinstance(value, np.ndarray):
-        return float(value.item()) if value.size == 1 else float(value[0])
-    return float(value)
+def sample_multivariate_gaussian(mean, cov, num_samples):
+    return np.random.multivariate_normal(mean, cov, num_samples)
 
 def list_perm(lista,permutazione):
     tmp=[]
@@ -145,170 +142,6 @@ def parallel_process_pixels(unique_pixels):
         results = pool.map(process_pixel, unique_pixels)
     return results
 
-# Aggiungi queste funzioni ottimizzate
-@njit
-def generate_samples_batch(perm_mean, L, batch_size):
-    """
-    Genera un batch di campioni da una distribuzione normale multivariata.
-    Questa funzione è ottimizzata con njit.
-    
-    Args:
-        perm_mean: vettore media
-        L: fattore di Cholesky della matrice di covarianza
-        batch_size: dimensione del batch
-        
-    Returns:
-        batch_samples: array di campioni
-    """
-    z_batch = np.random.randn(batch_size, len(perm_mean))
-    return perm_mean + z_batch @ L.T
-
-@njit
-def compute_healpix_angles(theta, phi):
-    """
-    Calcola gli angoli HEALPix corretti (modulo).
-    Questa funzione è ottimizzata con njit.
-    
-    Args:
-        theta: angoli theta
-        phi: angoli phi
-        
-    Returns:
-        theta_hp, phi_hp: angoli HEALPix
-    """
-    theta_hp = np.mod(theta, np.pi)
-    phi_hp = np.mod(phi, 2 * np.pi)
-    return theta_hp, phi_hp
-#-----------------------------------------------------------------#
-
-# Poi modifica la funzione adaptive_sampling come segue:
-
-#-----------------------------------------------------------------#
-def adaptive_sampling(perm_mean, perm_cov, nside=128):
-    """
-    Implementa il campionamento incrementale per generare mappe del cielo
-    con un numero ottimizzato di campioni.
-    
-    Args:
-        perm_mean: vettore media dopo permutazione
-        perm_cov: matrice covarianza dopo permutazione
-        nside: risoluzione HEALPix
-        
-    Returns:
-        samples: tutti i campioni generati
-        pixels: array di pixel corrispondenti ai campioni
-        sky_map: mappa di probabilità
-    """
-    # Calcola la decomposizione di Cholesky
-    L = np.linalg.cholesky(perm_cov)
-    
-    # Parametri per il campionamento incrementale
-    max_samples = 10**8  # Limite massimo di campioni
-    samples_per_batch = 10**6  # Dimensione del batch
-    samples_list = []
-    pixels_list = []
-    unique_pixels_set = set()
-    
-    # Calcolo del numero atteso di pixel
-    total_sky_pixels = hp.nside2npix(nside)
-    total_sky_area = 4 * np.pi * (180/np.pi)**2  # circa 41.253 deg²
-    pixels_per_deg2 = total_sky_pixels / total_sky_area
-    expected_pixels = int(25 * pixels_per_deg2)  # Numero atteso di pixel in 25 deg²
-    
-    # Target e parametri
-    pixel_coverage_target = min(expected_pixels * 3, total_sky_pixels)
-    min_sample_batches = 5
-    
-    print(f"Area prevista: circa 25 deg² (~{expected_pixels} pixel)")
-    print(f"Target di copertura: {pixel_coverage_target} pixel")
-    print(f"Avviando campionamento incrementale...")
-    
-    # Variabili per la convergenza
-    prev_unique_count = 0
-    stable_iterations = 0
-    required_stable_iterations = 3
-    convergence_tolerance = 0.02  # 2% di cambiamento
-    
-    for batch_idx in range(0, max_samples // samples_per_batch):
-        # Usa la funzione ottimizzata per generare campioni
-        batch_samples = generate_samples_batch(perm_mean, L, samples_per_batch)
-        
-        # Estrai theta e phi dai campioni
-        theta_batch = batch_samples[:, -2]
-        phi_batch = batch_samples[:, -1]
-        
-        # Calcola gli angoli HEALPix con la funzione ottimizzata
-        theta_hp, phi_hp = compute_healpix_angles(theta_batch, phi_batch)
-        
-        # Calcola i pixel
-        batch_pixels = hp.ang2pix(nside, theta_hp, phi_hp)
-        
-        # Aggiungi alle liste
-        samples_list.append(batch_samples)
-        pixels_list.append(batch_pixels)
-        
-        # Aggiorna i pixel unici
-        prev_unique_count = len(unique_pixels_set)
-        unique_pixels_set.update(batch_pixels)
-        current_unique_count = len(unique_pixels_set)
-        
-        # Calcola la percentuale di cambiamento
-        if prev_unique_count > 0:
-            percent_change = (current_unique_count - prev_unique_count) / prev_unique_count
-        else:
-            percent_change = 1.0
-        
-        # Stampa progresso
-        total_samples = (batch_idx + 1) * samples_per_batch
-        print(f"Batch {batch_idx+1}: {current_unique_count} pixel unici (Δ: {percent_change:.2%}), {total_samples:,} campioni")
-        
-        # Verifica convergenza
-        if percent_change < convergence_tolerance:
-            stable_iterations += 1
-        else:
-            stable_iterations = 0
-        
-        # Criteri di terminazione
-        min_samples_reached = batch_idx >= min_sample_batches
-        convergence_reached = stable_iterations >= required_stable_iterations
-        
-        if min_samples_reached and convergence_reached:
-            print(f"Convergenza raggiunta dopo {total_samples:,} campioni con {current_unique_count} pixel unici")
-            break
-            
-        if (batch_idx + 1) * samples_per_batch >= max_samples:
-            print(f"Raggiunto limite massimo di {max_samples:,} campioni con {current_unique_count} pixel unici")
-            break
-    
-    # Combina tutti i batch
-    samples = np.vstack(samples_list)
-    pixels = np.concatenate(pixels_list)
-    
-    print(f"Campionamento completato: generati {samples.shape[0]:,} campioni con {len(unique_pixels_set)} pixel unici")
-    
-    # Genera la mappa
-    sky_map = np.zeros(hp.nside2npix(nside))
-    np.add.at(sky_map, pixels, 1)
-    sky_map = sky_map / np.sum(sky_map)
-    
-    return samples, pixels, sky_map
-#-----------------------------------------------------------------#
-
-def is_near_pole(theta, pole_threshold=0.1):
-    """
-    Verifica se un evento è troppo vicino ai poli celesti.
-    
-    Args:
-        theta: angolo di declinazione in radianti (0 = polo nord, pi = polo sud)
-        pole_threshold: soglia in radianti per considerare l'evento vicino a un polo
-        
-    Returns:
-        bool: True se l'evento è vicino a un polo, False altrimenti
-    """
-    # Verifico vicinanza al polo nord (theta vicino a 0)
-    # o al polo sud (theta vicino a pi)
-    return theta < pole_threshold or (np.pi - theta) < pole_threshold
-
 # --------------------- HEALPix Utilities ---------------------------------
 
 def compute_area(nside, all_pixels, p_posterior, level=0.99):
@@ -355,7 +188,7 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Uniform/TestRun06/'
+folder='Uniform/TestRun04/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
@@ -378,10 +211,8 @@ print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*
 print(DS_Cat.head(5))
 start_index=49181
 iteration_count = 0
-max_iterations=5
-steps=0
+max_iterations=700
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():
-    steps += 1
     if iteration_count%10==0:
         print('Computed {} maps'.format(iteration_count))
     if iteration_count >= max_iterations:
@@ -411,19 +242,10 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     area_deg2=compute_localization_region(totCov_ET,ParNums,Allevents_DS['theta'])
 
     if area_deg2 <= 25:
-        # Controllo evento vicino ai poli maybe to cut out -------------------------------------------------------------------------
-        pole_threshold_rad = 0.3  # circa 8.6 gradi dal polo range :#0.1 --- 0.3
-        Val=is_near_pole(Allevents_DS['theta'][0], pole_threshold=pole_threshold_rad)
-        print(f"(Is near pole is giving {Val})")
-        if is_near_pole(Allevents_DS['theta'][0], pole_threshold=pole_threshold_rad):
-            print(f"Skipping event {event_index}, too close to celestial pole (theta = {Allevents_DS['theta'][0]:.4f} rad)")
-            continue
-            #----------------------------------------------------------------------------------------------------------------------
         iteration_count += 1
         np.save(COV_SAVE_PATH + f'Cov_SNR_more_than_100_{event_index}', totCov_ET)
         print(f"Saved covariance matrix for event {event_index}")
         gwfast.gwfastUtils.save_data(COV_SAVE_PATH+f'SNR_more_than_100_{event_index}.h5', Allevents_DS)
-        print('GWfast Area ={}'.format(area_deg2))
 
         #######Start the map making. I have to save and load beacuse I don't know if indices are mixed and for now it works if I load 
         #Reading Files
@@ -471,16 +293,29 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
 
 
         # Permutation and Cholesky decomposition
-#-----------------------------------------------------------------#
         args = mean, cov, parameters_list
         perm_mean, perm_cov, perm_keys = permutation(args)
+        #print("Eigenvalues after permutation:", np.linalg.eigvalsh(perm_cov))
+        #print("Condition number after permutation:", np.linalg.cond(perm_cov))
+        #diag_cov=perm_cov.diagonal()#remove after test
+        #perm_cov=np.diag(diag_cov)#remove after test
+        L = np.linalg.cholesky(perm_cov)
+        z = np.random.randn(10**8, len(perm_mean))
+        samples = perm_mean + z @ L.T
+        theta = samples[:, -2]
+        phi = samples[:, -1]
+        direct_dl=samples[:,0]
+        theta_hp = np.mod(theta, np.pi) 
+        phi_hp = np.mod(phi, 2 * np.pi) 
 
-        # Imposta la risoluzione HEALPix
+        # Healpix map generation
         nside = 128
-        
-        # Utilizza il campionamento adattivo per generare la mappa
-        samples, pixels, sky_map = adaptive_sampling(perm_mean, perm_cov, nside)
-#-----------------------------------------------------------------#
+        sky_map = np.zeros(hp.nside2npix(nside))
+        #pixels = hp.ang2pix(nside, theta, phi,nest=True)
+        pixels = hp.ang2pix(nside, theta_hp, phi_hp)
+        np.add.at(sky_map, pixels, 1)
+        sky_map = sky_map / np.sum(sky_map)
+
         # Compute the area of the 90% credible region
         all_pixels = np.arange(hp.nside2npix(nside))
         gw_area = compute_area(nside, all_pixels, sky_map, level=0.9)
@@ -492,48 +327,41 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
         print('Percentage of sky={}%'.format(100*gw_area/allsky))
         print('GWfast Area ={}'.format(area_deg2))
         os.chdir(COV_SAVE_PATH)
-        ##### INsert here a chck on true area an save only if less than 25. iteration_count-=1
-        if ensure_scalar(gw_area)>25:
-            iteration_count-=1
-            print('GW area too large after Monte carlo')
-            continue
-        else:
-            if (iteration_count % 100==0):
-                plt.figure(figsize=(12, 8))
-                hp.mollview(sky_map, title=f'GWtest{event_index}-skyprob', nest=False, hold=True)
-                plt.savefig(f'GWtest{event_index}.pdf')
-                plt.close() 
-        
-            theta_mean=perm_mean[-2]
-            phi_mean=perm_mean[-1]
-            mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)
-            theta_DS, phi_DS = hp.pix2ang(nside,mean_pix) #to fix DS in the pix. If galaxies are in the same piz, ang dist must be 0, you are in the same pix
-            DS_angs = np.zeros(2)
-            DS_angs[0] = theta_DS
-            DS_angs[1] = phi_DS   
-            all_mu = np.zeros(hp.nside2npix(nside))
-            all_std = np.zeros(hp.nside2npix(nside))
-            unique_pixels = np.unique(pixels)
-            luminosity_distance_samples = {}
-            results = parallel_process_pixels(unique_pixels)
 
-            for pix, mu, std,distance_sampled in results:
-                all_mu[pix] = mu
-                all_std[pix] = std
-                luminosity_distance_samples[pix] = distance_sampled #to check dist in each pix. Not used after test good
+        if (iteration_count % 100==0):
+            plt.figure(figsize=(12, 8))
+            hp.mollview(sky_map, title=f'GWtest{event_index}-skyprob', nest=False, hold=True)
+            plt.savefig(f'GWtest{event_index}.pdf')
+            plt.close() 
+    
+        theta_mean=perm_mean[-2]
+        phi_mean=perm_mean[-1]
+        mean_pix=hp.ang2pix(nside,theta_mean,phi_mean)
+        theta_DS, phi_DS = hp.pix2ang(nside,mean_pix) #to fix DS in the pix. If galaxies are in the same piz, ang dist must be 0, you are in the same pix
+        DS_angs = np.zeros(2)
+        DS_angs[0] = theta_DS
+        DS_angs[1] = phi_DS   
+        all_mu = np.zeros(hp.nside2npix(nside))
+        all_std = np.zeros(hp.nside2npix(nside))
+        unique_pixels = np.unique(pixels)
+        luminosity_distance_samples = {}
+        results = parallel_process_pixels(unique_pixels)
 
-            mod_postnorm = np.ones(hp.nside2npix(nside))
+        for pix, mu, std,distance_sampled in results:
+            all_mu[pix] = mu
+            all_std[pix] = std
+            luminosity_distance_samples[pix] = distance_sampled #to check dist in each pix. Not used after test good
 
-            # Save the map with an incremental name
-            fname = f'GWtest{event_index}.fits'
-            dat = Table([sky_map, all_mu, all_std, mod_postnorm],
-                        names=('PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM'))
-            os.chdir(COV_SAVE_PATH)
-            fits.write_sky_map(fname, dat, nest=False)
-            print(f'Map {fname} saved')
-            print(f" Elaborated {steps} lines, add to start_index\n")
+        mod_postnorm = np.ones(hp.nside2npix(nside))
+
+        # Save the map with an incremental name
+        fname = f'GWtest{event_index}.fits'
+        dat = Table([sky_map, all_mu, all_std, mod_postnorm],
+                    names=('PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM'))
+        os.chdir(COV_SAVE_PATH)
+        fits.write_sky_map(fname, dat, nest=False)
+        print(f'Map {fname} saved')
 
     else:
-        print(f"Skipping event {event_index}, area too large")
-        print(f" Elaborated {steps} lines, add to start_index\n")
+        print(f"Skipping event {event_index}, area too large\n")
 
