@@ -376,9 +376,9 @@ totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]
 print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*DS_Cat.shape[0]/totalds))
 print(DS_Cat.head(5))
-start_index=49181
-iteration_count = 0
-max_iterations=5
+start_index=0
+iteration_count = 6168
+max_iterations=600
 steps=0
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     steps += 1
@@ -457,17 +457,33 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
         #condition_number = np.linalg.cond(cov)
         #print("Condition number:", condition_number)       
         
-        try:
-            np.linalg.cholesky(cov)
-            print('Cov Matrix is Cholesky approved')
-        except:
-            print('Cov not positive semi-defined')
-            print('Increasing Epsilon')
-            cov += np.eye(cov.shape[0]) / epsilon
-            epsilon = 1e-8 * np.trace(cov)
-            cov += np.eye(cov.shape[0]) * epsilon
-            np.linalg.cholesky(cov)           
+        max_attempts = 5
+        attempt = 0
+        cholesky_success = False
 
+        while attempt < max_attempts and not cholesky_success:
+            try:
+                np.linalg.cholesky(cov)
+                print(f'Cov Matrix è positiva definita dopo {attempt+1} tentativi')
+                cholesky_success = True
+            except np.linalg.LinAlgError:
+                attempt += 1
+                if attempt == max_attempts:
+                    print(f'Fallito dopo {max_attempts} tentativi, skippo evento {event_index}')
+                    break
+                    
+                # Incrementa epsilon in modo esponenziale ad ogni tentativo
+                epsilon = 1e-8 * np.trace(cov) * (10**attempt)
+                print(f'Tentativo {attempt+1}/{max_attempts}: aumento epsilon a {epsilon:.2e}')
+                
+                # Applica la regolarizzazione
+                cov_orig = cov.copy()  # Salva la matrice originale
+                cov = cov_orig + np.eye(cov_orig.shape[0]) * epsilon
+
+        # Verifica se la decomposizione è riuscita, altrimenti salta questo evento
+        if not cholesky_success:
+            print(f'Impossibile rendere la matrice positiva definita, skippo evento {event_index}')
+            continue
 
 
         # Permutation and Cholesky decomposition
@@ -493,9 +509,27 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
         print('GWfast Area ={}'.format(area_deg2))
         os.chdir(COV_SAVE_PATH)
         ##### INsert here a chck on true area an save only if less than 25. iteration_count-=1
-        if ensure_scalar(gw_area)>25:
-            iteration_count-=1
-            print('GW area too large after Monte carlo')
+        if ensure_scalar(gw_area) > 25:
+            iteration_count -= 1
+            print('GW area too large after Monte Carlo')
+            
+            # Elimina i file salvati in precedenza
+            cov_file_path = COV_SAVE_PATH + f'Cov_SNR_more_than_100_{event_index}'
+            h5_file_path = COV_SAVE_PATH + f'SNR_more_than_100_{event_index}.h5'
+            
+            try:
+                # Rimuovi il file della matrice di covarianza
+                if os.path.exists(cov_file_path):
+                    os.remove(cov_file_path)
+                    print(f"File rimosso: {cov_file_path}")
+                
+                # Rimuovi anche il file h5 salvato
+                if os.path.exists(h5_file_path):
+                    os.remove(h5_file_path)
+                    print(f"File rimosso: {h5_file_path}")
+            except Exception as e:
+                print(f"Errore durante la rimozione dei file: {e}")
+            
             continue
         else:
             if (iteration_count % 100==0):
