@@ -49,12 +49,15 @@ def LikeofH0_pixel(mu_DS, sigma, z_hosts, Htemp):
     # Filter distances
     mask = (dl_array <= dl_max) & (dl_array >= dl_min)
     dl_array = dl_array[mask]
+    z_filtered=z_filtered[mask]
     
     if len(dl_array) == 0:
         return 0.0
+    # Ottengo i pesi statistici
+    weights = stat_weights(z_filtered)
 
     # Calcola la likelihood per ogni distanza e somma
-    likelihoods = likelihood_line(mu_DS, dl_array, sigma)  # Vettorizzato
+    likelihoods = likelihood_line(mu_DS, dl_array, sigma)*weights  # Vettorizzato
     return np.sum(likelihoods)
 
 
@@ -107,6 +110,19 @@ def compute_pixel_likelihood(args):
 #     return pixel_post
 ##############################################################################################
 
+#Statistical Weights
+
+@njit
+def stat_weights(array_of_z):
+    #alltheomega=w(array_of_z)
+    temp=np.interp(array_of_z,z_bin,w_hist)
+    return temp
+
+@njit
+def sum_stat_weights(array_of_z):
+    #alltheomega=w(array_of_z)
+    num=np.sum(np.interp(array_of_z,z_bin,w_hist))
+    return num
 #########################################################################################
 
 if __name__=='__main__':
@@ -128,6 +144,11 @@ if __name__=='__main__':
     # H0 Grid
     #H0Grid = np.linspace(H0min, H0max, 1000)
     #DF_results = pd.DataFrame(columns=['Event', 'Likelihood'])
+
+    #Statistical weights
+    z_bin=np.loadtxt('half_flag_bin_paper.txt')
+    w_hist=np.loadtxt('half_flag_weights_paper.txt')
+
     total_post = np.ones(len(H0Grid))  # Total posterior
 
     # Read Galaxy Catalogue

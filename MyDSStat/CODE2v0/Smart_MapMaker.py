@@ -376,8 +376,8 @@ totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]
 print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*DS_Cat.shape[0]/totalds))
 print(DS_Cat.head(5))
-start_index=0
-iteration_count = 6168
+start_index=6168
+iteration_count = 0
 max_iterations=600
 steps=0
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():

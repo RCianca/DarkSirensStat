@@ -91,7 +91,9 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
         sys.stdout.flush()
     
     # Filter by luminosity distance
-    dl_array = dl_array[(dl_array <= dl_max) & (dl_array >= dl_min)]
+    mask = (dl_array <= dl_max) & (dl_array >= dl_min)
+    dl_array = dl_array[mask]
+    z_filtered = z_filtered[mask]  # Filtro anche i redshift corrispondenti
     
     if debug == 1:
         print(f'dl_array after dl_max, dl_min selection\n {dl_array}')
@@ -107,8 +109,15 @@ def beta_inpix(mu_DS, sigma, z_hosts, Htemp):
     if len(dl_array) == 0:
         return 1  # No hosts in range after filtering
 
-    beta = len(dl_array)  # here we will add the weights
+    #beta = len(dl_array)  # here we will add the weights
+    beta = sum_stat_weights(z_filtered)
     return beta
+
+@njit
+def sum_stat_weights(array_of_z):
+    #alltheomega=w(array_of_z)
+    num=np.sum(np.interp(array_of_z,z_bin,w_hist))
+    return num
 
 if __name__=='__main__':
     debug=0
@@ -121,6 +130,7 @@ if __name__=='__main__':
     path = 'Results'
     #runpath = 'FirstBatch'
 
+
     # Ensure directory exists
     folder = os.path.join(path, runpath,'Beta')
     os.makedirs(folder, exist_ok=True)
@@ -129,7 +139,9 @@ if __name__=='__main__':
 
     # H0 Grid
     #H0Grid = np.linspace(H0min, H0max, 1000)
-
+    print(os.getcwd())
+    z_bin=np.loadtxt('half_flag_bin_paper.txt')
+    w_hist=np.loadtxt('half_flag_weights_paper.txt')
     # Read Galaxy Catalogue
     
     print('Reading Galaxy Catalogue--'+to_read)

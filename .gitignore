@@ -33,6 +33,10 @@ MyDSStat/CODE2v0/Events
 MyDSStat/CODE2v0/Data
 MyDSStat/CODE2v0/Results
 MyDSStat/CODE2v0/Catalogues/
+MyDSStat/CODE2v0/half_flag_weights_paper.txt
+MyDSStat/CODE2v0/half_flag_bin_paper.txt
+MyDSStat/half_flag_weights_paper.txt
+MyDSStat/half_flag_bin_paper.txt
 MyDSStat/DS_From_Parent_Uniform_Complete-Sliced.txt
 MyDSStat/DS_From_Parent_Uniform_Complete_SNR.txt
 MyDSStat/DS_From_Parent_UNiform_Complete_SNR_old.txt
@@ -105,5 +109,14 @@ MyDSStat/reverse.py
 MyDSStat/reverse01.py
 MyDSStat/run28-09.py
 MyDSStat/Uniform_paper_sampled.txt
+MyDSStat/CODE2v0/NumDSvsz.png
+MyDSStat/CODE2v0/NumDSvsz_extracted.png
+MyDSStat/CODE2v0/NzFlag_log_log.png
+MyDSStat/CODE2v0/NzUnif.png
+MyDSStat/CODE2v0/rate_paper.png
+MyDSStat/DS_From_Parent_Half_Flag.txt
+MyDSStat/DS_From_Parent_Half_Flag_Complete.txt
+MyDSStat/DS_From_Parent_Uniform_Complete_SNR_nz_flag.txt
+
 
 >>>>>>> d0a048149933183f83bc7e2a841f0c6865a9acca

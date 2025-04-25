@@ -265,33 +265,38 @@ def ThresholdInput(th_value, start, stop):
 
 
 
-#PARAMETES FOR THE CORE SCRIPT#######################
+
 #print('Loading GW data')
 
+#GW Maps---------------------------------------------------
 working_dir = os.getcwd()
 MapPath = os.path.join(working_dir, 'Events/Uniform/TestRun03/')
-start=1100
-stop=1199
-pix_threshold=100
+#---------------------------------------------------
+#H0-------------------------------------------------------
 H0min, H0max = 40, 100
 H0Grid = np.linspace(H0min, H0max, 1000)
+#-----------------------------------------------------
+#PARAMETES FOR THE CORE SCRIPT#######################
 which_beta='Beta2v0'#'Beta_fast'#'Beta2v0'
 debug=0
-# List of GW data files to process
-#fname = InputEvents(start,stop)
+pix_threshold=50
 th_start=0
-th_stop=350
+th_stop=10
 how_many_sigma=5
 fname = ImprovedInputEvets(MapPath, th_start, th_stop)
 #fname=['GWtest225903.fits']
-
 # Name of the runpath folder for saving results
-runpath = 'TestRun03-speed-0_all'
-#Host Catalogue to read
-to_read = 'Uniform_paper_sampled_density_of_version_one_testrun03.txt'
+runpath = 'Unif_nzflag_tr03'
+#Host Catalogue to read now use abs path!
+CAT_FOLDER="/storage/local/home/astrorm3/ciancrau/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Catalogues/GalaxyCatalogue/Uniform_nflag"
+CAT_NAME='Unif_nz_flag_filled.txt'
+to_read = os.path.join(CAT_FOLDER,CAT_NAME)
 #Uniform_paper_sampled_frac_005-host
 #Uniform_paper_sampled_density_of_version_one
 #Uniform_paper_sampled_density_of_version_one_testrun01.txt
 #Uniform_paper_sampled_density_of_version_one_testrun01_few.txt
 #Uniform_paper_sampled_density_of_version_one_testrun02.txt
 
+
+# List of GW data files to process
+#fname = InputEvents(start,stop)

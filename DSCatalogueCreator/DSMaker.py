@@ -95,7 +95,7 @@ def totalrate(z,tmin):
 CAT_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 THIS_DIR=os.getcwd()
 os.chdir(CAT_PATH)
-Parent_Catalogue = pd.read_csv('Uniform_paper.txt', header=None)
+Parent_Catalogue = pd.read_csv('TrueFlag_half.txt', sep=' ', header=None)
 os.chdir(THIS_DIR)
 #print(Parent_Catalogue.shape)
 #print(Parent_Catalogue.head(5))
@@ -115,7 +115,7 @@ title_fontsize = 18
 #plt.ylabel('N(z)', fontsize=label_fontsize)
 #plt.title('N(z)-Uniform', fontsize=title_fontsize)
 
-plt.savefig('NzUnif.png')
+#plt.savefig('NzUnif.png')
 
 n, bins, patches = plt.hist(x=Parent_Catalogue['z'], bins=50, color='teal',
                             alpha=0.7, rwidth=1,density=False)
@@ -126,7 +126,7 @@ plt.ylabel('N(z)', fontsize=label_fontsize)
 plt.title('N(z)-Uniform', fontsize=title_fontsize)
 plt.yscale('log')
 plt.xscale('log')
-plt.savefig('NzUnif_log_log.png')
+plt.savefig('NzFlag_log_log.png')
 
 #-----------------test the uniform distribution
 position=[]
@@ -163,7 +163,7 @@ plt.plot(position/np.max(position),volume/np.max(volume),color='g')
 plt.xlabel('$dc$')
 plt.ylabel('# of object in a sphere')
 plt.grid(axis='y', alpha=0.75)
-plt.savefig('TestVolume.png')
+#plt.savefig('TestVolume.png')
 #############################################################################################################à
 
 ########### How many DS= Rate X Volume
@@ -214,7 +214,7 @@ radthetamin=Parent_Catalogue['theta'].min()
 radthetamax=Parent_Catalogue['theta'].max()
 angular_part=(radphimax-radphimin)*(-(np.cos(radthetamax)-np.cos(radthetamin)))
 #print(angular_part)
-Numb_DS_of_z=Numb_DS_of_z*angular_part*1000#this is just a factor to create a more populated catalogue
+Numb_DS_of_z=Numb_DS_of_z*angular_part*500#this is just a factor to create a more populated catalogue
 Numb_DS_of_z_int=np.around(Numb_DS_of_z)
 
 half_bin=(arr_of_redshift[1]-arr_of_redshift[0])/2
@@ -318,7 +318,7 @@ DS_From_Parent['chiz2'] = 0
 
 #save catalogue uo to now 
 os.chdir(CAT_PATH)
-DS_From_Parent.to_csv('DS_From_Parent_Uniform.txt', header=True, index=False)
+DS_From_Parent.to_csv('DS_From_Parent_Half_Flag.txt', header=True, index=False)
 os.chdir(THIS_DIR)
 ############################extract masses now and assign##########################################
 
@@ -422,7 +422,7 @@ plt.savefig('m1_extracted.png')
 print(DS_From_Parent.columns)
 
 # Define the path to save the file
-output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Uniform_Complete.txt')
+output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Half_Flag_Complete.txt')
 
 # Save the DataFrame in chunks
 chunksize = 1000  # Adjust the chunksize according to your memory capacity
@@ -466,7 +466,7 @@ def Mc(m1, m2):
     return num / denom
 
 # Prepare the output file path
-output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Uniform_Complete.txt')
+output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Half_Flag_Complete.txt')
 
 # Process the data in chunks
 for start in range(0, len(DS_From_Parent), chunksize):
