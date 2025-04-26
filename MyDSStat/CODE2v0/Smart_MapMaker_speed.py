@@ -125,6 +125,57 @@ def cond_inpix(pix,samples_in_pixel):
     std = np.sqrt(Sigma_cond[0,0])
     return mu,std#, new_samples
 
+def cond_inpix_batch(unique_pixels, pixel_indices_mapping, samples, perm_mean, perm_cov, nside, DS_angs):
+    """
+    Calcola la media e la deviazione standard condizionate per un batch di pixel.
+
+    Args:
+        unique_pixels: Array di indici di pixel.
+        pixel_indices_mapping: Dizionario che mappa ciascun pixel agli indici dei campioni.
+        samples: Array di campioni.
+        perm_mean: Vettore media permutato.
+        perm_cov: Matrice covarianza permutata.
+        nside: Risoluzione HEALPix.
+        DS_angs: Angoli di riferimento.
+
+    Returns:
+        results: Dizionario con i pixel come chiavi e tuple (mu, std, distance_samples) come valori.
+    """
+    # Calcolo le matrici che non dipendono dal pixel una sola volta
+    Sigma_xx = perm_cov[-2:, -2:]
+    Sigma_xx_inv = np.linalg.inv(Sigma_xx)
+    Sigma_xy = perm_cov[-2:, 0:-2]
+    Sigma_yx = perm_cov[0:-2, -2:]
+    Sigma_yy = perm_cov[0:-2, 0:-2]
+    
+    # Calcolo la matrice di covarianza condizionata una sola volta
+    Sigma_cond = Sigma_yy - Sigma_yx @ Sigma_xx_inv @ Sigma_xy
+    std = np.sqrt(Sigma_cond[0, 0])
+    
+    # Base per la media condizionata
+    mu_base = perm_mean[0:-2]
+    
+    results = {}
+    
+    # Per ogni pixel nel batch
+    for pix in unique_pixels:
+        # Calcolo gli angoli per questo pixel
+        theta_fixed, phi_fixed = hp.pix2ang(nside, pix)
+        alpha = np.array([theta_fixed, phi_fixed])
+        
+        # Calcolo della media condizionata specifica per questo pixel
+        mu_cond = mu_base + Sigma_yx @ Sigma_xx_inv @ (alpha - DS_angs)
+        mu = mu_cond[0]
+        
+        # Ottengo i campioni per questo pixel
+        pixel_indices = pixel_indices_mapping.get(pix, [])
+        samples_in_pixel = samples[pixel_indices]
+        distance_samples = samples_in_pixel[:, 0] if len(samples_in_pixel) > 0 else np.array([])
+        
+        results[pix] = (mu, std, distance_samples)
+    
+    return results
+
 def process_pixel(args):
     pix = args
     pix=int(pix)
@@ -140,10 +191,27 @@ def process_pixel(args):
     return pix, mu, std ,distance_sampled
 
 def parallel_process_pixels(unique_pixels):
-    with Pool(multiprocessing.cpu_count()) as pool:
-        # Use map to distribute the unique pixels to each worker
-        results = pool.map(process_pixel, unique_pixels)
-    return results
+    """
+    Versione ottimizzata che processa i pixel in batch.
+    """
+    # Creo un mapping veloce dagli indici di pixel agli indici nei campioni
+    pixel_indices_mapping = {}
+    for i, pix in enumerate(pixels):
+        if pix not in pixel_indices_mapping:
+            pixel_indices_mapping[pix] = []
+        pixel_indices_mapping[pix].append(i)
+    
+    # Processo i pixel in batch usando cond_inpix_batch
+    results = cond_inpix_batch(unique_pixels, pixel_indices_mapping, samples, perm_mean, perm_cov, nside, DS_angs)
+    
+    # Converto i risultati nel formato previsto dalla versione precedente
+    formatted_results = []
+    for pix in unique_pixels:
+        if pix in results:
+            mu, std, distance_samples = results[pix]
+            formatted_results.append((pix, mu, std, distance_samples))
+    
+    return formatted_results
 
 # Aggiungi queste funzioni ottimizzate
 @njit
@@ -355,7 +423,7 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Flagship/TestRun01/'
+folder='Flagship/TestRun02/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
@@ -378,7 +446,7 @@ print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*
 print(DS_Cat.head(5))
 start_index=0
 iteration_count = 0
-max_iterations=500
+max_iterations=10
 steps=0
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     steps += 1
@@ -545,17 +613,32 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
             DS_angs = np.zeros(2)
             DS_angs[0] = theta_DS
             DS_angs[1] = phi_DS   
+            
+            # Inizializza array per la media e la deviazione standard
             all_mu = np.zeros(hp.nside2npix(nside))
             all_std = np.zeros(hp.nside2npix(nside))
             unique_pixels = np.unique(pixels)
             luminosity_distance_samples = {}
-            results = parallel_process_pixels(unique_pixels)
-
-            for pix, mu, std,distance_sampled in results:
+            
+            # Crea un mapping rapido dei pixel ai loro indici nei campioni
+            pixel_indices_mapping = {}
+            for i, pix in enumerate(pixels):
+                if pix not in pixel_indices_mapping:
+                    pixel_indices_mapping[pix] = []
+                pixel_indices_mapping[pix].append(i)
+            
+            # Elabora i pixel in batch
+            print(f"Elaborazione di {len(unique_pixels)} pixel unici vectorized...")
+            
+            # Utilizza cond_inpix_batch per elaborare tutti i pixel in un'unica chiamata
+            batch_results = cond_inpix_batch(unique_pixels, pixel_indices_mapping, samples, perm_mean, perm_cov, nside, DS_angs)
+            
+            # Popola gli array dei risultati
+            for pix, (mu, std, distance_samples) in batch_results.items():
                 all_mu[pix] = mu
                 all_std[pix] = std
-                luminosity_distance_samples[pix] = distance_sampled #to check dist in each pix. Not used after test good
-
+                luminosity_distance_samples[pix] = distance_samples
+                
             mod_postnorm = np.ones(hp.nside2npix(nside))
 
             # Save the map with an incremental name
@@ -565,9 +648,4 @@ for event_index, row in DS_Cat.iloc[start_index:].iterrows():
             os.chdir(COV_SAVE_PATH)
             fits.write_sky_map(fname, dat, nest=False)
             print(f'Map {fname} saved')
-            print(f" Elaborated {steps} lines, add to start_index\n")
-
-    else:
-        print(f"Skipping event {event_index}, area too large")
-        print(f" Elaborated {steps} lines, add to start_index\n")
-
+            print(f"Elaborated {steps} lines, add to start_index\n")

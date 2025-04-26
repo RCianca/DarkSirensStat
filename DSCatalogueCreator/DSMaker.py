@@ -387,7 +387,7 @@ num_samples = DS_From_Parent.shape[0]*100#change with 10
 # Sample the probability distribution
 m1_samples = np.loadtxt('m1masses_paper.txt')#return_samples(PowerLawPlusPeak_with_params, m_min, m_max, num_samples) #np.loadtxt('m1masses_paper.txt')
 #np.savetxt('m1masses_paper.txt',m1_samples)
-print('saved m1')
+#print('saved m1')
 DS_From_Parent['M1'] = np.random.choice(m1_samples, size=DS_From_Parent.shape[0])
 m1_values=np.linspace(m_min,m_max,1000000)
 p_m1_values=PowerLawPlusPeak_with_params(m1_values)
@@ -415,11 +415,12 @@ ax.legend(loc='upper right',prop={'size': 15})
 
 # Show plot
 plt.grid(axis='y', alpha=0.75)
-plt.savefig('m1_extracted.png')
+#plt.savefig('m1_extracted.png')
 
 
 #print(DS_From_Parent.head())
 print(DS_From_Parent.columns)
+print(DS_From_Parent.head(5))
 
 # Define the path to save the file
 output_file = os.path.join(CAT_PATH, 'DS_From_Parent_Half_Flag_Complete.txt')
