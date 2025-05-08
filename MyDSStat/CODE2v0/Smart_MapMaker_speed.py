@@ -423,14 +423,14 @@ for d in ETdet.keys():
                 IntTablePath=None)
 
 myET = DetNet(mySignalsET)
-folder='Flagship/TestRun02/'
+folder='Flagship/TestRun03/'
 CAT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 SCRIPT_FOLDER='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/'
 COV_SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/CODE2v0/Events/'+folder
 
 
 os.chdir(CAT_FOLDER)
-DS_Cat= pd.read_csv('DS_From_Parent_Uniform_Complete_SNR_nz_flag.txt') #Flagship---DS_From_Parent_Uniform_Complete_SNR_nz_flag.txt #Uniform---DS_From_Parent_Uniform_Complete_SNR.txt
+DS_Cat= pd.read_csv('DS_From_Parent_Half_Flag_Branchesi_Complete_SNR.txt') #Flagship---DS_From_Parent_Uniform_Complete_SNR_nz_flag.txt #Uniform---DS_From_Parent_Uniform_Complete_SNR.txt
 os.chdir(SCRIPT_FOLDER)
 
 H0GLOB= 67#67.9 #69
@@ -444,9 +444,9 @@ totalds=DS_Cat.shape[0]
 DS_Cat=DS_Cat[DS_Cat['SNR']>100]
 print('Number of DSs with SNR more than 100 {}. {}%'.format(DS_Cat.shape[0],100*DS_Cat.shape[0]/totalds))
 print(DS_Cat.head(5))
-start_index=0
+start_index=512
 iteration_count = 0
-max_iterations=10
+max_iterations=100
 steps=0
 for event_index, row in DS_Cat.iloc[start_index:].iterrows():
     steps += 1

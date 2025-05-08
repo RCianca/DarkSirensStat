@@ -165,7 +165,7 @@ radthetamax = Parent_Catalogue['theta'].max()
 angular_part = (radphimax - radphimin) * (-(np.cos(radthetamax) - np.cos(radthetamin)))
 
 # Scale the number of Dark Sirens
-Numb_DS_of_z = Numb_DS_of_z * (angular_part/4*np.pi) * 1000  # Scaling factor to increase population
+Numb_DS_of_z = Numb_DS_of_z * (angular_part/4*np.pi) * 8000  # Scaling factor to increase population (angular_part/4*np.pi) ~ 1/8
 Numb_DS_of_z_int = np.around(Numb_DS_of_z)
 
 # Plot the number of Dark Sirens vs redshift

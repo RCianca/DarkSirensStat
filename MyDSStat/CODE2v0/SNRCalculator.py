@@ -47,7 +47,7 @@ SAVE_PATH='/storage/DATA-03/astrorm3/Users/rcianca/DarkSirensStat/MyDSStat/'
 ###########################################################################
 
 os.chdir(CAT_FOLDER)
-DS_Cat= pd.read_csv('DS_From_Parent_Uniform_Complete.txt')
+DS_Cat= pd.read_csv('DS_From_Parent_Half_Flag_Branchesi_Complete.txt')#pd.read_csv('DS_From_Parent_Uniform_Complete.txt')
 #dlmean=np.mean(DS_Cat['Luminosity Distance'])
 #print('dl media in Mpc')
 #print(dlmean)
@@ -103,7 +103,7 @@ chunksize = 1000
 total_length = len(DS_Cat)
 
 # Prepare the output file path
-output_file = os.path.join(SAVE_PATH, 'DS_From_Parent_Uniform_Complete_SNR.txt')
+output_file = os.path.join(SAVE_PATH, 'DS_From_Parent_Half_Flag_Branchesi_Complete_SNR.txt')
 
 # Process the data in chunks
 for start in range(0, total_length, chunksize):
